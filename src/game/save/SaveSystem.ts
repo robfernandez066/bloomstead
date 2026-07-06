@@ -3,12 +3,12 @@ import type { GameStateSystem } from '../systems/GameStateSystem';
 import type { OrderSystem } from '../systems/OrderSystem';
 import type { PlotStateSystem } from '../systems/PlotStateSystem';
 import type { UpgradeSystem } from '../systems/UpgradeSystem';
-import type { SavedGameData, SavedPlotState } from './SaveTypes';
+import type { SavedGameData, SavedPlotState, SaveLoadResult } from './SaveTypes';
 
 const SAVE_KEY = 'bloomstead.save.v1';
 
 export class SaveSystem {
-  load(): SavedGameData | null {
+  load(): SaveLoadResult | null {
     const rawSave = localStorage.getItem(SAVE_KEY);
 
     if (rawSave === null) {
@@ -22,7 +22,7 @@ export class SaveSystem {
         return null;
       }
 
-      return this.rebaseSavedPlots(parsedSave);
+      return this.applyOfflineGrowth(parsedSave);
     } catch {
       return null;
     }
@@ -36,6 +36,7 @@ export class SaveSystem {
   ): void {
     const saveData: SavedGameData = {
       version: 1,
+      lastPlayedAt: Date.now(),
       gameState: structuredClone(gameStateSystem.getState()),
       plots: this.createSavedPlots(plotStateSystem.getPlots()),
       purchasedPlotUpgradeCount: upgradeSystem.getPurchasedPlotUpgradeCount(),
@@ -61,12 +62,17 @@ export class SaveSystem {
     }));
   }
 
-  private rebaseSavedPlots(saveData: SavedGameData): SavedGameData {
+  private applyOfflineGrowth(saveData: SavedGameData): SaveLoadResult {
     const now = Date.now();
+    const offlineElapsedMs = saveData.lastPlayedAt === undefined
+      ? 0
+      : Math.max(0, now - saveData.lastPlayedAt);
+    let cropsFinishedWhileAway = 0;
 
     return {
-      ...saveData,
-      plots: saveData.plots.map((plot) => {
+      data: {
+        ...saveData,
+        plots: saveData.plots.map((plot) => {
         if (
           plot.plantedCropId === null ||
           plot.growDurationMs === null ||
@@ -80,14 +86,25 @@ export class SaveSystem {
           };
         }
 
-        const elapsedGrowMs = Math.min(plot.elapsedGrowMs, plot.growDurationMs);
+        const wasReady = plot.elapsedGrowMs >= plot.growDurationMs || plot.ready;
+        const elapsedGrowMs = Math.min(
+          plot.elapsedGrowMs + offlineElapsedMs,
+          plot.growDurationMs
+        );
+        const ready = elapsedGrowMs >= plot.growDurationMs;
+
+        if (!wasReady && ready && offlineElapsedMs > 0) {
+          cropsFinishedWhileAway += 1;
+        }
 
         return {
           ...plot,
           plantedAt: now - elapsedGrowMs,
-          ready: elapsedGrowMs >= plot.growDurationMs
+          ready
         };
       })
+      },
+      cropsFinishedWhileAway
     };
   }
 }

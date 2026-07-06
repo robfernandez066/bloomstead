@@ -13,8 +13,14 @@ export interface SavedOrderState {
 
 export interface SavedGameData {
   version: 1;
+  lastPlayedAt?: number;
   gameState: GameState;
   plots: SavedPlotState[];
   purchasedPlotUpgradeCount: number;
   orderState?: SavedOrderState;
+}
+
+export interface SaveLoadResult {
+  data: SavedGameData;
+  cropsFinishedWhileAway: number;
 }

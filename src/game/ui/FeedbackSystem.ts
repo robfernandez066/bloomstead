@@ -117,4 +117,30 @@ export class FeedbackSystem {
       onComplete: () => text.destroy()
     });
   }
+
+  showOfflineSummary(count: number, x: number, y: number): void {
+    const text = this.scene.add
+      .text(x, y, `${count} crops finished growing while you were away.`, {
+        color: '#ffffff',
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '18px',
+        fontStyle: 'bold',
+        stroke: '#4f6b35',
+        strokeThickness: 4,
+        align: 'center',
+        wordWrap: { width: 320 }
+      })
+      .setOrigin(0.5)
+      .setDepth(115);
+
+    this.scene.tweens.add({
+      targets: text,
+      y: y - 24,
+      alpha: 0,
+      duration: 2600,
+      ease: 'Sine.easeOut',
+      delay: 1200,
+      onComplete: () => text.destroy()
+    });
+  }
 }

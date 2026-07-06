@@ -28,7 +28,8 @@ export class FarmScene extends Phaser.Scene {
     this.add.rectangle(width / 2, height / 2, width, height, 0x8fcf8a);
 
     const saveSystem = new SaveSystem();
-    const savedGameData = saveSystem.load();
+    const saveLoadResult = saveSystem.load();
+    const savedGameData = saveLoadResult?.data;
     const gameStateSystem = new GameStateSystem(savedGameData?.gameState);
     const plotStateSystem = new PlotStateSystem({
       rows: 6,
@@ -221,5 +222,14 @@ export class FarmScene extends Phaser.Scene {
         this.scene.restart();
       }
     });
+
+    if (saveLoadResult !== null && saveLoadResult.cropsFinishedWhileAway > 0) {
+      feedbackSystem.showOfflineSummary(
+        saveLoadResult.cropsFinishedWhileAway,
+        width / 2,
+        FARM_LAYOUT.farmGrid.y + 24
+      );
+      saveGame();
+    }
   }
 }
