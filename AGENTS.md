@@ -59,6 +59,7 @@ The MVP should include:
 * Crop growth timers
 * Coins
 * Crop inventory
+* Crop selling fallback
 * Seed purchasing
 * Order board
 * 5 basic MVP orders
@@ -97,8 +98,11 @@ The MVP should not include:
 * Crop death: never.
 * Storage limits: not in MVP; add later.
 * Orders: no deadlines in MVP; timed premium orders later.
+* Order availability: active orders should not require crops above the current farm level.
 * Offline progress: crops grow offline.
 * Starting coins: 100 coins for new game and Dev Reset.
+* Crop selling: harvested crops can be sold using current crop sell values as a fallback for seed money.
+* Crop sell UI: current `S +4c`, `C +12c`, and `G +32c` labels are functional but temporary; replace them in a future UI/art polish pass with readable rows such as `Sunwheat x7 — Sell +4c`.
 * Starting plot layout: 3x4 centered crop bed, 12 unlocked plots.
 * Plot upgrades should preserve a uniform rectangular crop bed:
 
@@ -108,6 +112,7 @@ The MVP should not include:
   * Upgrade 3: 6x4 crop bed, unlocks 4 plots.
 
 * The final MVP plot upgrade unlocks 4 plots, not 8.
+* Tutorial: includes a sell-crop step after the first plot upgrade and a one-time 75 coin completion reward.
 * Strategy level: 6/10.
 * Randomness: some randomness later, not core MVP.
 
