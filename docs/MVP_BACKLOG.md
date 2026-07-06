@@ -36,6 +36,20 @@ Handle this in the upcoming UI/art polish pass, not as an immediate gameplay-sys
 
 Readable crop rows and/or small crop icons should replace the current compact labels when the HUD/inventory area gets a proper polish pass.
 
+### Tutorial Completion Reward Feedback
+
+The tutorial completion reward works mechanically: clicking the final `Complete` button grants the one-time 75 coin reward. The action should feel more satisfying in the upcoming UI/art/game-feel polish pass.
+
+Preferred future direction:
+
+* Animate coins flying from the `Complete` button or tutorial panel into the coin counter.
+* Show clear reward text like `+75 Coins`.
+* Add a small burst, pop, or glow on the `Complete` button.
+* Pulse or count up the coin HUD.
+* Later, add a satisfying coin sound and light haptic feedback when mobile support exists.
+
+Do not implement this now. Do not change the reward amount, add sound, add haptics, or modify TypeScript for this backlog item yet.
+
 ## Scope Guardrails
 
 Do not add storage, machines, workers, research, new crops, sound, haptics, daily rewards, monetization, or new gameplay systems unless explicitly requested.
