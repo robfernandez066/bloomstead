@@ -37,7 +37,7 @@ export class FarmScene extends Phaser.Scene {
     });
     const plantingSystem = new PlantingSystem(gameStateSystem, plotStateSystem);
     const harvestingSystem = new HarvestingSystem(gameStateSystem, plotStateSystem);
-    const orderSystem = new OrderSystem(gameStateSystem);
+    const orderSystem = new OrderSystem(gameStateSystem, savedGameData?.orderState);
     const upgradeSystem = new UpgradeSystem(
       gameStateSystem,
       plotStateSystem,
@@ -47,7 +47,7 @@ export class FarmScene extends Phaser.Scene {
     let dragMode: DragMode = 'none';
 
     const saveGame = (): void => {
-      saveSystem.save(gameStateSystem, plotStateSystem, upgradeSystem);
+      saveSystem.save(gameStateSystem, plotStateSystem, upgradeSystem, orderSystem);
     };
 
     const hudSystem = new HudSystem(this, gameStateSystem);

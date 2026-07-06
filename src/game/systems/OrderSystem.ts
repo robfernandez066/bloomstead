@@ -1,5 +1,6 @@
 import { MVP_ORDERS } from '../data/Orders';
-import type { OrderDefinition, OrderId, OrderRequirements } from '../models/OrderTypes';
+import type { OrderDefinition, OrderId } from '../models/OrderTypes';
+import type { SavedOrderState } from '../save/SaveTypes';
 import type { FarmXpResult, GameStateSystem } from './GameStateSystem';
 
 export interface OrderCompletionResult {
@@ -12,13 +13,21 @@ export class OrderSystem {
   private readonly activeOrders: OrderDefinition[];
   private nextOrderIndex = 3;
 
-  constructor(gameState: GameStateSystem) {
+  constructor(gameState: GameStateSystem, savedOrderState?: SavedOrderState) {
     this.gameState = gameState;
-    this.activeOrders = MVP_ORDERS.slice(0, 3);
+    this.activeOrders = this.createInitialActiveOrders(savedOrderState);
+    this.nextOrderIndex = savedOrderState?.nextOrderIndex ?? 3;
   }
 
   getActiveOrders(): OrderDefinition[] {
     return this.activeOrders;
+  }
+
+  getSavedOrderState(): SavedOrderState {
+    return {
+      activeOrderIds: this.activeOrders.map((order) => order.id),
+      nextOrderIndex: this.nextOrderIndex
+    };
   }
 
   canCompleteOrder(order: OrderDefinition): boolean {
@@ -64,5 +73,21 @@ export class OrderSystem {
     }
 
     return MVP_ORDERS[this.nextOrderIndex];
+  }
+
+  private createInitialActiveOrders(savedOrderState?: SavedOrderState): OrderDefinition[] {
+    if (savedOrderState === undefined) {
+      return MVP_ORDERS.slice(0, 3);
+    }
+
+    const savedOrders = savedOrderState.activeOrderIds
+      .map((orderId) => MVP_ORDERS.find((order) => order.id === orderId))
+      .filter((order): order is OrderDefinition => order !== undefined);
+
+    if (savedOrders.length !== 3) {
+      return MVP_ORDERS.slice(0, 3);
+    }
+
+    return savedOrders;
   }
 }
