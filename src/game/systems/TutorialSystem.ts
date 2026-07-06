@@ -8,8 +8,15 @@ import type {
 
 const DEFAULT_TUTORIAL_STATE: TutorialState = {
   currentStepId: 'welcome',
-  completed: false
+  completed: false,
+  completionRewardClaimed: false
 };
+
+export const TUTORIAL_COMPLETION_REWARD_COINS = 75;
+
+export interface TutorialCompletionResult {
+  coinReward: number;
+}
 
 export class TutorialSystem {
   private readonly state: TutorialState;
@@ -39,12 +46,21 @@ export class TutorialSystem {
       return this.advanceTo('select-sunwheat');
     }
 
-    if (this.state.currentStepId === 'complete') {
-      this.state.completed = true;
-      return true;
+    return false;
+  }
+
+  completeTutorial(): TutorialCompletionResult | null {
+    if (
+      this.state.completed ||
+      this.state.currentStepId !== 'complete' ||
+      this.state.completionRewardClaimed
+    ) {
+      return null;
     }
 
-    return false;
+    this.state.completionRewardClaimed = true;
+    this.state.completed = true;
+    return { coinReward: TUTORIAL_COMPLETION_REWARD_COINS };
   }
 
   recordCropPlanted(cropId: CropId): boolean {
@@ -84,6 +100,14 @@ export class TutorialSystem {
       return false;
     }
 
+    return this.advanceTo('sell-crop');
+  }
+
+  recordCropSold(): boolean {
+    if (this.state.currentStepId !== 'sell-crop') {
+      return false;
+    }
+
     return this.advanceTo('complete');
   }
 
@@ -98,7 +122,9 @@ export class TutorialSystem {
 
     return {
       currentStepId: initialState.currentStepId,
-      completed: initialState.completed === true
+      completed: initialState.completed === true,
+      completionRewardClaimed:
+        initialState.completed === true || initialState.completionRewardClaimed === true
     };
   }
 

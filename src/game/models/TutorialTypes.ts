@@ -5,6 +5,7 @@ export type TutorialStepId =
   | 'harvest'
   | 'complete-order'
   | 'upgrade-plots'
+  | 'sell-crop'
   | 'complete';
 
 export interface TutorialStepDefinition {
@@ -16,4 +17,5 @@ export interface TutorialStepDefinition {
 export interface TutorialState {
   currentStepId: TutorialStepId;
   completed: boolean;
+  completionRewardClaimed: boolean;
 }

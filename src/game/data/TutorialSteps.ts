@@ -32,6 +32,11 @@ export const TUTORIAL_STEPS: TutorialStepDefinition[] = [
     requiresAcknowledgement: false
   },
   {
+    id: 'sell-crop',
+    message: 'Out of coins? Sell extra crops to earn seed money.',
+    requiresAcknowledgement: false
+  },
+  {
     id: 'complete',
     message: 'Nice! Keep farming, completing orders, and unlocking new crops.',
     requiresAcknowledgement: true

@@ -70,7 +70,7 @@ export class TutorialPanelSystem {
     );
 
     if (step.requiresAcknowledgement) {
-      this.renderAcknowledgeButton(step.id === 'complete' ? 'Done' : 'Start');
+      this.renderAcknowledgeButton(step.id === 'complete' ? 'Complete' : 'Start');
     }
   }
 
@@ -79,7 +79,7 @@ export class TutorialPanelSystem {
       return;
     }
 
-    const buttonWidth = 66;
+    const buttonWidth = label === 'Complete' ? 82 : 66;
     const buttonHeight = 30;
     const buttonX = this.config.x + this.config.width - buttonWidth - 10;
     const buttonY = this.config.y + (this.config.height - buttonHeight) / 2;

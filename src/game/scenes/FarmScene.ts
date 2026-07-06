@@ -206,6 +206,7 @@ export class FarmScene extends Phaser.Scene {
         cropSellPanelSystem.refresh();
         orderBoardSystem.refresh();
         upgradePanelSystem.refresh();
+        refreshTutorialIfAdvanced(tutorialSystem.recordCropSold());
         saveGame();
         feedbackSystem.showCropSold(
           width / 2,
@@ -328,6 +329,21 @@ export class FarmScene extends Phaser.Scene {
       width: FARM_LAYOUT.tutorialPanel.width,
       height: FARM_LAYOUT.tutorialPanel.height,
       onAcknowledge: () => {
+        if (tutorialSystem.getCurrentStep()?.id === 'complete') {
+          const result = tutorialSystem.completeTutorial();
+
+          if (result === null) {
+            return;
+          }
+
+          gameStateSystem.addCoins(result.coinReward);
+          hudSystem.refresh();
+          upgradePanelSystem.refresh();
+          tutorialPanelSystem.refresh();
+          saveGame();
+          return;
+        }
+
         if (tutorialSystem.acknowledgeCurrentStep()) {
           tutorialPanelSystem.refresh();
           saveGame();
