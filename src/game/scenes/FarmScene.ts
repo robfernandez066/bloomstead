@@ -3,6 +3,7 @@ import { HudSystem } from '../ui/HudSystem';
 import { SeedSelectorSystem } from '../ui/SeedSelectorSystem';
 import { GameStateSystem } from '../systems/GameStateSystem';
 import { GridSystem } from '../systems/GridSystem';
+import { PlantingSystem } from '../systems/PlantingSystem';
 import { PlotStateSystem } from '../systems/PlotStateSystem';
 
 export class FarmScene extends Phaser.Scene {
@@ -22,18 +23,46 @@ export class FarmScene extends Phaser.Scene {
       columns: 6,
       unlockedTileCount: 12
     });
+    const plantingSystem = new PlantingSystem(gameStateSystem, plotStateSystem);
+
+    const hudSystem = new HudSystem(this, gameStateSystem);
 
     const gridSystem = new GridSystem(this, {
       tileWidth: 56,
       tileHeight: 28,
       originX: width / 2,
       originY: height * 0.38
-    }, plotStateSystem.getPlots());
+    }, plotStateSystem.getPlots(), {
+      onPlotPressed: (plot) => {
+        if (plantingSystem.beginPaint(plot)) {
+          gridSystem.refreshPlotVisuals();
+          hudSystem.refresh();
+        }
+      },
+      onPlotDraggedOver: (plot) => {
+        if (plantingSystem.paintOver(plot)) {
+          gridSystem.refreshPlotVisuals();
+          hudSystem.refresh();
+        }
+      }
+    });
 
     gridSystem.render();
 
-    const hudSystem = new HudSystem(this, gameStateSystem);
     hudSystem.render(18, 18, width - 36);
+
+    this.input.on('pointerup', () => {
+      plantingSystem.endPaint();
+    });
+
+    this.time.addEvent({
+      delay: 250,
+      loop: true,
+      callback: () => {
+        plotStateSystem.refreshReadyStates();
+        gridSystem.refreshPlotVisuals();
+      }
+    });
 
     const seedSelectorSystem = new SeedSelectorSystem(this, gameStateSystem);
     seedSelectorSystem.render({

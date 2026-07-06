@@ -37,6 +37,19 @@ export class GameStateSystem {
     return this.state.farmLevel >= crop.unlockLevel;
   }
 
+  canAfford(cost: number): boolean {
+    return this.state.coins >= cost;
+  }
+
+  spendCoins(amount: number): boolean {
+    if (!this.canAfford(amount)) {
+      return false;
+    }
+
+    this.state.coins -= amount;
+    return true;
+  }
+
   selectSeed(cropId: CropId): boolean {
     const crop = CROPS[cropId];
 
