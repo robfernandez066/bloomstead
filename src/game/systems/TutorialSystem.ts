@@ -98,7 +98,7 @@ export class TutorialSystem {
 
     return {
       currentStepId: initialState.currentStepId,
-      completed: initialState.completed
+      completed: initialState.completed === true
     };
   }
 

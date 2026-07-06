@@ -74,6 +74,14 @@ export class FarmScene extends Phaser.Scene {
       }
     };
 
+    const syncTutorialWithLoadedReadyCrop = (): boolean => {
+      const hasReadyCrop = plotStateSystem
+        .getPlots()
+        .some((plot) => plot.unlocked && plot.plantedCropId !== null && plot.ready);
+
+      return hasReadyCrop && tutorialSystem.recordCropReady();
+    };
+
     const handleLevelUp = (level: number): void => {
       seedSelectorSystem.refresh();
       feedbackSystem.showLevelUp(level, width / 2, height * 0.28);
@@ -287,6 +295,11 @@ export class FarmScene extends Phaser.Scene {
         }
       }
     });
+
+    if (syncTutorialWithLoadedReadyCrop()) {
+      tutorialPanelSystem.refresh();
+      saveGame();
+    }
 
     devSaveControlsSystem.render({
       x: FARM_LAYOUT.devControls.x,
