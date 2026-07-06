@@ -13,9 +13,14 @@ export class UpgradeSystem {
   private readonly plotState: PlotStateSystem;
   private nextPlotUpgradeIndex = 0;
 
-  constructor(gameState: GameStateSystem, plotState: PlotStateSystem) {
+  constructor(gameState: GameStateSystem, plotState: PlotStateSystem, purchasedPlotUpgradeCount = 0) {
     this.gameState = gameState;
     this.plotState = plotState;
+    this.nextPlotUpgradeIndex = purchasedPlotUpgradeCount;
+  }
+
+  getPurchasedPlotUpgradeCount(): number {
+    return this.nextPlotUpgradeIndex;
   }
 
   getNextPlotUpgrade(): PlotUpgradeDefinition | null {

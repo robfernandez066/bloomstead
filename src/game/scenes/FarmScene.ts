@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { SaveSystem } from '../save/SaveSystem';
+import { DevSaveControlsSystem } from '../ui/DevSaveControlsSystem';
 import { FeedbackSystem } from '../ui/FeedbackSystem';
 import { HudSystem } from '../ui/HudSystem';
 import { OrderBoardSystem } from '../ui/OrderBoardSystem';
@@ -25,23 +27,35 @@ export class FarmScene extends Phaser.Scene {
     this.add.rectangle(width / 2, height / 2, width, height, 0x8fcf8a);
     this.add.rectangle(width / 2, height * 0.72, width * 0.82, height * 0.34, 0x6aa45f);
 
-    const gameStateSystem = new GameStateSystem();
+    const saveSystem = new SaveSystem();
+    const savedGameData = saveSystem.load();
+    const gameStateSystem = new GameStateSystem(savedGameData?.gameState);
     const plotStateSystem = new PlotStateSystem({
       rows: 6,
       columns: 6,
-      unlockedTileCount: 12
+      unlockedTileCount: 12,
+      initialPlots: savedGameData?.plots
     });
     const plantingSystem = new PlantingSystem(gameStateSystem, plotStateSystem);
     const harvestingSystem = new HarvestingSystem(gameStateSystem, plotStateSystem);
     const orderSystem = new OrderSystem(gameStateSystem);
-    const upgradeSystem = new UpgradeSystem(gameStateSystem, plotStateSystem);
+    const upgradeSystem = new UpgradeSystem(
+      gameStateSystem,
+      plotStateSystem,
+      savedGameData?.purchasedPlotUpgradeCount
+    );
     const feedbackSystem = new FeedbackSystem(this);
     let dragMode: DragMode = 'none';
+
+    const saveGame = (): void => {
+      saveSystem.save(gameStateSystem, plotStateSystem, upgradeSystem);
+    };
 
     const hudSystem = new HudSystem(this, gameStateSystem);
     const seedSelectorSystem = new SeedSelectorSystem(this, gameStateSystem);
     const orderBoardSystem = new OrderBoardSystem(this, orderSystem);
     const upgradePanelSystem = new UpgradePanelSystem(this, upgradeSystem);
+    const devSaveControlsSystem = new DevSaveControlsSystem(this);
     let gridSystem: GridSystem;
 
     const handleLevelUp = (level: number): void => {
@@ -54,6 +68,7 @@ export class FarmScene extends Phaser.Scene {
       hudSystem.refresh();
       orderBoardSystem.refresh();
       upgradePanelSystem.refresh();
+      saveGame();
       feedbackSystem.showHarvestFeedback(
         gridSystem.getPlotScreenPosition(harvestResult.plot),
         harvestResult.crop.name
@@ -84,6 +99,7 @@ export class FarmScene extends Phaser.Scene {
           gridSystem.refreshPlotVisuals();
           hudSystem.refresh();
           upgradePanelSystem.refresh();
+          saveGame();
           return;
         }
 
@@ -104,6 +120,7 @@ export class FarmScene extends Phaser.Scene {
           gridSystem.refreshPlotVisuals();
           hudSystem.refresh();
           upgradePanelSystem.refresh();
+          saveGame();
         }
       }
     });
@@ -127,6 +144,7 @@ export class FarmScene extends Phaser.Scene {
         gridSystem.refreshPlotVisuals();
         hudSystem.refresh();
         upgradePanelSystem.refresh();
+        saveGame();
         feedbackSystem.showPlotsUnlocked(width / 2, 438);
       }
     });
@@ -147,6 +165,7 @@ export class FarmScene extends Phaser.Scene {
         hudSystem.refresh();
         orderBoardSystem.refresh();
         upgradePanelSystem.refresh();
+        saveGame();
         feedbackSystem.showOrderComplete(width / 2, 486);
 
         if (result.xpResult.leveledUp) {
@@ -165,8 +184,12 @@ export class FarmScene extends Phaser.Scene {
       delay: 250,
       loop: true,
       callback: () => {
-        plotStateSystem.refreshReadyStates();
+        const readyStatesChanged = plotStateSystem.refreshReadyStates();
         gridSystem.refreshPlotVisuals();
+
+        if (readyStatesChanged) {
+          saveGame();
+        }
       }
     });
 
@@ -176,7 +199,21 @@ export class FarmScene extends Phaser.Scene {
       buttonWidth: 108,
       buttonHeight: 64,
       gap: 15,
-      onSeedSelected: () => hudSystem.refresh()
+      onSeedSelected: () => {
+        hudSystem.refresh();
+        saveGame();
+      }
+    });
+
+    devSaveControlsSystem.render({
+      x: width - 112,
+      y: 154,
+      width: 94,
+      height: 28,
+      onResetSave: () => {
+        saveSystem.clear();
+        this.scene.restart();
+      }
     });
 
     this.add

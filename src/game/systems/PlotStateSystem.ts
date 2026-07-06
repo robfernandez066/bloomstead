@@ -5,13 +5,14 @@ interface PlotStateSystemConfig {
   rows: number;
   columns: number;
   unlockedTileCount: number;
+  initialPlots?: PlotState[];
 }
 
 export class PlotStateSystem {
   private readonly plots: PlotState[];
 
   constructor(config: PlotStateSystemConfig) {
-    this.plots = this.createInitialPlots(config);
+    this.plots = config.initialPlots ?? this.createInitialPlots(config);
   }
 
   getPlots(): PlotState[] {
@@ -51,10 +52,19 @@ export class PlotStateSystem {
     plot.ready = false;
   }
 
-  refreshReadyStates(now = Date.now()): void {
+  refreshReadyStates(now = Date.now()): boolean {
+    let changed = false;
+
     for (const plot of this.plots) {
-      plot.ready = this.isPlotReady(plot, now);
+      const ready = this.isPlotReady(plot, now);
+
+      if (plot.ready !== ready) {
+        changed = true;
+        plot.ready = ready;
+      }
     }
+
+    return changed;
   }
 
   isPlotReady(plot: PlotState, now = Date.now()): boolean {

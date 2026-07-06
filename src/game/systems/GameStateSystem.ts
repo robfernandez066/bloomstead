@@ -18,8 +18,8 @@ export interface FarmXpResult {
 export class GameStateSystem {
   private readonly state: GameState;
 
-  constructor() {
-    this.state = {
+  constructor(initialState?: GameState) {
+    this.state = initialState ?? {
       coins: 100,
       farmXp: 0,
       farmLevel: 1,
