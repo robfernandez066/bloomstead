@@ -1,6 +1,7 @@
 import type { GameState } from '../models/GameStateTypes';
 import type { OrderId } from '../models/OrderTypes';
 import type { PlotState } from '../models/PlotTypes';
+import type { TutorialState } from '../models/TutorialTypes';
 
 export interface SavedPlotState extends PlotState {
   elapsedGrowMs: number | null;
@@ -18,6 +19,7 @@ export interface SavedGameData {
   plots: SavedPlotState[];
   purchasedPlotUpgradeCount: number;
   orderState?: SavedOrderState;
+  tutorialState?: TutorialState;
 }
 
 export interface SaveLoadResult {

@@ -38,6 +38,12 @@ export const FARM_LAYOUT = {
     gap: 6,
     bottomPadding: 14
   },
+  tutorialPanel: {
+    x: 18,
+    y: 684,
+    width: 354,
+    height: 62
+  },
   seedSelector: {
     x: 22,
     y: 760,

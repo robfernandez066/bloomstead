@@ -62,6 +62,7 @@ The MVP should include:
 * Seed purchasing
 * Order board
 * 5 basic MVP orders
+* Lightweight tutorial/onboarding prompts
 * Farm XP
 * Farm level
 * Crop unlocks
@@ -97,7 +98,7 @@ The MVP should not include:
 * Storage limits: not in MVP; add later.
 * Orders: no deadlines in MVP; timed premium orders later.
 * Offline progress: crops grow offline.
-* Starting coins: 1000 coins is a temporary MVP testing value, not final tuning.
+* Starting coins: 100 coins for new game and Dev Reset.
 * Starting plot layout: 3x4 centered crop bed, 12 unlocked plots.
 * Plot upgrades should preserve a uniform rectangular crop bed:
 

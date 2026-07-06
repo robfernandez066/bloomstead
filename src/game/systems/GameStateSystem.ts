@@ -20,7 +20,7 @@ export class GameStateSystem {
 
   constructor(initialState?: GameState) {
     this.state = initialState ?? {
-      coins: 1000,
+      coins: 100,
       farmXp: 0,
       farmLevel: 1,
       cropInventory: { ...STARTING_CROP_INVENTORY },
