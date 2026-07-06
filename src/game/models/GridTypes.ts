@@ -8,15 +8,7 @@ export interface IsometricPoint {
   y: number;
 }
 
-export interface GridTile {
-  position: GridPosition;
-  unlocked: boolean;
-}
-
 export interface GridSystemConfig {
-  rows: number;
-  columns: number;
-  unlockedTileCount: number;
   tileWidth: number;
   tileHeight: number;
   originX: number;

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import type { GridPosition, GridSystemConfig, GridTile } from '../models/GridTypes';
+import type { GridPosition, GridSystemConfig } from '../models/GridTypes';
+import type { PlotState } from '../models/PlotTypes';
 import { createDiamondPoints, gridToIso } from '../utils/isometric';
 
 const UNLOCKED_FILL = 0x86b85f;
@@ -11,58 +12,43 @@ const HOVER_FILL = 0xa8d87d;
 export class GridSystem {
   private readonly scene: Phaser.Scene;
   private readonly config: GridSystemConfig;
-  private readonly tiles: GridTile[] = [];
+  private readonly plots: PlotState[];
 
-  constructor(scene: Phaser.Scene, config: GridSystemConfig) {
+  constructor(scene: Phaser.Scene, config: GridSystemConfig, plots: PlotState[]) {
     this.scene = scene;
     this.config = config;
+    this.plots = plots;
   }
 
   render(): void {
-    this.createTiles();
-
-    for (const tile of this.tiles) {
-      this.renderTile(tile);
+    for (const plot of this.plots) {
+      this.renderPlot(plot);
     }
   }
 
-  private createTiles(): void {
-    this.tiles.length = 0;
-
-    for (let row = 0; row < this.config.rows; row += 1) {
-      for (let column = 0; column < this.config.columns; column += 1) {
-        const tileIndex = row * this.config.columns + column;
-
-        this.tiles.push({
-          position: { row, column },
-          unlocked: tileIndex < this.config.unlockedTileCount
-        });
-      }
-    }
-  }
-
-  private renderTile(tile: GridTile): void {
+  private renderPlot(plot: PlotState): void {
     const { tileWidth, tileHeight, originX, originY } = this.config;
-    const screenPosition = gridToIso(tile.position, tileWidth, tileHeight, originX, originY);
+    const position = { row: plot.row, column: plot.column };
+    const screenPosition = gridToIso(position, tileWidth, tileHeight, originX, originY);
     const diamondPoints = createDiamondPoints(tileWidth, tileHeight);
-    const fillColor = tile.unlocked ? UNLOCKED_FILL : LOCKED_FILL;
-    const strokeColor = tile.unlocked ? UNLOCKED_STROKE : LOCKED_STROKE;
+    const fillColor = plot.unlocked ? UNLOCKED_FILL : LOCKED_FILL;
+    const strokeColor = plot.unlocked ? UNLOCKED_STROKE : LOCKED_STROKE;
 
     const diamond = this.scene.add
       .polygon(screenPosition.x, screenPosition.y, diamondPoints, fillColor)
       .setStrokeStyle(2, strokeColor)
-      .setDepth(tile.position.row + tile.position.column)
+      .setDepth(plot.row + plot.column)
       .setInteractive(
         new Phaser.Geom.Polygon(diamondPoints),
         Phaser.Geom.Polygon.Contains
       );
 
     diamond.on('pointerdown', () => {
-      this.logTilePosition(tile.position);
+      this.logTilePosition(position);
     });
 
     diamond.on('pointerover', () => {
-      if (tile.unlocked) {
+      if (plot.unlocked) {
         diamond.setFillStyle(HOVER_FILL);
       }
     });

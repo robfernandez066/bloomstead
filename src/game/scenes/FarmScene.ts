@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GridSystem } from '../systems/GridSystem';
+import { PlotStateSystem } from '../systems/PlotStateSystem';
 
 export class FarmScene extends Phaser.Scene {
   constructor() {
@@ -12,15 +13,18 @@ export class FarmScene extends Phaser.Scene {
     this.add.rectangle(width / 2, height / 2, width, height, 0x8fcf8a);
     this.add.rectangle(width / 2, height * 0.72, width * 0.82, height * 0.34, 0x6aa45f);
 
-    const gridSystem = new GridSystem(this, {
+    const plotStateSystem = new PlotStateSystem({
       rows: 6,
       columns: 6,
-      unlockedTileCount: 12,
+      unlockedTileCount: 12
+    });
+
+    const gridSystem = new GridSystem(this, {
       tileWidth: 56,
       tileHeight: 28,
       originX: width / 2,
       originY: height * 0.38
-    });
+    }, plotStateSystem.getPlots());
 
     gridSystem.render();
 
