@@ -47,4 +47,28 @@ export class FeedbackSystem {
       onComplete: () => pop.destroy()
     });
   }
+
+  showLevelUp(level: number, x: number, y: number): void {
+    const text = this.scene.add
+      .text(x, y, `Level ${level}!`, {
+        color: '#fff4a8',
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '34px',
+        fontStyle: 'bold',
+        stroke: '#3f512e',
+        strokeThickness: 5
+      })
+      .setOrigin(0.5)
+      .setDepth(120);
+
+    this.scene.tweens.add({
+      targets: text,
+      y: y - 36,
+      scale: 1.12,
+      alpha: 0,
+      duration: 1200,
+      ease: 'Sine.easeOut',
+      onComplete: () => text.destroy()
+    });
+  }
 }

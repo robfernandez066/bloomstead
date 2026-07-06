@@ -1,12 +1,13 @@
 import { CROPS } from '../data/Crops';
 import type { CropDefinition } from '../models/CropTypes';
 import type { PlotState } from '../models/PlotTypes';
-import type { GameStateSystem } from './GameStateSystem';
+import type { FarmXpResult, GameStateSystem } from './GameStateSystem';
 import type { PlotStateSystem } from './PlotStateSystem';
 
 export interface HarvestResult {
   crop: CropDefinition;
   plot: PlotState;
+  xpResult: FarmXpResult;
 }
 
 export class HarvestingSystem {
@@ -51,9 +52,9 @@ export class HarvestingSystem {
     const crop = CROPS[plot.plantedCropId];
 
     this.gameState.addCropToInventory(crop.id, 1);
-    this.gameState.addFarmXp(crop.xp);
+    const xpResult = this.gameState.addFarmXp(crop.xp);
     this.plotState.clearPlot(plot);
 
-    return { crop, plot };
+    return { crop, plot, xpResult };
   }
 }

@@ -18,10 +18,16 @@ interface SeedSelectorConfig {
   onSeedSelected: () => void;
 }
 
+interface SeedButton {
+  crop: CropDefinition;
+  button: Phaser.GameObjects.Rectangle;
+  label: Phaser.GameObjects.Text;
+}
+
 export class SeedSelectorSystem {
   private readonly scene: Phaser.Scene;
   private readonly gameState: GameStateSystem;
-  private readonly buttons: Phaser.GameObjects.Rectangle[] = [];
+  private readonly seedButtons: SeedButton[] = [];
 
   constructor(scene: Phaser.Scene, gameState: GameStateSystem) {
     this.scene = scene;
@@ -38,15 +44,20 @@ export class SeedSelectorSystem {
 
   refresh(): void {
     const selectedSeedId = this.gameState.getState().selectedSeedId;
-    const crops = this.gameState.getCrops();
 
-    this.buttons.forEach((button, index) => {
-      const crop = crops[index];
+    this.seedButtons.forEach(({ crop, button, label }) => {
       const unlocked = this.gameState.isCropUnlocked(crop);
       const fillColor = crop.id === selectedSeedId ? SELECTED_FILL : UNLOCKED_FILL;
 
       button.setFillStyle(unlocked ? fillColor : LOCKED_FILL);
       button.setAlpha(unlocked ? 1 : 0.72);
+      label.setColor(unlocked ? UNLOCKED_TEXT : LOCKED_TEXT);
+
+      if (unlocked) {
+        button.setInteractive({ useHandCursor: true });
+      } else {
+        button.disableInteractive();
+      }
     });
   }
 
@@ -66,19 +77,14 @@ export class SeedSelectorSystem {
       .setStrokeStyle(2, BUTTON_STROKE)
       .setAlpha(unlocked ? 1 : 0.72);
 
-    this.buttons.push(button);
+    button.on('pointerdown', () => {
+      if (this.gameState.selectSeed(crop.id)) {
+        this.refresh();
+        config.onSeedSelected();
+      }
+    });
 
-    if (unlocked) {
-      button.setInteractive({ useHandCursor: true });
-      button.on('pointerdown', () => {
-        if (this.gameState.selectSeed(crop.id)) {
-          this.refresh();
-          config.onSeedSelected();
-        }
-      });
-    }
-
-    this.scene.add
+    const label = this.scene.add
       .text(x + config.buttonWidth / 2, config.y + config.buttonHeight / 2, crop.name, {
         color: unlocked ? UNLOCKED_TEXT : LOCKED_TEXT,
         fontFamily: 'Arial, sans-serif',
@@ -88,5 +94,8 @@ export class SeedSelectorSystem {
         wordWrap: { width: config.buttonWidth - 12 }
       })
       .setOrigin(0.5);
+
+    this.seedButtons.push({ crop, button, label });
+    this.refresh();
   }
 }

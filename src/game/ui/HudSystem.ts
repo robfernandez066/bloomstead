@@ -12,6 +12,7 @@ export class HudSystem {
   private levelText?: Phaser.GameObjects.Text;
   private xpText?: Phaser.GameObjects.Text;
   private selectedSeedText?: Phaser.GameObjects.Text;
+  private inventoryText?: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene, gameState: GameStateSystem) {
     this.scene = scene;
@@ -20,7 +21,7 @@ export class HudSystem {
 
   render(x: number, y: number, width: number): void {
     this.scene.add
-      .rectangle(x, y, width, 86, PANEL_FILL)
+      .rectangle(x, y, width, 126, PANEL_FILL)
       .setOrigin(0, 0)
       .setStrokeStyle(2, PANEL_STROKE);
 
@@ -28,6 +29,7 @@ export class HudSystem {
     this.levelText = this.createText(x + width - 106, y + 12);
     this.xpText = this.createText(x + 14, y + 48);
     this.selectedSeedText = this.createText(x + width - 174, y + 48);
+    this.inventoryText = this.createText(x + 14, y + 86, '16px');
 
     this.refresh();
   }
@@ -40,13 +42,19 @@ export class HudSystem {
     this.levelText?.setText(`Level: ${state.farmLevel}`);
     this.xpText?.setText(`XP: ${state.farmXp}`);
     this.selectedSeedText?.setText(`Seed: ${selectedSeed.name}`);
+    this.inventoryText?.setText(
+      this.gameState
+        .getCrops()
+        .map((crop) => `${crop.name}: ${state.cropInventory[crop.id]}`)
+        .join('  ')
+    );
   }
 
-  private createText(x: number, y: number): Phaser.GameObjects.Text {
+  private createText(x: number, y: number, fontSize = '18px'): Phaser.GameObjects.Text {
     return this.scene.add.text(x, y, '', {
       color: TEXT_COLOR,
       fontFamily: 'Arial, sans-serif',
-      fontSize: '18px',
+      fontSize,
       fontStyle: 'bold'
     });
   }

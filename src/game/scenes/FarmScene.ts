@@ -4,7 +4,7 @@ import { HudSystem } from '../ui/HudSystem';
 import { SeedSelectorSystem } from '../ui/SeedSelectorSystem';
 import { GameStateSystem } from '../systems/GameStateSystem';
 import { GridSystem } from '../systems/GridSystem';
-import { HarvestingSystem } from '../systems/HarvestingSystem';
+import { HarvestingSystem, type HarvestResult } from '../systems/HarvestingSystem';
 import { PlantingSystem } from '../systems/PlantingSystem';
 import { PlotStateSystem } from '../systems/PlotStateSystem';
 
@@ -33,8 +33,24 @@ export class FarmScene extends Phaser.Scene {
     let dragMode: DragMode = 'none';
 
     const hudSystem = new HudSystem(this, gameStateSystem);
+    const seedSelectorSystem = new SeedSelectorSystem(this, gameStateSystem);
+    let gridSystem: GridSystem;
 
-    const gridSystem = new GridSystem(this, {
+    const handleHarvestResult = (harvestResult: HarvestResult): void => {
+      gridSystem.refreshPlotVisuals();
+      hudSystem.refresh();
+      feedbackSystem.showHarvestFeedback(
+        gridSystem.getPlotScreenPosition(harvestResult.plot),
+        harvestResult.crop.name
+      );
+
+      if (harvestResult.xpResult.leveledUp) {
+        seedSelectorSystem.refresh();
+        feedbackSystem.showLevelUp(harvestResult.xpResult.currentLevel, width / 2, height * 0.28);
+      }
+    };
+
+    gridSystem = new GridSystem(this, {
       tileWidth: 56,
       tileHeight: 28,
       originX: width / 2,
@@ -45,12 +61,7 @@ export class FarmScene extends Phaser.Scene {
 
         if (harvestResult !== null) {
           dragMode = 'harvest';
-          gridSystem.refreshPlotVisuals();
-          hudSystem.refresh();
-          feedbackSystem.showHarvestFeedback(
-            gridSystem.getPlotScreenPosition(harvestResult.plot),
-            harvestResult.crop.name
-          );
+          handleHarvestResult(harvestResult);
           return;
         }
 
@@ -68,12 +79,7 @@ export class FarmScene extends Phaser.Scene {
           const harvestResult = harvestingSystem.harvestOver(plot);
 
           if (harvestResult !== null) {
-            gridSystem.refreshPlotVisuals();
-            hudSystem.refresh();
-            feedbackSystem.showHarvestFeedback(
-              gridSystem.getPlotScreenPosition(harvestResult.plot),
-              harvestResult.crop.name
-            );
+            handleHarvestResult(harvestResult);
           }
 
           return;
@@ -105,7 +111,6 @@ export class FarmScene extends Phaser.Scene {
       }
     });
 
-    const seedSelectorSystem = new SeedSelectorSystem(this, gameStateSystem);
     seedSelectorSystem.render({
       x: 18,
       y: height - 104,

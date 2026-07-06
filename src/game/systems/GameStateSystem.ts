@@ -1,4 +1,5 @@
 import { CROPS, MVP_CROPS } from '../data/Crops';
+import { getFarmLevelForXp } from '../data/LevelProgression';
 import type { CropDefinition, CropId } from '../models/CropTypes';
 import type { CropInventory, GameState } from '../models/GameStateTypes';
 
@@ -7,6 +8,12 @@ const STARTING_CROP_INVENTORY: CropInventory = {
   carrot: 0,
   glowberry: 0
 };
+
+export interface FarmXpResult {
+  previousLevel: number;
+  currentLevel: number;
+  leveledUp: boolean;
+}
 
 export class GameStateSystem {
   private readonly state: GameState;
@@ -54,8 +61,17 @@ export class GameStateSystem {
     this.state.cropInventory[cropId] += amount;
   }
 
-  addFarmXp(amount: number): void {
+  addFarmXp(amount: number): FarmXpResult {
+    const previousLevel = this.state.farmLevel;
+
     this.state.farmXp += amount;
+    this.state.farmLevel = getFarmLevelForXp(this.state.farmXp);
+
+    return {
+      previousLevel,
+      currentLevel: this.state.farmLevel,
+      leveledUp: this.state.farmLevel > previousLevel
+    };
   }
 
   selectSeed(cropId: CropId): boolean {
