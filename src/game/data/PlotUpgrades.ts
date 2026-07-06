@@ -16,7 +16,7 @@ export const MVP_PLOT_UPGRADES: PlotUpgradeDefinition[] = [
   {
     id: 'plot-upgrade-3',
     name: 'Field Expansion III',
-    plotsToUnlock: 8,
+    plotsToUnlock: 4,
     coinCost: 500
   }
 ];

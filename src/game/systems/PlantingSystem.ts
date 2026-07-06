@@ -1,6 +1,13 @@
+import type { CropDefinition } from '../models/CropTypes';
 import type { PlotState } from '../models/PlotTypes';
 import type { GameStateSystem } from './GameStateSystem';
 import type { PlotStateSystem } from './PlotStateSystem';
+
+export interface PlantResult {
+  crop: CropDefinition;
+  plot: PlotState;
+  seedCost: number;
+}
 
 export class PlantingSystem {
   private readonly gameState: GameStateSystem;
@@ -12,12 +19,12 @@ export class PlantingSystem {
     this.plotState = plotState;
   }
 
-  beginPaint(plot: PlotState): boolean {
+  beginPaint(plot: PlotState): PlantResult | null {
     this.paintedPlots.clear();
     return this.tryPlantOnce(plot);
   }
 
-  paintOver(plot: PlotState): boolean {
+  paintOver(plot: PlotState): PlantResult | null {
     return this.tryPlantOnce(plot);
   }
 
@@ -25,33 +32,33 @@ export class PlantingSystem {
     this.paintedPlots.clear();
   }
 
-  private tryPlantOnce(plot: PlotState): boolean {
+  private tryPlantOnce(plot: PlotState): PlantResult | null {
     const plotKey = `${plot.row}:${plot.column}`;
 
     if (this.paintedPlots.has(plotKey)) {
-      return false;
+      return null;
     }
 
     this.paintedPlots.add(plotKey);
     return this.tryPlant(plot);
   }
 
-  private tryPlant(plot: PlotState): boolean {
+  private tryPlant(plot: PlotState): PlantResult | null {
     const crop = this.gameState.getSelectedSeed();
 
     if (!plot.unlocked || plot.plantedCropId !== null) {
-      return false;
+      return null;
     }
 
     if (!this.gameState.isCropUnlocked(crop) || !this.gameState.canAfford(crop.seedCost)) {
-      return false;
+      return null;
     }
 
     if (!this.gameState.spendCoins(crop.seedCost)) {
-      return false;
+      return null;
     }
 
     this.plotState.plantCrop(plot, crop);
-    return true;
+    return { crop, plot, seedCost: crop.seedCost };
   }
 }

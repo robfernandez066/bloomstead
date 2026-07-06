@@ -11,7 +11,7 @@ import { GameStateSystem } from '../systems/GameStateSystem';
 import { GridSystem } from '../systems/GridSystem';
 import { HarvestingSystem, type HarvestResult } from '../systems/HarvestingSystem';
 import { OrderSystem } from '../systems/OrderSystem';
-import { PlantingSystem } from '../systems/PlantingSystem';
+import { PlantingSystem, type PlantResult } from '../systems/PlantingSystem';
 import { PlotStateSystem } from '../systems/PlotStateSystem';
 import { UpgradeSystem } from '../systems/UpgradeSystem';
 
@@ -65,6 +65,7 @@ export class FarmScene extends Phaser.Scene {
 
     const handleHarvestResult = (harvestResult: HarvestResult): void => {
       gridSystem.refreshPlotVisuals();
+      gridSystem.playHarvestEffect(harvestResult.plot);
       hudSystem.refresh();
       orderBoardSystem.refresh();
       upgradePanelSystem.refresh();
@@ -77,6 +78,18 @@ export class FarmScene extends Phaser.Scene {
       if (harvestResult.xpResult.leveledUp) {
         handleLevelUp(harvestResult.xpResult.currentLevel);
       }
+    };
+
+    const handlePlantResult = (plantResult: PlantResult): void => {
+      gridSystem.refreshPlotVisuals();
+      gridSystem.playPlantEffect(plantResult.plot);
+      hudSystem.refresh();
+      upgradePanelSystem.refresh();
+      saveGame();
+      feedbackSystem.showPlantingFeedback(
+        gridSystem.getPlotScreenPosition(plantResult.plot),
+        plantResult.seedCost
+      );
     };
 
     gridSystem = new GridSystem(this, {
@@ -95,12 +108,11 @@ export class FarmScene extends Phaser.Scene {
           return;
         }
 
-        if (plantingSystem.beginPaint(plot)) {
+        const plantResult = plantingSystem.beginPaint(plot);
+
+        if (plantResult !== null) {
           dragMode = 'plant';
-          gridSystem.refreshPlotVisuals();
-          hudSystem.refresh();
-          upgradePanelSystem.refresh();
-          saveGame();
+          handlePlantResult(plantResult);
           return;
         }
 
@@ -117,11 +129,12 @@ export class FarmScene extends Phaser.Scene {
           return;
         }
 
-        if (dragMode === 'plant' && plantingSystem.paintOver(plot)) {
-          gridSystem.refreshPlotVisuals();
-          hudSystem.refresh();
-          upgradePanelSystem.refresh();
-          saveGame();
+        if (dragMode === 'plant') {
+          const plantResult = plantingSystem.paintOver(plot);
+
+          if (plantResult !== null) {
+            handlePlantResult(plantResult);
+          }
         }
       }
     });
@@ -148,6 +161,9 @@ export class FarmScene extends Phaser.Scene {
         }
 
         gridSystem.refreshPlotVisuals();
+        for (const plot of result.plots) {
+          gridSystem.playPlotUnlockEffect(plot);
+        }
         hudSystem.refresh();
         upgradePanelSystem.refresh();
         saveGame();
@@ -174,6 +190,12 @@ export class FarmScene extends Phaser.Scene {
         upgradePanelSystem.refresh();
         saveGame();
         feedbackSystem.showOrderComplete(width / 2, FARM_LAYOUT.orderBoard.y - 10);
+        feedbackSystem.showOrderRewards(
+          width / 2,
+          FARM_LAYOUT.orderBoard.y + 22,
+          result.order.coinReward,
+          result.order.xpReward
+        );
 
         if (result.xpResult.leveledUp) {
           handleLevelUp(result.xpResult.currentLevel);
@@ -191,10 +213,19 @@ export class FarmScene extends Phaser.Scene {
       delay: 250,
       loop: true,
       callback: () => {
+        const previouslyGrowingPlots = plotStateSystem
+          .getPlots()
+          .filter((plot) => plot.plantedCropId !== null && !plot.ready);
         const readyStatesChanged = plotStateSystem.refreshReadyStates();
         gridSystem.refreshPlotVisuals();
 
         if (readyStatesChanged) {
+          for (const plot of previouslyGrowingPlots) {
+            if (plot.ready) {
+              gridSystem.playReadyEffect(plot);
+            }
+          }
+
           saveGame();
         }
       }

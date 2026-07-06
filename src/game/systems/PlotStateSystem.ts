@@ -20,8 +20,8 @@ export class PlotStateSystem {
     return this.plots;
   }
 
-  unlockPlots(positions: GridPosition[]): number {
-    let unlockedCount = 0;
+  unlockPlots(positions: GridPosition[]): PlotState[] {
+    const unlockedPlots: PlotState[] = [];
 
     for (const position of positions) {
       const plot = this.findPlot(position);
@@ -31,10 +31,10 @@ export class PlotStateSystem {
       }
 
       plot.unlocked = true;
-      unlockedCount += 1;
+      unlockedPlots.push(plot);
     }
 
-    return unlockedCount;
+    return unlockedPlots;
   }
 
   plantCrop(plot: PlotState, crop: CropDefinition, plantedAt = Date.now()): void {

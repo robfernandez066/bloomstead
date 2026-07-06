@@ -13,39 +13,17 @@ export class FeedbackSystem {
   }
 
   showHarvestFeedback(position: IsometricPoint, cropName: string): void {
-    const text = this.scene.add
-      .text(position.x, position.y - 34, `+1 ${cropName}`, {
-        color: FLOAT_TEXT_COLOR,
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '16px',
-        fontStyle: 'bold',
-        stroke: FLOAT_TEXT_STROKE,
-        strokeThickness: 3
-      })
-      .setOrigin(0.5)
-      .setDepth(100);
+    this.showFloatingText(`+1 ${cropName}`, position.x, position.y - 34, 800, 28);
+    this.showPop(position.x, position.y - 8, POP_FILL);
+  }
 
-    const pop = this.scene.add
-      .circle(position.x, position.y - 8, 4, POP_FILL, 0.9)
-      .setDepth(99);
+  showPlantingFeedback(position: IsometricPoint, seedCost: number): void {
+    this.showFloatingText(`-${seedCost}c`, position.x, position.y - 24, 620, 18, '#fff0a8');
+  }
 
-    this.scene.tweens.add({
-      targets: text,
-      y: text.y - 28,
-      alpha: 0,
-      duration: 800,
-      ease: 'Sine.easeOut',
-      onComplete: () => text.destroy()
-    });
-
-    this.scene.tweens.add({
-      targets: pop,
-      scale: 3,
-      alpha: 0,
-      duration: 320,
-      ease: 'Sine.easeOut',
-      onComplete: () => pop.destroy()
-    });
+  showOrderRewards(x: number, y: number, coins: number, xp: number): void {
+    this.showFloatingText(`+${coins}c  +${xp} XP`, x, y, 900, 24, '#fff4a8');
+    this.showRewardBurst(x, y + 8);
   }
 
   showLevelUp(level: number, x: number, y: number): void {
@@ -60,6 +38,8 @@ export class FeedbackSystem {
       })
       .setOrigin(0.5)
       .setDepth(120);
+
+    text.setScale(0.72);
 
     this.scene.tweens.add({
       targets: text,
@@ -142,5 +122,66 @@ export class FeedbackSystem {
       delay: 1200,
       onComplete: () => text.destroy()
     });
+  }
+
+  private showFloatingText(
+    message: string,
+    x: number,
+    y: number,
+    duration: number,
+    rise: number,
+    color = FLOAT_TEXT_COLOR
+  ): void {
+    const text = this.scene.add
+      .text(x, y, message, {
+        color,
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '16px',
+        fontStyle: 'bold',
+        stroke: FLOAT_TEXT_STROKE,
+        strokeThickness: 3,
+        align: 'center'
+      })
+      .setOrigin(0.5)
+      .setDepth(120);
+
+    this.scene.tweens.add({
+      targets: text,
+      y: y - rise,
+      alpha: 0,
+      duration,
+      ease: 'Sine.easeOut',
+      onComplete: () => text.destroy()
+    });
+  }
+
+  private showPop(x: number, y: number, fill: number): void {
+    const pop = this.scene.add.circle(x, y, 4, fill, 0.9).setDepth(99);
+
+    this.scene.tweens.add({
+      targets: pop,
+      scale: 3,
+      alpha: 0,
+      duration: 320,
+      ease: 'Sine.easeOut',
+      onComplete: () => pop.destroy()
+    });
+  }
+
+  private showRewardBurst(x: number, y: number): void {
+    for (let index = 0; index < 8; index += 1) {
+      const angle = Phaser.Math.DegToRad(index * 45);
+      const particle = this.scene.add.circle(x, y, 3, POP_FILL, 0.9).setDepth(110);
+
+      this.scene.tweens.add({
+        targets: particle,
+        x: x + Math.cos(angle) * 26,
+        y: y + Math.sin(angle) * 18,
+        alpha: 0,
+        duration: 420,
+        ease: 'Sine.easeOut',
+        onComplete: () => particle.destroy()
+      });
+    }
   }
 }

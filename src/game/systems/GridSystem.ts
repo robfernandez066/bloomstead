@@ -84,6 +84,80 @@ export class GridSystem {
     );
   }
 
+  playPlantEffect(plot: PlotState): void {
+    const objects = this.renderObjects.get(this.getPlotKey(plot));
+
+    if (objects === undefined) {
+      return;
+    }
+
+    objects.cropVisual.setScale(0.72);
+    this.scene.tweens.add({
+      targets: objects.cropVisual,
+      scale: 1,
+      duration: 180,
+      ease: 'Back.easeOut'
+    });
+  }
+
+  playReadyEffect(plot: PlotState): void {
+    const objects = this.renderObjects.get(this.getPlotKey(plot));
+
+    if (objects === undefined) {
+      return;
+    }
+
+    const anchor = this.getPlotScreenPosition(plot);
+    const pulse = this.scene.add
+      .ellipse(anchor.x, anchor.y, this.config.tileWidth * 0.42, this.config.tileHeight * 0.5, 0xffe27a, 0.45)
+      .setDepth(90);
+
+    this.scene.tweens.add({
+      targets: pulse,
+      scale: 1.8,
+      alpha: 0,
+      duration: 520,
+      ease: 'Sine.easeOut',
+      onComplete: () => pulse.destroy()
+    });
+  }
+
+  playHarvestEffect(plot: PlotState): void {
+    const anchor = this.getPlotScreenPosition(plot);
+
+    for (let index = 0; index < 5; index += 1) {
+      const angle = Phaser.Math.DegToRad(Phaser.Math.Between(210, 330));
+      const distance = Phaser.Math.Between(8, 16);
+      const particle = this.scene.add.circle(anchor.x, anchor.y, 2, READY_FILL, 0.9).setDepth(100);
+
+      this.scene.tweens.add({
+        targets: particle,
+        x: anchor.x + Math.cos(angle) * distance,
+        y: anchor.y + Math.sin(angle) * distance,
+        alpha: 0,
+        duration: 360,
+        ease: 'Sine.easeOut',
+        onComplete: () => particle.destroy()
+      });
+    }
+  }
+
+  playPlotUnlockEffect(plot: PlotState): void {
+    const objects = this.renderObjects.get(this.getPlotKey(plot));
+
+    if (objects === undefined) {
+      return;
+    }
+
+    objects.tile.setScale(0.82);
+    this.scene.tweens.add({
+      targets: objects.tile,
+      scale: 1,
+      duration: 240,
+      ease: 'Back.easeOut'
+    });
+  }
+
   private renderPlot(plot: PlotState): void {
     const { tileWidth, tileHeight } = this.config;
     const position = { row: plot.row, column: plot.column };

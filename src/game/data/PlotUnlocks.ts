@@ -29,13 +29,9 @@ export const PLOT_UPGRADE_UNLOCK_ORDER: GridPosition[][] = [
     { row: 0, column: 4 }
   ],
   [
-    { row: 1, column: 0 },
-    { row: 2, column: 0 },
-    { row: 3, column: 0 },
-    { row: 4, column: 0 },
-    { row: 1, column: 5 },
-    { row: 2, column: 5 },
-    { row: 3, column: 5 },
-    { row: 4, column: 5 }
+    { row: 5, column: 1 },
+    { row: 5, column: 2 },
+    { row: 5, column: 3 },
+    { row: 5, column: 4 }
   ]
 ];
