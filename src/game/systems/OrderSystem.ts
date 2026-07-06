@@ -16,7 +16,7 @@ export class OrderSystem {
   constructor(gameState: GameStateSystem, savedOrderState?: SavedOrderState) {
     this.gameState = gameState;
     this.activeOrders = this.createInitialActiveOrders(savedOrderState);
-    this.nextOrderIndex = savedOrderState?.nextOrderIndex ?? 3;
+    this.nextOrderIndex = this.createInitialNextOrderIndex(savedOrderState);
   }
 
   getActiveOrders(): OrderDefinition[] {
@@ -80,6 +80,16 @@ export class OrderSystem {
       return MVP_ORDERS.slice(0, 3);
     }
 
+    if (!Array.isArray(savedOrderState.activeOrderIds)) {
+      return MVP_ORDERS.slice(0, 3);
+    }
+
+    const uniqueOrderIds = new Set(savedOrderState.activeOrderIds);
+
+    if (uniqueOrderIds.size !== 3) {
+      return MVP_ORDERS.slice(0, 3);
+    }
+
     const savedOrders = savedOrderState.activeOrderIds
       .map((orderId) => MVP_ORDERS.find((order) => order.id === orderId))
       .filter((order): order is OrderDefinition => order !== undefined);
@@ -89,5 +99,17 @@ export class OrderSystem {
     }
 
     return savedOrders;
+  }
+
+  private createInitialNextOrderIndex(savedOrderState?: SavedOrderState): number {
+    if (
+      savedOrderState === undefined ||
+      !Number.isInteger(savedOrderState.nextOrderIndex) ||
+      savedOrderState.nextOrderIndex < 0
+    ) {
+      return 3;
+    }
+
+    return savedOrderState.nextOrderIndex % MVP_ORDERS.length;
   }
 }

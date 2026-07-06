@@ -73,36 +73,37 @@ export class SaveSystem {
       data: {
         ...saveData,
         plots: saveData.plots.map((plot) => {
-        if (
-          plot.plantedCropId === null ||
-          plot.growDurationMs === null ||
-          plot.elapsedGrowMs === null
-        ) {
+          if (plot.plantedCropId === null || plot.growDurationMs === null) {
+            return {
+              ...plot,
+              plantedAt: null,
+              growDurationMs: plot.growDurationMs,
+              ready: false
+            };
+          }
+
+          const savedElapsedGrowMs = typeof plot.elapsedGrowMs === 'number'
+            ? plot.elapsedGrowMs
+            : plot.ready
+              ? plot.growDurationMs
+              : 0;
+          const wasReady = savedElapsedGrowMs >= plot.growDurationMs || plot.ready;
+          const elapsedGrowMs = Math.min(
+            savedElapsedGrowMs + offlineElapsedMs,
+            plot.growDurationMs
+          );
+          const ready = elapsedGrowMs >= plot.growDurationMs;
+
+          if (!wasReady && ready && offlineElapsedMs > 0) {
+            cropsFinishedWhileAway += 1;
+          }
+
           return {
             ...plot,
-            plantedAt: null,
-            growDurationMs: plot.growDurationMs,
-            ready: false
+            plantedAt: now - elapsedGrowMs,
+            ready
           };
-        }
-
-        const wasReady = plot.elapsedGrowMs >= plot.growDurationMs || plot.ready;
-        const elapsedGrowMs = Math.min(
-          plot.elapsedGrowMs + offlineElapsedMs,
-          plot.growDurationMs
-        );
-        const ready = elapsedGrowMs >= plot.growDurationMs;
-
-        if (!wasReady && ready && offlineElapsedMs > 0) {
-          cropsFinishedWhileAway += 1;
-        }
-
-        return {
-          ...plot,
-          plantedAt: now - elapsedGrowMs,
-          ready
-        };
-      })
+        })
       },
       cropsFinishedWhileAway
     };
