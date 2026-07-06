@@ -1,10 +1,12 @@
 import Phaser from 'phaser';
 import { FeedbackSystem } from '../ui/FeedbackSystem';
 import { HudSystem } from '../ui/HudSystem';
+import { OrderBoardSystem } from '../ui/OrderBoardSystem';
 import { SeedSelectorSystem } from '../ui/SeedSelectorSystem';
 import { GameStateSystem } from '../systems/GameStateSystem';
 import { GridSystem } from '../systems/GridSystem';
 import { HarvestingSystem, type HarvestResult } from '../systems/HarvestingSystem';
+import { OrderSystem } from '../systems/OrderSystem';
 import { PlantingSystem } from '../systems/PlantingSystem';
 import { PlotStateSystem } from '../systems/PlotStateSystem';
 
@@ -29,24 +31,31 @@ export class FarmScene extends Phaser.Scene {
     });
     const plantingSystem = new PlantingSystem(gameStateSystem, plotStateSystem);
     const harvestingSystem = new HarvestingSystem(gameStateSystem, plotStateSystem);
+    const orderSystem = new OrderSystem(gameStateSystem);
     const feedbackSystem = new FeedbackSystem(this);
     let dragMode: DragMode = 'none';
 
     const hudSystem = new HudSystem(this, gameStateSystem);
     const seedSelectorSystem = new SeedSelectorSystem(this, gameStateSystem);
+    const orderBoardSystem = new OrderBoardSystem(this, orderSystem);
     let gridSystem: GridSystem;
+
+    const handleLevelUp = (level: number): void => {
+      seedSelectorSystem.refresh();
+      feedbackSystem.showLevelUp(level, width / 2, height * 0.28);
+    };
 
     const handleHarvestResult = (harvestResult: HarvestResult): void => {
       gridSystem.refreshPlotVisuals();
       hudSystem.refresh();
+      orderBoardSystem.refresh();
       feedbackSystem.showHarvestFeedback(
         gridSystem.getPlotScreenPosition(harvestResult.plot),
         harvestResult.crop.name
       );
 
       if (harvestResult.xpResult.leveledUp) {
-        seedSelectorSystem.refresh();
-        feedbackSystem.showLevelUp(harvestResult.xpResult.currentLevel, width / 2, height * 0.28);
+        handleLevelUp(harvestResult.xpResult.currentLevel);
       }
     };
 
@@ -95,6 +104,29 @@ export class FarmScene extends Phaser.Scene {
     gridSystem.render();
 
     hudSystem.render(18, 18, width - 36);
+
+    orderBoardSystem.render({
+      x: 18,
+      y: 508,
+      width: width - 36,
+      orderHeight: 58,
+      gap: 6,
+      onOrderComplete: (order) => {
+        const result = orderSystem.completeOrder(order.id);
+
+        if (result === null) {
+          return;
+        }
+
+        hudSystem.refresh();
+        orderBoardSystem.refresh();
+        feedbackSystem.showOrderComplete(width / 2, 486);
+
+        if (result.xpResult.leveledUp) {
+          handleLevelUp(result.xpResult.currentLevel);
+        }
+      }
+    });
 
     this.input.on('pointerup', () => {
       plantingSystem.endPaint();

@@ -57,8 +57,32 @@ export class GameStateSystem {
     return true;
   }
 
+  addCoins(amount: number): void {
+    this.state.coins += amount;
+  }
+
   addCropToInventory(cropId: CropId, amount: number): void {
     this.state.cropInventory[cropId] += amount;
+  }
+
+  hasCropInventory(requirements: Partial<CropInventory>): boolean {
+    return Object.entries(requirements).every(([cropId, count]) => {
+      return count === undefined || this.state.cropInventory[cropId as CropId] >= count;
+    });
+  }
+
+  removeCropInventory(requirements: Partial<CropInventory>): boolean {
+    if (!this.hasCropInventory(requirements)) {
+      return false;
+    }
+
+    Object.entries(requirements).forEach(([cropId, count]) => {
+      if (count !== undefined) {
+        this.state.cropInventory[cropId as CropId] -= count;
+      }
+    });
+
+    return true;
   }
 
   addFarmXp(amount: number): FarmXpResult {
