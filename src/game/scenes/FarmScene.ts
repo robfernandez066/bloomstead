@@ -3,12 +3,14 @@ import { FeedbackSystem } from '../ui/FeedbackSystem';
 import { HudSystem } from '../ui/HudSystem';
 import { OrderBoardSystem } from '../ui/OrderBoardSystem';
 import { SeedSelectorSystem } from '../ui/SeedSelectorSystem';
+import { UpgradePanelSystem } from '../ui/UpgradePanelSystem';
 import { GameStateSystem } from '../systems/GameStateSystem';
 import { GridSystem } from '../systems/GridSystem';
 import { HarvestingSystem, type HarvestResult } from '../systems/HarvestingSystem';
 import { OrderSystem } from '../systems/OrderSystem';
 import { PlantingSystem } from '../systems/PlantingSystem';
 import { PlotStateSystem } from '../systems/PlotStateSystem';
+import { UpgradeSystem } from '../systems/UpgradeSystem';
 
 type DragMode = 'none' | 'plant' | 'harvest';
 
@@ -32,12 +34,14 @@ export class FarmScene extends Phaser.Scene {
     const plantingSystem = new PlantingSystem(gameStateSystem, plotStateSystem);
     const harvestingSystem = new HarvestingSystem(gameStateSystem, plotStateSystem);
     const orderSystem = new OrderSystem(gameStateSystem);
+    const upgradeSystem = new UpgradeSystem(gameStateSystem, plotStateSystem);
     const feedbackSystem = new FeedbackSystem(this);
     let dragMode: DragMode = 'none';
 
     const hudSystem = new HudSystem(this, gameStateSystem);
     const seedSelectorSystem = new SeedSelectorSystem(this, gameStateSystem);
     const orderBoardSystem = new OrderBoardSystem(this, orderSystem);
+    const upgradePanelSystem = new UpgradePanelSystem(this, upgradeSystem);
     let gridSystem: GridSystem;
 
     const handleLevelUp = (level: number): void => {
@@ -49,6 +53,7 @@ export class FarmScene extends Phaser.Scene {
       gridSystem.refreshPlotVisuals();
       hudSystem.refresh();
       orderBoardSystem.refresh();
+      upgradePanelSystem.refresh();
       feedbackSystem.showHarvestFeedback(
         gridSystem.getPlotScreenPosition(harvestResult.plot),
         harvestResult.crop.name
@@ -78,6 +83,7 @@ export class FarmScene extends Phaser.Scene {
           dragMode = 'plant';
           gridSystem.refreshPlotVisuals();
           hudSystem.refresh();
+          upgradePanelSystem.refresh();
           return;
         }
 
@@ -97,6 +103,7 @@ export class FarmScene extends Phaser.Scene {
         if (dragMode === 'plant' && plantingSystem.paintOver(plot)) {
           gridSystem.refreshPlotVisuals();
           hudSystem.refresh();
+          upgradePanelSystem.refresh();
         }
       }
     });
@@ -104,6 +111,25 @@ export class FarmScene extends Phaser.Scene {
     gridSystem.render();
 
     hudSystem.render(18, 18, width - 36);
+
+    upgradePanelSystem.render({
+      x: 18,
+      y: 454,
+      width: width - 36,
+      height: 46,
+      onPurchase: () => {
+        const result = upgradeSystem.purchaseNextPlotUpgrade();
+
+        if (result === null) {
+          return;
+        }
+
+        gridSystem.refreshPlotVisuals();
+        hudSystem.refresh();
+        upgradePanelSystem.refresh();
+        feedbackSystem.showPlotsUnlocked(width / 2, 438);
+      }
+    });
 
     orderBoardSystem.render({
       x: 18,
@@ -120,6 +146,7 @@ export class FarmScene extends Phaser.Scene {
 
         hudSystem.refresh();
         orderBoardSystem.refresh();
+        upgradePanelSystem.refresh();
         feedbackSystem.showOrderComplete(width / 2, 486);
 
         if (result.xpResult.leveledUp) {

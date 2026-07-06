@@ -94,4 +94,27 @@ export class FeedbackSystem {
       onComplete: () => text.destroy()
     });
   }
+
+  showPlotsUnlocked(x: number, y: number): void {
+    const text = this.scene.add
+      .text(x, y, 'Plots Unlocked!', {
+        color: '#ffffff',
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '24px',
+        fontStyle: 'bold',
+        stroke: '#4f6b35',
+        strokeThickness: 4
+      })
+      .setOrigin(0.5)
+      .setDepth(115);
+
+    this.scene.tweens.add({
+      targets: text,
+      y: y - 28,
+      alpha: 0,
+      duration: 900,
+      ease: 'Sine.easeOut',
+      onComplete: () => text.destroy()
+    });
+  }
 }

@@ -118,6 +118,7 @@ export class GridSystem {
     }
 
     objects.tile.setFillStyle(this.getPlotFill(plot));
+    objects.tile.setStrokeStyle(2, plot.unlocked ? UNLOCKED_STROKE : LOCKED_STROKE);
 
     if (plot.plantedCropId === null) {
       objects.marker.setVisible(false);

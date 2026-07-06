@@ -18,6 +18,25 @@ export class PlotStateSystem {
     return this.plots;
   }
 
+  unlockNextLockedPlots(count: number): number {
+    let unlockedCount = 0;
+
+    for (const plot of this.plots) {
+      if (plot.unlocked) {
+        continue;
+      }
+
+      plot.unlocked = true;
+      unlockedCount += 1;
+
+      if (unlockedCount >= count) {
+        break;
+      }
+    }
+
+    return unlockedCount;
+  }
+
   plantCrop(plot: PlotState, crop: CropDefinition, plantedAt = Date.now()): void {
     plot.plantedCropId = crop.id;
     plot.plantedAt = plantedAt;
