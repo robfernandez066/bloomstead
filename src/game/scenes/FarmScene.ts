@@ -1,4 +1,7 @@
 import Phaser from 'phaser';
+import { HudSystem } from '../ui/HudSystem';
+import { SeedSelectorSystem } from '../ui/SeedSelectorSystem';
+import { GameStateSystem } from '../systems/GameStateSystem';
 import { GridSystem } from '../systems/GridSystem';
 import { PlotStateSystem } from '../systems/PlotStateSystem';
 
@@ -13,6 +16,7 @@ export class FarmScene extends Phaser.Scene {
     this.add.rectangle(width / 2, height / 2, width, height, 0x8fcf8a);
     this.add.rectangle(width / 2, height * 0.72, width * 0.82, height * 0.34, 0x6aa45f);
 
+    const gameStateSystem = new GameStateSystem();
     const plotStateSystem = new PlotStateSystem({
       rows: 6,
       columns: 6,
@@ -28,11 +32,24 @@ export class FarmScene extends Phaser.Scene {
 
     gridSystem.render();
 
+    const hudSystem = new HudSystem(this, gameStateSystem);
+    hudSystem.render(18, 18, width - 36);
+
+    const seedSelectorSystem = new SeedSelectorSystem(this, gameStateSystem);
+    seedSelectorSystem.render({
+      x: 18,
+      y: height - 104,
+      buttonWidth: 108,
+      buttonHeight: 64,
+      gap: 15,
+      onSeedSelected: () => hudSystem.refresh()
+    });
+
     this.add
-      .text(width / 2, height * 0.18, 'Bloomstead Farm Scene Loaded', {
+      .text(width / 2, height * 0.2, 'Bloomstead Farm Scene Loaded', {
         color: '#243524',
         fontFamily: 'Arial, sans-serif',
-        fontSize: '24px',
+        fontSize: '20px',
         fontStyle: 'bold',
         align: 'center',
         wordWrap: { width: width * 0.82 }
