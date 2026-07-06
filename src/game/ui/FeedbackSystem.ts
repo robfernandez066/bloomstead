@@ -21,6 +21,10 @@ export class FeedbackSystem {
     this.showFloatingText(`-${seedCost}c`, position.x, position.y - 24, 620, 18, '#fff0a8');
   }
 
+  showCropSold(x: number, y: number, cropName: string, coins: number): void {
+    this.showFloatingText(`Sold ${cropName} +${coins}c`, x, y, 760, 22, '#fff4a8');
+  }
+
   showOrderRewards(x: number, y: number, coins: number, xp: number): void {
     this.showFloatingText(`+${coins}c  +${xp} XP`, x, y, 900, 24, '#fff4a8');
     this.showRewardBurst(x, y + 8);

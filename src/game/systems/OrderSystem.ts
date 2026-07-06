@@ -1,4 +1,5 @@
 import { MVP_ORDERS } from '../data/Orders';
+import { CROPS } from '../data/Crops';
 import type { OrderDefinition, OrderId } from '../models/OrderTypes';
 import type { SavedOrderState } from '../save/SaveTypes';
 import type { FarmXpResult, GameStateSystem } from './GameStateSystem';
@@ -21,6 +22,23 @@ export class OrderSystem {
 
   getActiveOrders(): OrderDefinition[] {
     return this.activeOrders;
+  }
+
+  refreshActiveOrdersForCurrentLevel(): void {
+    const eligibleOrderIds = new Set(this.getEligibleOrders().map((order) => order.id));
+    const activeOrderIds = new Set<OrderId>();
+
+    for (let index = this.activeOrders.length - 1; index >= 0; index -= 1) {
+      const orderId = this.activeOrders[index].id;
+
+      if (!eligibleOrderIds.has(orderId) || activeOrderIds.has(orderId)) {
+        this.activeOrders.splice(index, 1);
+      } else {
+        activeOrderIds.add(orderId);
+      }
+    }
+
+    this.fillActiveOrders();
   }
 
   getSavedOrderState(): SavedOrderState {
@@ -56,10 +74,23 @@ export class OrderSystem {
       return;
     }
 
-    this.activeOrders[activeIndex] = this.getNextInactiveOrder();
+    this.activeOrders.splice(activeIndex, 1);
+    const replacementOrder = this.getNextInactiveOrder();
+
+    if (replacementOrder !== null) {
+      this.activeOrders.splice(activeIndex, 0, replacementOrder);
+    }
+
+    this.fillActiveOrders();
   }
 
-  private getNextInactiveOrder(): OrderDefinition {
+  private getNextInactiveOrder(): OrderDefinition | null {
+    const eligibleOrders = this.getEligibleOrders();
+
+    if (eligibleOrders.length === 0) {
+      return null;
+    }
+
     const activeIds = new Set(this.activeOrders.map((order) => order.id));
 
     for (let attempts = 0; attempts < MVP_ORDERS.length; attempts += 1) {
@@ -67,38 +98,42 @@ export class OrderSystem {
 
       this.nextOrderIndex = (this.nextOrderIndex + 1) % MVP_ORDERS.length;
 
-      if (!activeIds.has(order.id)) {
+      if (this.isOrderEligible(order) && !activeIds.has(order.id)) {
         return order;
       }
     }
 
-    return MVP_ORDERS[this.nextOrderIndex];
+    return eligibleOrders[0];
   }
 
   private createInitialActiveOrders(savedOrderState?: SavedOrderState): OrderDefinition[] {
     if (savedOrderState === undefined) {
-      return MVP_ORDERS.slice(0, 3);
+      return this.getEligibleOrders().slice(0, 3);
     }
 
     if (!Array.isArray(savedOrderState.activeOrderIds)) {
-      return MVP_ORDERS.slice(0, 3);
+      return this.getEligibleOrders().slice(0, 3);
     }
 
-    const uniqueOrderIds = new Set(savedOrderState.activeOrderIds);
+    const seenOrderIds = new Set<OrderId>();
+    const savedOrders: OrderDefinition[] = [];
 
-    if (uniqueOrderIds.size !== 3) {
-      return MVP_ORDERS.slice(0, 3);
+    for (const orderId of savedOrderState.activeOrderIds) {
+      const order = MVP_ORDERS.find((candidateOrder) => candidateOrder.id === orderId);
+
+      if (order === undefined || seenOrderIds.has(order.id) || !this.isOrderEligible(order)) {
+        continue;
+      }
+
+      savedOrders.push(order);
+      seenOrderIds.add(order.id);
     }
 
-    const savedOrders = savedOrderState.activeOrderIds
-      .map((orderId) => MVP_ORDERS.find((order) => order.id === orderId))
-      .filter((order): order is OrderDefinition => order !== undefined);
-
-    if (savedOrders.length !== 3) {
-      return MVP_ORDERS.slice(0, 3);
+    if (savedOrders.length === 0) {
+      return this.getEligibleOrders().slice(0, 3);
     }
 
-    return savedOrders;
+    return this.fillOrders(savedOrders);
   }
 
   private createInitialNextOrderIndex(savedOrderState?: SavedOrderState): number {
@@ -111,5 +146,36 @@ export class OrderSystem {
     }
 
     return savedOrderState.nextOrderIndex % MVP_ORDERS.length;
+  }
+
+  private fillActiveOrders(): void {
+    this.fillOrders(this.activeOrders);
+  }
+
+  private fillOrders(orders: OrderDefinition[]): OrderDefinition[] {
+    const activeIds = new Set(orders.map((order) => order.id));
+
+    for (const order of this.getEligibleOrders()) {
+      if (orders.length >= 3) {
+        break;
+      }
+
+      if (!activeIds.has(order.id)) {
+        orders.push(order);
+        activeIds.add(order.id);
+      }
+    }
+
+    return orders;
+  }
+
+  private getEligibleOrders(): OrderDefinition[] {
+    return MVP_ORDERS.filter((order) => this.isOrderEligible(order));
+  }
+
+  private isOrderEligible(order: OrderDefinition): boolean {
+    return Object.keys(order.requirements).every((cropId) => {
+      return this.gameState.isCropUnlocked(CROPS[cropId as keyof typeof CROPS]);
+    });
   }
 }

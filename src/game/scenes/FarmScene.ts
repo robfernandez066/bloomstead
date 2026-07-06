@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { SaveSystem } from '../save/SaveSystem';
+import { CropSellPanelSystem } from '../ui/CropSellPanelSystem';
 import { DevSaveControlsSystem } from '../ui/DevSaveControlsSystem';
 import { FeedbackSystem } from '../ui/FeedbackSystem';
 import { HudSystem } from '../ui/HudSystem';
@@ -8,6 +9,7 @@ import { OrderBoardSystem } from '../ui/OrderBoardSystem';
 import { SeedSelectorSystem } from '../ui/SeedSelectorSystem';
 import { TutorialPanelSystem } from '../ui/TutorialPanelSystem';
 import { UpgradePanelSystem } from '../ui/UpgradePanelSystem';
+import { CropSellingSystem } from '../systems/CropSellingSystem';
 import { GameStateSystem } from '../systems/GameStateSystem';
 import { GridSystem } from '../systems/GridSystem';
 import { HarvestingSystem, type HarvestResult } from '../systems/HarvestingSystem';
@@ -46,6 +48,7 @@ export class FarmScene extends Phaser.Scene {
       plotStateSystem,
       savedGameData?.purchasedPlotUpgradeCount
     );
+    const cropSellingSystem = new CropSellingSystem(gameStateSystem);
     const tutorialSystem = new TutorialSystem(savedGameData?.tutorialState);
     const feedbackSystem = new FeedbackSystem(this);
     let dragMode: DragMode = 'none';
@@ -61,6 +64,11 @@ export class FarmScene extends Phaser.Scene {
     };
 
     const hudSystem = new HudSystem(this, gameStateSystem);
+    const cropSellPanelSystem = new CropSellPanelSystem(
+      this,
+      gameStateSystem,
+      cropSellingSystem
+    );
     const seedSelectorSystem = new SeedSelectorSystem(this, gameStateSystem);
     const orderBoardSystem = new OrderBoardSystem(this, orderSystem);
     const upgradePanelSystem = new UpgradePanelSystem(this, upgradeSystem);
@@ -83,6 +91,8 @@ export class FarmScene extends Phaser.Scene {
     };
 
     const handleLevelUp = (level: number): void => {
+      orderSystem.refreshActiveOrdersForCurrentLevel();
+      orderBoardSystem.refresh();
       seedSelectorSystem.refresh();
       feedbackSystem.showLevelUp(level, width / 2, height * 0.28);
     };
@@ -93,6 +103,7 @@ export class FarmScene extends Phaser.Scene {
       gridSystem.refreshPlotVisuals();
       gridSystem.playHarvestEffect(harvestResult.plot);
       hudSystem.refresh();
+      cropSellPanelSystem.refresh();
       orderBoardSystem.refresh();
       upgradePanelSystem.refresh();
       refreshTutorialIfAdvanced(tutorialAdvanced);
@@ -178,6 +189,33 @@ export class FarmScene extends Phaser.Scene {
       FARM_LAYOUT.hud.height
     );
 
+    cropSellPanelSystem.render({
+      x: FARM_LAYOUT.cropSellPanel.x,
+      y: FARM_LAYOUT.cropSellPanel.y,
+      buttonWidth: FARM_LAYOUT.cropSellPanel.buttonWidth,
+      buttonHeight: FARM_LAYOUT.cropSellPanel.buttonHeight,
+      gap: FARM_LAYOUT.cropSellPanel.gap,
+      onSellCrop: (crop) => {
+        const result = cropSellingSystem.sellCrop(crop.id);
+
+        if (result === null) {
+          return;
+        }
+
+        hudSystem.refresh();
+        cropSellPanelSystem.refresh();
+        orderBoardSystem.refresh();
+        upgradePanelSystem.refresh();
+        saveGame();
+        feedbackSystem.showCropSold(
+          width / 2,
+          FARM_LAYOUT.hud.y + FARM_LAYOUT.hud.height - 8,
+          result.crop.name,
+          result.coinValue
+        );
+      }
+    });
+
     upgradePanelSystem.render({
       x: FARM_LAYOUT.plotUpgradePanel.x,
       y: FARM_LAYOUT.plotUpgradePanel.y,
@@ -221,6 +259,7 @@ export class FarmScene extends Phaser.Scene {
         }
 
         hudSystem.refresh();
+        cropSellPanelSystem.refresh();
         orderBoardSystem.refresh();
         upgradePanelSystem.refresh();
         refreshTutorialIfAdvanced(tutorialSystem.recordOrderCompleted());

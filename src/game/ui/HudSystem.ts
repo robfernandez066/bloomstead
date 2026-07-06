@@ -29,7 +29,7 @@ export class HudSystem {
     this.levelText = this.createText(x + width - 106, y + 10);
     this.xpText = this.createText(x + 14, y + 40);
     this.selectedSeedText = this.createText(x + width - 174, y + 40);
-    this.inventoryText = this.createText(x + 14, y + 74, '15px');
+    this.inventoryText = this.createText(x + 14, y + 78, '14px');
 
     this.refresh();
   }
@@ -43,10 +43,10 @@ export class HudSystem {
     this.xpText?.setText(`XP: ${state.farmXp}`);
     this.selectedSeedText?.setText(`Seed: ${selectedSeed.name}`);
     this.inventoryText?.setText(
-      this.gameState
+      `Inv  ${this.gameState
         .getCrops()
-        .map((crop) => `${crop.name}: ${state.cropInventory[crop.id]}`)
-        .join('  ')
+        .map((crop) => `${crop.name[0]}:${state.cropInventory[crop.id]}`)
+        .join(' ')}`
     );
   }
 
