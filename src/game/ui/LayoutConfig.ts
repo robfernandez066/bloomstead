@@ -6,38 +6,43 @@ export const FARM_LAYOUT = {
     x: 18,
     y: 18,
     width: 354,
-    height: 126
+    height: 106
   },
   devControls: {
-    x: 18,
-    y: 152,
-    width: 354,
-    height: 28
+    x: 286,
+    y: 132,
+    width: 86,
+    height: 24
   },
   farmGrid: {
-    originX: 195,
-    originY: 244,
-    tileWidth: 56,
-    tileHeight: 28
+    x: 18,
+    y: 164,
+    width: 354,
+    height: 232,
+    tileWidth: 54,
+    tileHeight: 27,
+    markerAnchorOffsetY: 0,
+    debugAnchors: false
   },
   plotUpgradePanel: {
     x: 18,
-    y: 454,
+    y: 406,
     width: 354,
-    height: 46
+    height: 44
   },
   orderBoard: {
     x: 18,
-    y: 508,
+    y: 458,
     width: 354,
-    orderHeight: 58,
-    gap: 6
+    orderHeight: 54,
+    gap: 6,
+    bottomPadding: 14
   },
   seedSelector: {
-    x: 18,
-    y: 740,
-    buttonWidth: 108,
-    buttonHeight: 64,
-    gap: 15
+    x: 22,
+    y: 760,
+    buttonWidth: 104,
+    buttonHeight: 56,
+    gap: 17
   }
 } as const;

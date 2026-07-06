@@ -19,17 +19,17 @@ export class HudSystem {
     this.gameState = gameState;
   }
 
-  render(x: number, y: number, width: number): void {
+  render(x: number, y: number, width: number, height: number): void {
     this.scene.add
-      .rectangle(x, y, width, 126, PANEL_FILL)
+      .rectangle(x, y, width, height, PANEL_FILL)
       .setOrigin(0, 0)
       .setStrokeStyle(2, PANEL_STROKE);
 
-    this.coinsText = this.createText(x + 14, y + 12);
-    this.levelText = this.createText(x + width - 106, y + 12);
-    this.xpText = this.createText(x + 14, y + 48);
-    this.selectedSeedText = this.createText(x + width - 174, y + 48);
-    this.inventoryText = this.createText(x + 14, y + 86, '16px');
+    this.coinsText = this.createText(x + 14, y + 10);
+    this.levelText = this.createText(x + width - 106, y + 10);
+    this.xpText = this.createText(x + 14, y + 40);
+    this.selectedSeedText = this.createText(x + width - 174, y + 40);
+    this.inventoryText = this.createText(x + 14, y + 74, '15px');
 
     this.refresh();
   }

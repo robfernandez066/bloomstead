@@ -18,6 +18,7 @@ interface OrderBoardConfig {
   width: number;
   orderHeight: number;
   gap: number;
+  bottomPadding: number;
   onOrderComplete: (order: OrderDefinition) => void;
 }
 
@@ -45,7 +46,11 @@ export class OrderBoardSystem {
     this.clearObjects();
 
     const orders = this.orderSystem.getActiveOrders();
-    const boardHeight = 30 + orders.length * this.config.orderHeight + (orders.length - 1) * this.config.gap;
+    const boardHeight =
+      30 +
+      orders.length * this.config.orderHeight +
+      (orders.length - 1) * this.config.gap +
+      this.config.bottomPadding;
 
     this.objects.push(
       this.scene.add

@@ -1,10 +1,11 @@
+import { STARTING_UNLOCKED_PLOTS } from '../data/PlotUnlocks';
 import type { CropDefinition } from '../models/CropTypes';
+import type { GridPosition } from '../models/GridTypes';
 import type { PlotState } from '../models/PlotTypes';
 
 interface PlotStateSystemConfig {
   rows: number;
   columns: number;
-  unlockedTileCount: number;
   initialPlots?: PlotState[];
 }
 
@@ -19,20 +20,18 @@ export class PlotStateSystem {
     return this.plots;
   }
 
-  unlockNextLockedPlots(count: number): number {
+  unlockPlots(positions: GridPosition[]): number {
     let unlockedCount = 0;
 
-    for (const plot of this.plots) {
-      if (plot.unlocked) {
+    for (const position of positions) {
+      const plot = this.findPlot(position);
+
+      if (plot === undefined || plot.unlocked) {
         continue;
       }
 
       plot.unlocked = true;
       unlockedCount += 1;
-
-      if (unlockedCount >= count) {
-        break;
-      }
     }
 
     return unlockedCount;
@@ -77,15 +76,16 @@ export class PlotStateSystem {
 
   private createInitialPlots(config: PlotStateSystemConfig): PlotState[] {
     const plots: PlotState[] = [];
+    const startingUnlockedPlotKeys = new Set(
+      STARTING_UNLOCKED_PLOTS.map((position) => this.getPlotKey(position))
+    );
 
     for (let row = 0; row < config.rows; row += 1) {
       for (let column = 0; column < config.columns; column += 1) {
-        const tileIndex = row * config.columns + column;
-
         plots.push({
           row,
           column,
-          unlocked: tileIndex < config.unlockedTileCount,
+          unlocked: startingUnlockedPlotKeys.has(this.getPlotKey({ row, column })),
           plantedCropId: null,
           plantedAt: null,
           growDurationMs: null,
@@ -95,5 +95,13 @@ export class PlotStateSystem {
     }
 
     return plots;
+  }
+
+  private findPlot(position: GridPosition): PlotState | undefined {
+    return this.plots.find((plot) => plot.row === position.row && plot.column === position.column);
+  }
+
+  private getPlotKey(position: GridPosition): string {
+    return `${position.row}:${position.column}`;
   }
 }

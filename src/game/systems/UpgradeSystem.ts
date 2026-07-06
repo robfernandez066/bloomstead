@@ -1,4 +1,5 @@
 import { MVP_PLOT_UPGRADES } from '../data/PlotUpgrades';
+import { PLOT_UPGRADE_UNLOCK_ORDER } from '../data/PlotUnlocks';
 import type { PlotUpgradeDefinition } from '../models/UpgradeTypes';
 import type { GameStateSystem } from './GameStateSystem';
 import type { PlotStateSystem } from './PlotStateSystem';
@@ -40,7 +41,8 @@ export class UpgradeSystem {
       return null;
     }
 
-    const unlockedPlots = this.plotState.unlockNextLockedPlots(upgrade.plotsToUnlock);
+    const plotUnlocks = PLOT_UPGRADE_UNLOCK_ORDER[this.nextPlotUpgradeIndex] ?? [];
+    const unlockedPlots = this.plotState.unlockPlots(plotUnlocks);
     this.nextPlotUpgradeIndex += 1;
 
     return { upgrade, unlockedPlots };

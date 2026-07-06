@@ -26,7 +26,6 @@ export class FarmScene extends Phaser.Scene {
     const { width, height } = this.scale;
 
     this.add.rectangle(width / 2, height / 2, width, height, 0x8fcf8a);
-    this.add.rectangle(width / 2, height * 0.72, width * 0.82, height * 0.34, 0x6aa45f);
 
     const saveSystem = new SaveSystem();
     const savedGameData = saveSystem.load();
@@ -34,7 +33,6 @@ export class FarmScene extends Phaser.Scene {
     const plotStateSystem = new PlotStateSystem({
       rows: 6,
       columns: 6,
-      unlockedTileCount: 12,
       initialPlots: savedGameData?.plots
     });
     const plantingSystem = new PlantingSystem(gameStateSystem, plotStateSystem);
@@ -83,8 +81,9 @@ export class FarmScene extends Phaser.Scene {
     gridSystem = new GridSystem(this, {
       tileWidth: FARM_LAYOUT.farmGrid.tileWidth,
       tileHeight: FARM_LAYOUT.farmGrid.tileHeight,
-      originX: FARM_LAYOUT.farmGrid.originX,
-      originY: FARM_LAYOUT.farmGrid.originY
+      area: FARM_LAYOUT.farmGrid,
+      markerAnchorOffsetY: FARM_LAYOUT.farmGrid.markerAnchorOffsetY,
+      debugAnchors: FARM_LAYOUT.farmGrid.debugAnchors
     }, plotStateSystem.getPlots(), {
       onPlotPressed: (plot) => {
         const harvestResult = harvestingSystem.beginHarvest(plot);
@@ -128,7 +127,12 @@ export class FarmScene extends Phaser.Scene {
 
     gridSystem.render();
 
-    hudSystem.render(FARM_LAYOUT.hud.x, FARM_LAYOUT.hud.y, FARM_LAYOUT.hud.width);
+    hudSystem.render(
+      FARM_LAYOUT.hud.x,
+      FARM_LAYOUT.hud.y,
+      FARM_LAYOUT.hud.width,
+      FARM_LAYOUT.hud.height
+    );
 
     upgradePanelSystem.render({
       x: FARM_LAYOUT.plotUpgradePanel.x,
@@ -146,7 +150,7 @@ export class FarmScene extends Phaser.Scene {
         hudSystem.refresh();
         upgradePanelSystem.refresh();
         saveGame();
-        feedbackSystem.showPlotsUnlocked(width / 2, 438);
+        feedbackSystem.showPlotsUnlocked(width / 2, FARM_LAYOUT.plotUpgradePanel.y - 8);
       }
     });
 
@@ -156,6 +160,7 @@ export class FarmScene extends Phaser.Scene {
       width: FARM_LAYOUT.orderBoard.width,
       orderHeight: FARM_LAYOUT.orderBoard.orderHeight,
       gap: FARM_LAYOUT.orderBoard.gap,
+      bottomPadding: FARM_LAYOUT.orderBoard.bottomPadding,
       onOrderComplete: (order) => {
         const result = orderSystem.completeOrder(order.id);
 
@@ -167,7 +172,7 @@ export class FarmScene extends Phaser.Scene {
         orderBoardSystem.refresh();
         upgradePanelSystem.refresh();
         saveGame();
-        feedbackSystem.showOrderComplete(width / 2, 486);
+        feedbackSystem.showOrderComplete(width / 2, FARM_LAYOUT.orderBoard.y - 10);
 
         if (result.xpResult.leveledUp) {
           handleLevelUp(result.xpResult.currentLevel);
