@@ -50,6 +50,14 @@ export class GameStateSystem {
     return true;
   }
 
+  addCropToInventory(cropId: CropId, amount: number): void {
+    this.state.cropInventory[cropId] += amount;
+  }
+
+  addFarmXp(amount: number): void {
+    this.state.farmXp += amount;
+  }
+
   selectSeed(cropId: CropId): boolean {
     const crop = CROPS[cropId];
 

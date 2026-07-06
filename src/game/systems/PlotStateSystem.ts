@@ -25,6 +25,13 @@ export class PlotStateSystem {
     plot.ready = this.isPlotReady(plot);
   }
 
+  clearPlot(plot: PlotState): void {
+    plot.plantedCropId = null;
+    plot.plantedAt = null;
+    plot.growDurationMs = null;
+    plot.ready = false;
+  }
+
   refreshReadyStates(now = Date.now()): void {
     for (const plot of this.plots) {
       plot.ready = this.isPlotReady(plot, now);

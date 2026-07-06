@@ -1,10 +1,14 @@
 import Phaser from 'phaser';
+import { FeedbackSystem } from '../ui/FeedbackSystem';
 import { HudSystem } from '../ui/HudSystem';
 import { SeedSelectorSystem } from '../ui/SeedSelectorSystem';
 import { GameStateSystem } from '../systems/GameStateSystem';
 import { GridSystem } from '../systems/GridSystem';
+import { HarvestingSystem } from '../systems/HarvestingSystem';
 import { PlantingSystem } from '../systems/PlantingSystem';
 import { PlotStateSystem } from '../systems/PlotStateSystem';
+
+type DragMode = 'none' | 'plant' | 'harvest';
 
 export class FarmScene extends Phaser.Scene {
   constructor() {
@@ -24,6 +28,9 @@ export class FarmScene extends Phaser.Scene {
       unlockedTileCount: 12
     });
     const plantingSystem = new PlantingSystem(gameStateSystem, plotStateSystem);
+    const harvestingSystem = new HarvestingSystem(gameStateSystem, plotStateSystem);
+    const feedbackSystem = new FeedbackSystem(this);
+    let dragMode: DragMode = 'none';
 
     const hudSystem = new HudSystem(this, gameStateSystem);
 
@@ -34,13 +41,45 @@ export class FarmScene extends Phaser.Scene {
       originY: height * 0.38
     }, plotStateSystem.getPlots(), {
       onPlotPressed: (plot) => {
-        if (plantingSystem.beginPaint(plot)) {
+        const harvestResult = harvestingSystem.beginHarvest(plot);
+
+        if (harvestResult !== null) {
+          dragMode = 'harvest';
           gridSystem.refreshPlotVisuals();
           hudSystem.refresh();
+          feedbackSystem.showHarvestFeedback(
+            gridSystem.getPlotScreenPosition(harvestResult.plot),
+            harvestResult.crop.name
+          );
+          return;
         }
+
+        if (plantingSystem.beginPaint(plot)) {
+          dragMode = 'plant';
+          gridSystem.refreshPlotVisuals();
+          hudSystem.refresh();
+          return;
+        }
+
+        dragMode = 'none';
       },
       onPlotDraggedOver: (plot) => {
-        if (plantingSystem.paintOver(plot)) {
+        if (dragMode === 'harvest') {
+          const harvestResult = harvestingSystem.harvestOver(plot);
+
+          if (harvestResult !== null) {
+            gridSystem.refreshPlotVisuals();
+            hudSystem.refresh();
+            feedbackSystem.showHarvestFeedback(
+              gridSystem.getPlotScreenPosition(harvestResult.plot),
+              harvestResult.crop.name
+            );
+          }
+
+          return;
+        }
+
+        if (dragMode === 'plant' && plantingSystem.paintOver(plot)) {
           gridSystem.refreshPlotVisuals();
           hudSystem.refresh();
         }
@@ -53,6 +92,8 @@ export class FarmScene extends Phaser.Scene {
 
     this.input.on('pointerup', () => {
       plantingSystem.endPaint();
+      harvestingSystem.endHarvest();
+      dragMode = 'none';
     });
 
     this.time.addEvent({

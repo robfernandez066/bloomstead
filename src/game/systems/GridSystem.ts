@@ -53,6 +53,19 @@ export class GridSystem {
     }
   }
 
+  getPlotScreenPosition(plot: PlotState): Phaser.Math.Vector2 {
+    const { tileWidth, tileHeight, originX, originY } = this.config;
+    const position = gridToIso(
+      { row: plot.row, column: plot.column },
+      tileWidth,
+      tileHeight,
+      originX,
+      originY
+    );
+
+    return new Phaser.Math.Vector2(position.x, position.y);
+  }
+
   private renderPlot(plot: PlotState): void {
     const { tileWidth, tileHeight, originX, originY } = this.config;
     const position = { row: plot.row, column: plot.column };
