@@ -3,6 +3,7 @@ import { SaveSystem } from '../save/SaveSystem';
 import { DevSaveControlsSystem } from '../ui/DevSaveControlsSystem';
 import { FeedbackSystem } from '../ui/FeedbackSystem';
 import { HudSystem } from '../ui/HudSystem';
+import { FARM_LAYOUT } from '../ui/LayoutConfig';
 import { OrderBoardSystem } from '../ui/OrderBoardSystem';
 import { SeedSelectorSystem } from '../ui/SeedSelectorSystem';
 import { UpgradePanelSystem } from '../ui/UpgradePanelSystem';
@@ -80,10 +81,10 @@ export class FarmScene extends Phaser.Scene {
     };
 
     gridSystem = new GridSystem(this, {
-      tileWidth: 56,
-      tileHeight: 28,
-      originX: width / 2,
-      originY: height * 0.38
+      tileWidth: FARM_LAYOUT.farmGrid.tileWidth,
+      tileHeight: FARM_LAYOUT.farmGrid.tileHeight,
+      originX: FARM_LAYOUT.farmGrid.originX,
+      originY: FARM_LAYOUT.farmGrid.originY
     }, plotStateSystem.getPlots(), {
       onPlotPressed: (plot) => {
         const harvestResult = harvestingSystem.beginHarvest(plot);
@@ -127,13 +128,13 @@ export class FarmScene extends Phaser.Scene {
 
     gridSystem.render();
 
-    hudSystem.render(18, 18, width - 36);
+    hudSystem.render(FARM_LAYOUT.hud.x, FARM_LAYOUT.hud.y, FARM_LAYOUT.hud.width);
 
     upgradePanelSystem.render({
-      x: 18,
-      y: 454,
-      width: width - 36,
-      height: 46,
+      x: FARM_LAYOUT.plotUpgradePanel.x,
+      y: FARM_LAYOUT.plotUpgradePanel.y,
+      width: FARM_LAYOUT.plotUpgradePanel.width,
+      height: FARM_LAYOUT.plotUpgradePanel.height,
       onPurchase: () => {
         const result = upgradeSystem.purchaseNextPlotUpgrade();
 
@@ -150,11 +151,11 @@ export class FarmScene extends Phaser.Scene {
     });
 
     orderBoardSystem.render({
-      x: 18,
-      y: 508,
-      width: width - 36,
-      orderHeight: 58,
-      gap: 6,
+      x: FARM_LAYOUT.orderBoard.x,
+      y: FARM_LAYOUT.orderBoard.y,
+      width: FARM_LAYOUT.orderBoard.width,
+      orderHeight: FARM_LAYOUT.orderBoard.orderHeight,
+      gap: FARM_LAYOUT.orderBoard.gap,
       onOrderComplete: (order) => {
         const result = orderSystem.completeOrder(order.id);
 
@@ -194,11 +195,11 @@ export class FarmScene extends Phaser.Scene {
     });
 
     seedSelectorSystem.render({
-      x: 18,
-      y: height - 104,
-      buttonWidth: 108,
-      buttonHeight: 64,
-      gap: 15,
+      x: FARM_LAYOUT.seedSelector.x,
+      y: FARM_LAYOUT.seedSelector.y,
+      buttonWidth: FARM_LAYOUT.seedSelector.buttonWidth,
+      buttonHeight: FARM_LAYOUT.seedSelector.buttonHeight,
+      gap: FARM_LAYOUT.seedSelector.gap,
       onSeedSelected: () => {
         hudSystem.refresh();
         saveGame();
@@ -206,25 +207,14 @@ export class FarmScene extends Phaser.Scene {
     });
 
     devSaveControlsSystem.render({
-      x: width - 112,
-      y: 154,
-      width: 94,
-      height: 28,
+      x: FARM_LAYOUT.devControls.x,
+      y: FARM_LAYOUT.devControls.y,
+      width: FARM_LAYOUT.devControls.width,
+      height: FARM_LAYOUT.devControls.height,
       onResetSave: () => {
         saveSystem.clear();
         this.scene.restart();
       }
     });
-
-    this.add
-      .text(width / 2, height * 0.2, 'Bloomstead Farm Scene Loaded', {
-        color: '#243524',
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '20px',
-        fontStyle: 'bold',
-        align: 'center',
-        wordWrap: { width: width * 0.82 }
-      })
-      .setOrigin(0.5);
   }
 }

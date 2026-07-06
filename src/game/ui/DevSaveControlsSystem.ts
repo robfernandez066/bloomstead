@@ -31,12 +31,12 @@ export class DevSaveControlsSystem {
     });
 
     this.scene.add
-      .text(config.x + config.width / 2, config.y + config.height / 2, 'Reset Save', {
+      .text(config.x + 12, config.y + config.height / 2, 'Developer: Reset Save', {
         color: TEXT_COLOR,
         fontFamily: 'Arial, sans-serif',
         fontSize: '13px',
         fontStyle: 'bold'
       })
-      .setOrigin(0.5);
+      .setOrigin(0, 0.5);
   }
 }
