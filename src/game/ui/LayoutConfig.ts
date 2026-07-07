@@ -44,9 +44,9 @@ export const FARM_LAYOUT = {
   },
   cropSellPanel: {
     x: 18,
-    y: 128,
+    y: 126,
     buttonWidth: 84,
-    buttonHeight: 30,
+    buttonHeight: 36,
     gap: 6
   },
   muteToggle: {

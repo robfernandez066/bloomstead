@@ -10,8 +10,8 @@ const BAR_BACK = 0x9ca28e;
 const BAR_FILL = 0x6fae57;
 const PANEL_STROKE = 0x6f5734;
 const TEXT_COLOR = '#2f3b26';
-const CHIP_WIDTH = 96;
-const CHIP_HEIGHT = 30;
+const CHIP_WIDTH = 108;
+const CHIP_HEIGHT = 34;
 const CHIP_GAP = 6;
 
 interface ProductionStatusConfig {
@@ -144,10 +144,10 @@ export class ProductionStatusSystem {
 
     if (ready) {
       this.objects.push(
-        this.scene.add.text(chipX + 8, chipY + 8, `${recipe.buildingName} Ready`, {
+        this.scene.add.text(chipX + 9, chipY + 9, `${recipe.buildingName} Ready`, {
           color: TEXT_COLOR,
           fontFamily: 'Arial, sans-serif',
-          fontSize: '12px',
+          fontSize: '11px',
           fontStyle: 'bold'
         })
       );
@@ -158,22 +158,22 @@ export class ProductionStatusSystem {
     const durationMs = state.durationMs ?? 1;
     const remainingMs = this.productionSystem.getRemainingMs(recipe.id);
     const progress = Phaser.Math.Clamp(1 - remainingMs / durationMs, 0, 1);
-    const barX = chipX + 8;
-    const barY = chipY + 21;
-    const barWidth = chipWidth - 16;
+    const barX = chipX + 9;
+    const barY = chipY + 24;
+    const barWidth = chipWidth - 18;
 
     this.objects.push(
-      this.scene.add.text(chipX + 8, chipY + 5, `${recipe.buildingName} ${remainingSeconds}s`, {
+      this.scene.add.text(chipX + 9, chipY + 6, `${recipe.buildingName} ${remainingSeconds}s`, {
         color: TEXT_COLOR,
         fontFamily: 'Arial, sans-serif',
-        fontSize: '12px',
+        fontSize: '11px',
         fontStyle: 'bold'
       }),
       this.scene.add
-        .rectangle(barX, barY, barWidth, 8, BAR_BACK)
+        .rectangle(barX, barY, barWidth, 7, BAR_BACK)
         .setOrigin(0, 0),
       this.scene.add
-        .rectangle(barX, barY, Math.max(3, barWidth * progress), 8, BAR_FILL)
+        .rectangle(barX, barY, Math.max(3, barWidth * progress), 7, BAR_FILL)
         .setOrigin(0, 0)
     );
   }

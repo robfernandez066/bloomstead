@@ -105,19 +105,19 @@ export class CropSellPanelSystem {
       .text(x + config.buttonWidth / 2, config.y + 8, `${crop.name} x0`, {
         color: DISABLED_TEXT,
         fontFamily: 'Arial, sans-serif',
-        fontSize: '10px',
+        fontSize: '11px',
         fontStyle: 'bold'
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5, 0);
 
     const sellLabel = this.scene.add
-      .text(x + config.buttonWidth / 2, config.y + 21, `Sell +${crop.sellValue}c`, {
+      .text(x + config.buttonWidth / 2, config.y + 22, `Sell +${crop.sellValue}c`, {
         color: DISABLED_TEXT,
         fontFamily: 'Arial, sans-serif',
-        fontSize: '10px',
+        fontSize: '11px',
         fontStyle: 'bold'
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5, 0);
 
     this.sellButtons.push({ crop, button, cropLabel, sellLabel });
   }
