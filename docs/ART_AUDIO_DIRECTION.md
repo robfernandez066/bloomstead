@@ -52,17 +52,19 @@ Onboarding guidance should feel unified and lightweight. The tutorial starts aut
 
 Craft guidance uses the existing tutorial/onboarding panel instead of a separate floating popup. When Craft becomes relevant, the player should see `Use Craft to turn Sunwheat into Flour.` and the Craft button should receive a clear but non-intrusive highlight. Opening Craft dismisses that guidance. Future polish may add a stronger arrow or pointer if the highlight is not enough.
 
-Known UI backlog item: current sell buttons like `S +4c`, `C +12c`, and `G +32c` are functional but ugly. Future direction should use readable crop rows and/or icons:
+Readable crop sell/inventory rows are implemented for MVP. They should stay clear and mobile-tappable, using crop names, counts, and sell values:
 
-* `Sunwheat x7 — Sell +4c`
-* `Carrot x0 — Sell +12c`
-* `Glowberry x0 — Sell +32c`
+* `Sunwheat x7 - Sell +4c`
+* `Carrot x0 - Sell +12c`
+* `Glowberry x0 - Sell +32c`
+
+Proper crop and processed-good icons remain future art polish. Icons can replace or augment text rows later, but they are not required for the MVP release candidate.
 
 ## Reward / Juice Direction
 
 Reward moments should use coin bursts, floating reward text, small pops, light glow/pulse, HUD count-up, order completion bursts, level-up pops, and plot unlock pulses. Effects should make rewards feel good while preserving readability.
 
-Known backlog item: the tutorial `Complete` button should feel satisfying. Future direction: show `+75 Coins`, animate coins flying to the coin counter, add a button pop/glow, and pulse or count up the coin HUD.
+Basic tutorial `Complete` reward feedback is implemented for MVP: the one-time 75 coin reward has clear reward text, generated coin fly feedback, and a coin HUD pulse. Stronger coin animation and sound effects remain future polish.
 
 ## Animation Principles
 
@@ -97,22 +99,20 @@ Style should be soft, bright, and cozy: small wooden taps, chimes, coin jingles,
 
 Music should be a cozy magical farm loop with light plucked strings, soft bells, woodwinds, and gentle pads. It should be calm, loopable, and pleasant over long sessions. Music can come after first SFX hooks.
 
-## First Art/SFX Implementation Pass
+## Future Art/SFX Polish Pass
 
-Recommended first pass:
+Future polish should improve presentation without changing MVP gameplay scope:
 
 * Improved plot tile art
 * Simple crop sprites or generated crop shapes
-* Improved crop sell UI
+* Proper crop and processed-good icons for inventory, selling, production, and orders
 * Improved Craft button art/icon
 * Stronger Craft pointer/arrow if needed
 * Improved production status chip visuals/icons
 * Improved Mill/Bakery menu/building placeholders
-* Clear Flour and Bread icons
 * Better processed-good/order onboarding if needed after playtesting
-* Improved tutorial completion reward feedback
-* Sound manager foundation
-* Placeholder/generated or temporary SFX hooks only if no assets exist yet, including Mill/Bakery start/complete/collect hooks
+* Stronger tutorial completion reward animation and audio polish
+* Real SFX assets wired into the existing sound hooks, including Mill/Bakery start, complete, and collect hooks
 
 ## Out of Scope For First Art/Audio Pass
 
