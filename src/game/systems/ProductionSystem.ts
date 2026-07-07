@@ -43,6 +43,10 @@ export class ProductionSystem {
     return PRODUCTION_RECIPES['mill-flour'];
   }
 
+  getAvailableRecipes(): ProductionRecipeDefinition[] {
+    return [this.getCurrentRecipe()];
+  }
+
   getItemCount(itemId: ItemId): number {
     return this.gameState.getItemCount(itemId);
   }
