@@ -20,6 +20,7 @@ export class FeedbackSystem {
   private harvestFlyEffectsInWindow = 0;
   private aggregateHarvestText?: Phaser.GameObjects.Text;
   private aggregateHarvestFadeEvent?: Phaser.Time.TimerEvent;
+  private aggregateHarvestFadeTween?: Phaser.Tweens.Tween;
   private readonly aggregateHarvestCounts = new Map<string, { cropName: string; count: number }>();
 
   constructor(scene: Phaser.Scene) {
@@ -61,6 +62,9 @@ export class FeedbackSystem {
         .setOrigin(0.5)
         .setDepth(122);
     }
+
+    this.aggregateHarvestFadeTween?.stop();
+    this.aggregateHarvestFadeTween = undefined;
 
     this.aggregateHarvestText
       .setText(this.formatAggregateHarvestText())
@@ -382,10 +386,11 @@ export class FeedbackSystem {
 
     if (text === undefined || !text.active) {
       this.aggregateHarvestCounts.clear();
+      this.aggregateHarvestFadeTween = undefined;
       return;
     }
 
-    this.scene.tweens.add({
+    this.aggregateHarvestFadeTween = this.scene.tweens.add({
       targets: text,
       y: text.y - 18,
       alpha: 0,
@@ -394,6 +399,7 @@ export class FeedbackSystem {
       onComplete: () => {
         text.destroy();
         this.aggregateHarvestText = undefined;
+        this.aggregateHarvestFadeTween = undefined;
         this.aggregateHarvestCounts.clear();
       }
     });
