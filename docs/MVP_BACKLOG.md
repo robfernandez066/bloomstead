@@ -55,6 +55,27 @@ Tutorial and hint guidance should be unified: only one tutorial/hint message sho
 
 After the main tutorial is complete, Craft guidance appears through the tutorial/onboarding panel when Craft becomes relevant: farm level 2 or enough Sunwheat to start the Mill. The message guides the player to use Craft to turn Sunwheat into Flour. The Craft button is highlighted while this guidance is active, and opening Craft completes/dismisses the guidance. Tutorial completion reward behavior remains unchanged.
 
+## MVP Stabilization Notes
+
+Recent focused QA passes have verified the current tutorial, production, save/load, mobile usability, and legacy production migration behavior for MVP.
+
+Verified behavior:
+
+* Tutorial guidance auto-starts on new saves and Dev Reset.
+* The old tutorial `Start` button has been removed.
+* Only one tutorial/hint panel should be visible at a time.
+* Craft guidance appears after the main tutorial is complete, at farm level 2 or when Craft first becomes relevant.
+* Craft guidance uses the tutorial/onboarding panel, highlights Craft, teaches `Sunwheat -> Flour`, and completes when Craft opens.
+* Mill and Bakery production work independently and can run at the same time.
+* Offline finished production loads as ready and does not auto-collect.
+* Older single-Mill saves migrate safely into keyed production state under `mill`, with `bakery` initialized normally.
+* Mobile portrait QA passed at `390x844` and `360x740`.
+
+Current caveats:
+
+* Sell rows and production chips are compact and functional for MVP, but still need future art/UI polish.
+* Landscape layout is not ideal, but the UI recovers when returning to portrait.
+
 ## Implemented MVP UI / Game Feel Polish
 
 The following polish items are implemented for the MVP:

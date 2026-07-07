@@ -130,6 +130,11 @@ The MVP should not include:
   * Craft guidance appears through the tutorial/onboarding UI when Craft becomes relevant.
   * Craft guidance highlights Craft and tells the player to use Craft to turn Sunwheat into Flour.
   * Opening Craft completes/dismisses Craft guidance and prevents replay.
+* MVP stabilization status:
+  * Tutorial auto-start, unified tutorial/hint behavior, Craft guidance, save/load, offline production, mobile portrait layouts, and legacy single-Mill production save migration have passed focused QA.
+  * Mobile portrait QA passed at 390x844 and 360x740.
+  * Current compact sell rows and production chips are acceptable for MVP but should be improved in a future UI/art polish pass.
+  * Landscape is not ideal, but the layout recovers when returning to portrait.
 * Strategy level: 6/10.
 * Randomness: some randomness later, not core MVP.
 
