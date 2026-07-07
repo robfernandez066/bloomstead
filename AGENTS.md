@@ -132,11 +132,18 @@ The MVP should not include:
 * Tutorial/onboarding:
   * Starts automatically on new saves and Dev Reset; do not reintroduce a Start button.
   * Includes a sell-crop step after the first plot upgrade.
+  * Uses pulsing highlights on the actual target instead of generic line/circle indicators.
+  * Requires planting the full starter Sunwheat field.
+  * Waits for all starter Sunwheat to be harvested before moving to the first order step.
   * Tutorial completion still grants a one-time 75 coin reward.
+  * Tutorial completion reward feedback has improved visibility.
   * Tutorial and hint guidance should be unified so only one tutorial/hint message is visible at a time.
-  * Craft guidance appears through the tutorial/onboarding UI when Craft becomes relevant.
-  * Craft guidance highlights Craft and tells the player to use Craft to turn Sunwheat into Flour.
-  * Opening Craft completes/dismisses Craft guidance and prevents replay.
+  * Craft onboarding is part of the tutorial flow: open Craft, start the Mill, wait for Flour, tap `Mill Ready`, collect Flour, start another Mill job, tap outside to close the Production menu, then complete the tutorial.
+* Plot upgrade tutorial safety:
+  * Plot upgrades are locked until the tutorial reaches the upgrade step.
+  * The upgrade action is labeled `Purchase More Plots`.
+  * Plot upgrade purchases use a `Yes / No` confirmation.
+* Empty unlocked plots appear as brown dirt, not green.
 * MVP stabilization status:
   * Tutorial auto-start, unified tutorial/hint behavior, Craft guidance, save/load, offline production, mobile portrait layouts, and legacy single-Mill production save migration have passed focused QA.
   * Mobile portrait QA passed at 390x844 and 360x740.
@@ -145,6 +152,7 @@ The MVP should not include:
   * Landscape is not ideal, but the layout recovers when returning to portrait.
   * Level 3 pacing is acceptable; level 4 pacing is acceptable but slightly fast; level 5 was reached and felt like a natural milestone.
   * Bread-heavy order clusters and Baker's Basket generosity are watch items, not current MVP blockers.
+  * Build passes with only the existing Vite large chunk warning.
 * Strategy level: 6/10.
 * Randomness: some randomness later, not core MVP.
 

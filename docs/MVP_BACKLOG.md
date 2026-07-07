@@ -36,9 +36,9 @@ The MVP includes:
 * Order completion coin/XP fly-to-HUD reward feedback.
 * Swipe harvesting aggregate `Gathered X Crop` text to reduce clutter.
 * Save/load, active order persistence, and offline crop growth.
-* Tutorial flow that starts automatically on new saves and Dev Reset, with a sell-crop step after the first plot upgrade.
-* One-time 75 coin tutorial completion reward with basic reward feedback.
-* Craft guidance that appears through the tutorial/onboarding UI when Craft becomes relevant.
+* Tutorial flow that starts automatically on new saves and Dev Reset, with target-specific pulsing highlights and a sell-crop step after the first plot upgrade.
+* One-time 75 coin tutorial completion reward with improved visible reward feedback.
+* Craft onboarding is part of the tutorial flow and guides the player through making Flour in the Mill.
 
 Current MVP processed-good and advanced orders:
 
@@ -54,13 +54,28 @@ Current MVP processed-good and advanced orders:
 
 The tutorial starts automatically on new saves and Dev Reset. The old tutorial `Start` button has been removed.
 
-The tutorial should teach the core loop in this order: welcome, plant Sunwheat, wait for crop, harvest, complete an order, buy the first plot upgrade, sell a crop, then complete the tutorial.
+Tutorial guidance now uses pulsing highlights on the actual target the player should tap instead of generic line/circle indicators. Plot steps pulse the starter crop bed, the first order step pulses the `Sunwheat Sack` order card, production steps pulse Craft/Mill controls, and the final step pulses the tutorial completion panel.
 
-The final tutorial completion reward is 75 coins and must only be granted once per save. Dev Reset clears the save, so the reward can be earned again from a fresh start.
+The tutorial teaches the core loop in this order: plant the full starter Sunwheat field, wait for crop, harvest all starter Sunwheat, complete the first order, buy the first plot upgrade, sell a crop, use Craft to make Flour, start another Mill job, close the Production menu, then complete the tutorial.
+
+Plot upgrades are locked until the tutorial reaches the upgrade step. The upgrade action is labeled `Purchase More Plots`, shows the price, and uses a `Yes / No` confirmation before spending coins.
+
+Empty plots now appear as brown dirt instead of green, while growing and ready crops remain visually distinct.
+
+The final tutorial completion reward is 75 coins, has clearer visible reward feedback, and must only be granted once per save. Dev Reset clears the save, so the reward can be earned again from a fresh start.
 
 Tutorial and hint guidance should be unified: only one tutorial/hint message should be visible at a time.
 
-After the main tutorial is complete, Craft guidance appears through the tutorial/onboarding panel when Craft becomes relevant: farm level 2 or enough Sunwheat to start the Mill. The message guides the player to use Craft to turn Sunwheat into Flour. The Craft button is highlighted while this guidance is active, and opening Craft completes/dismisses the guidance. Tutorial completion reward behavior remains unchanged.
+Craft onboarding is integrated into the tutorial flow:
+
+* Open Craft.
+* Start Mill production: `2 Sunwheat -> 1 Flour`.
+* Wait for Flour.
+* Tap the `Mill Ready` chip.
+* Collect Flour.
+* Start another Mill production job.
+* Tap outside the Production menu to close it.
+* Complete the tutorial.
 
 ## MVP Stabilization Notes
 
@@ -71,8 +86,12 @@ Verified behavior:
 * Tutorial guidance auto-starts on new saves and Dev Reset.
 * The old tutorial `Start` button has been removed.
 * Only one tutorial/hint panel should be visible at a time.
-* Craft guidance appears after the main tutorial is complete, at farm level 2 or when Craft first becomes relevant.
-* Craft guidance uses the tutorial/onboarding panel, highlights Craft, teaches `Sunwheat -> Flour`, and completes when Craft opens.
+* Tutorial guidance uses pulsing highlights on exact targets instead of generic indicators.
+* Tutorial requires the full starter Sunwheat field to be planted and harvested before moving to the first order step.
+* Plot upgrades are locked until the tutorial reaches the upgrade step.
+* The plot upgrade action is `Purchase More Plots` and uses a `Yes / No` confirmation.
+* Empty plots use a brown dirt visual.
+* Craft onboarding is part of the tutorial flow and guides the player through opening Craft, starting the Mill, waiting for Flour, tapping `Mill Ready`, collecting Flour, starting another Mill job, closing the Production menu, and then completing the tutorial.
 * Mill and Bakery production work independently and can run at the same time.
 * Offline finished production loads as ready and does not auto-collect.
 * Older single-Mill saves migrate safely into keyed production state under `mill`, with `bakery` initialized normally.
