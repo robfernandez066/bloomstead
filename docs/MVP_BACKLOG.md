@@ -12,7 +12,9 @@ The MVP includes:
 * Level-aware order availability:
   * Level 1 orders should only require Sunwheat.
   * Level 2 orders may require Sunwheat and Carrot, plus the Flour order.
-  * Level 3+ orders may use any MVP crop, plus the Bread order.
+  * Level 3+ orders may use any MVP crop, Bread, and mixed crop/processed-good requirements.
+  * Level 4+ orders add larger Bread/Flour and Glowberry goals.
+  * Level 5 includes the Village Feast capstone MVP order.
 * Crop selling as a fallback way to regain seed money.
 * Readable crop sell/inventory rows for each MVP crop.
 * MVP production buildings:
@@ -38,10 +40,15 @@ The MVP includes:
 * One-time 75 coin tutorial completion reward with basic reward feedback.
 * Craft guidance that appears through the tutorial/onboarding UI when Craft becomes relevant.
 
-Current MVP processed-good orders:
+Current MVP processed-good and advanced orders:
 
 * Baker's Flour: requires 2 Flour, rewards 90 coins and 20 XP, gated at farm level 2.
 * Fresh Bread: requires 1 Bread, rewards 130 coins and 30 XP, gated at farm level 3.
+* Glowberry Toast: requires 1 Bread and 2 Glowberry, rewards 210 coins and 42 XP, gated at farm level 3.
+* Harvest Lunchbox: requires 3 Sunwheat, 2 Carrot, and 1 Bread, rewards 180 coins and 36 XP, gated at farm level 3.
+* Baker's Basket: requires 2 Bread and 2 Flour, rewards 300 coins and 60 XP, gated at farm level 4.
+* Lanternberry Crate: requires 4 Glowberry and 2 Carrot, rewards 230 coins and 48 XP, gated at farm level 4.
+* Village Feast: requires 2 Bread, 4 Glowberry, and 4 Carrot, rewards 420 coins and 85 XP, gated at farm level 5.
 
 ## Tutorial Notes
 
@@ -71,11 +78,17 @@ Verified behavior:
 * Older single-Mill saves migrate safely into keyed production state under `mill`, with `bakery` initialized normally.
 * Mobile portrait QA passed at `390x844` and `360x740`.
 * Sell/inventory rows and compact production chips received a small MVP mobile usability polish pass and passed QA at `360x740` and `390x844`.
+* The level 3-5 MVP order content pass is complete using only existing crops, Flour, and Bread.
+* The level 3-5 order pass added no new crops, processed goods, production buildings, tutorial steps, save/load changes, or UI systems.
+* Level 3 pacing is acceptable.
+* Level 4 pacing is acceptable, though slightly fast.
+* Level 5 was reached and felt like a natural milestone.
 
 Current caveats:
 
 * Sell rows and production chips are acceptable for MVP, but very small phones and future added goods should still be watched.
 * Landscape layout is not ideal, but the UI recovers when returning to portrait.
+* Bread-heavy order clusters and Baker's Basket generosity are watch items, not current MVP blockers.
 
 ## Implemented MVP UI / Game Feel Polish
 

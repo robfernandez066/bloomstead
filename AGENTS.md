@@ -61,7 +61,7 @@ The MVP should include:
 * Crop selling fallback
 * Seed purchasing
 * Order board
-* MVP orders, including Baker's Flour and Fresh Bread
+* MVP orders, including Baker's Flour, Fresh Bread, and level 3-5 advanced orders
 * MVP production buildings: Mill and Bakery
 * Flour and Bread as processed goods
 * Lightweight tutorial/onboarding prompts
@@ -115,6 +115,13 @@ The MVP should not include:
   * Finished production loads as ready but does not auto-collect.
 * Baker's Flour order: requires 2 Flour, rewards 90 coins and 20 XP, and is gated at farm level 2.
 * Fresh Bread order: requires 1 Bread, rewards 130 coins and 30 XP, and is gated at farm level 3.
+* Level 3-5 advanced MVP orders:
+  * Glowberry Toast: requires 1 Bread and 2 Glowberry, rewards 210 coins and 42 XP, gated at level 3.
+  * Harvest Lunchbox: requires 3 Sunwheat, 2 Carrot, and 1 Bread, rewards 180 coins and 36 XP, gated at level 3.
+  * Baker's Basket: requires 2 Bread and 2 Flour, rewards 300 coins and 60 XP, gated at level 4.
+  * Lanternberry Crate: requires 4 Glowberry and 2 Carrot, rewards 230 coins and 48 XP, gated at level 4.
+  * Village Feast: requires 2 Bread, 4 Glowberry, and 4 Carrot, rewards 420 coins and 85 XP, gated at level 5.
+* The level 3-5 order pass added no new crops, goods, production buildings, tutorial steps, save/load changes, or UI systems.
 * Starting plot layout: 3x4 centered crop bed, 12 unlocked plots.
 * Plot upgrades should preserve a uniform rectangular crop bed:
   * Start: 3x4 crop bed, 12 plots.
@@ -136,6 +143,8 @@ The MVP should not include:
   * Sell/inventory rows and compact production chips received a small MVP mobile usability polish pass and passed QA at 360x740 and 390x844.
   * Very small phones and future added goods should still be watched, but sell rows and production chips are not an active MVP blocker.
   * Landscape is not ideal, but the layout recovers when returning to portrait.
+  * Level 3 pacing is acceptable; level 4 pacing is acceptable but slightly fast; level 5 was reached and felt like a natural milestone.
+  * Bread-heavy order clusters and Baker's Basket generosity are watch items, not current MVP blockers.
 * Strategy level: 6/10.
 * Randomness: some randomness later, not core MVP.
 
