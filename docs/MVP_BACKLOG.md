@@ -12,16 +12,18 @@ The MVP includes:
 * Level-aware order availability:
   * Level 1 orders should only require Sunwheat.
   * Level 2 orders may require Sunwheat and Carrot, plus the Flour order.
-  * Level 3+ orders may use any MVP crop.
+  * Level 3+ orders may use any MVP crop, plus the Bread order.
 * Crop selling as a fallback way to regain seed money.
 * Readable crop sell/inventory rows for each MVP crop.
-* First production building: the Mill.
-  * Recipe: `2 Sunwheat -> 1 Flour`.
-  * Production time: 15 seconds.
-  * Flour is stored as a processed good.
-  * Flour is not plantable.
-  * Mill production continues offline.
-  * Finished Mill production loads as ready but does not auto-collect.
+* MVP production buildings:
+  * Mill: `2 Sunwheat -> 1 Flour`, 15 seconds.
+  * Bakery: `2 Flour -> 1 Bread`, 30 seconds.
+  * Flour and Bread are processed goods, not plantable crops.
+  * Production state is keyed by building/system id, currently `mill` and `bakery`.
+  * Mill and Bakery can run independently at the same time.
+  * Older single-Mill production saves migrate into the keyed production state.
+  * Production continues offline.
+  * Finished production loads as ready but does not auto-collect.
   * Farm screen production uses a compact `Craft` button.
   * Full production details live in the `Production` menu.
   * Farm screen production status uses compact chips only while a job is producing or ready.
@@ -35,11 +37,10 @@ The MVP includes:
 * Tutorial flow with a sell-crop step after the first plot upgrade.
 * One-time 75 coin tutorial completion reward with basic reward feedback.
 
-Current MVP orders include Baker's Flour:
+Current MVP processed-good orders:
 
-* Requires: 2 Flour.
-* Rewards: 90 coins and 20 XP.
-* Gated at farm level 2.
+* Baker's Flour: requires 2 Flour, rewards 90 coins and 20 XP, gated at farm level 2.
+* Fresh Bread: requires 1 Bread, rewards 130 coins and 30 XP, gated at farm level 3.
 
 ## Tutorial Notes
 
@@ -67,16 +68,16 @@ In a future UI/art polish pass, consider replacing or augmenting text rows with 
 * `Carrot x0 - Sell +12c`
 * `Glowberry x0 - Sell +32c`
 
-Future Mill production polish:
+Future production polish:
 
 * The old full-width Mill farm-screen panel was replaced by the compact Craft button, Production menu, and status chip pattern.
 * Use this Production menu/status chip pattern for future systems such as Bakery, Press, Brewery, etc.
 * Give the Craft button/icon proper art so it reads clearly as production/crafting.
 * Polish production status chips with clearer visuals and icons.
-* Replace placeholder Mill/menu visuals with clear Mill building/UI art.
-* Give Flour a readable icon for inventory, orders, and production output.
-* Add SFX hooks/assets for Mill start, production complete, and Flour collect.
-* Future production chains may expand from the Mill pattern, but should stay simple and modular.
+* Replace placeholder Mill/Bakery/menu visuals with clear production building/UI art.
+* Give Flour and Bread readable icons for inventory, orders, and production output.
+* Add SFX hooks/assets for Mill/Bakery start, production complete, and collect.
+* Future production chains may expand from this pattern, but should stay simple and modular.
 
 * Later, add a satisfying coin sound and light haptic feedback when mobile support exists.
 

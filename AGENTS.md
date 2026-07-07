@@ -61,9 +61,9 @@ The MVP should include:
 * Crop selling fallback
 * Seed purchasing
 * Order board
-* MVP orders, including Baker's Flour
-* First production building: Mill
-* Flour as a processed good
+* MVP orders, including Baker's Flour and Fresh Bread
+* MVP production buildings: Mill and Bakery
+* Flour and Bread as processed goods
 * Lightweight tutorial/onboarding prompts
 * Farm XP
 * Farm level
@@ -100,17 +100,21 @@ The MVP should not include:
 * Storage limits: not in MVP; add later.
 * Orders: no deadlines in MVP; timed premium orders later.
 * Order availability: active orders should not require crops above the current farm level.
-* Offline progress: crops and Mill production progress offline.
+* Offline progress: crops and production jobs progress offline.
 * Starting coins: 100 coins for new game and Dev Reset.
 * Crop selling: harvested crops can be sold using current crop sell values as a fallback for seed money.
 * Crop sell UI: current readable text rows are functional for MVP; future art/UI polish can replace or augment them with icons.
-* Production: the Mill is the first MVP production building.
-  * Recipe: 2 Sunwheat -> 1 Flour.
-  * Production time: 15 seconds.
-  * Flour is stored as a processed good and is not plantable.
-  * Mill production continues offline.
-  * Finished Mill production loads as ready but does not auto-collect.
+* Production:
+  * Mill recipe: 2 Sunwheat -> 1 Flour, 15 seconds.
+  * Bakery recipe: 2 Flour -> 1 Bread, 30 seconds.
+  * Flour and Bread are processed goods and are not plantable.
+  * Production state is keyed by building/system id, currently `mill` and `bakery`.
+  * Mill and Bakery can run independently at the same time.
+  * Older single-Mill production saves migrate into the keyed production state.
+  * Production continues offline.
+  * Finished production loads as ready but does not auto-collect.
 * Baker's Flour order: requires 2 Flour, rewards 90 coins and 20 XP, and is gated at farm level 2.
+* Fresh Bread order: requires 1 Bread, rewards 130 coins and 30 XP, and is gated at farm level 3.
 * Starting plot layout: 3x4 centered crop bed, 12 unlocked plots.
 * Plot upgrades should preserve a uniform rectangular crop bed:
   * Start: 3x4 crop bed, 12 plots.

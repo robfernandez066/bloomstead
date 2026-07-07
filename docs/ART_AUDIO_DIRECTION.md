@@ -26,7 +26,7 @@ Ready crops should look clearly harvestable without relying only on a circle mar
 
 ## Production Building Direction
 
-The MVP now includes the Mill as the first production building. Its current UI is functional placeholder art.
+The MVP now includes the Mill and Bakery as the first production buildings. Their current UI is functional placeholder art.
 
 The current production UI pattern is:
 
@@ -37,7 +37,12 @@ The current production UI pattern is:
 * Tapping a production chip opens the `Production` menu.
 * Tapping outside the `Production` menu closes it.
 
-Use this pattern for future production systems such as Bakery, Press, Brewery, etc. Future Mill art should make it read as a cozy small farm building or workbench, not an industrial factory. It should support the simple chain `2 Sunwheat -> 1 Flour` without implying a large crafting system. Flour should get a clear, readable icon for production output, inventory, and orders.
+Use this pattern for future production systems such as Press, Brewery, etc. Future Mill and Bakery art should read as cozy small farm buildings or workbenches, not industrial factory machinery. They should support simple chains without implying a large crafting system:
+
+* Mill: `2 Sunwheat -> 1 Flour`
+* Bakery: `2 Flour -> 1 Bread`
+
+Flour and Bread should get clear, readable icons for production output, inventory, and orders.
 
 ## UI Direction
 
@@ -78,6 +83,9 @@ First SFX list:
 * Mill start
 * Mill production complete
 * Flour collect
+* Bakery start
+* Bakery production complete
+* Bread collect
 
 Style should be soft, bright, and cozy: small wooden taps, chimes, coin jingles, and gentle magical sparkles. Avoid harsh arcade sounds.
 
@@ -94,11 +102,11 @@ Recommended first pass:
 * Improved crop sell UI
 * Improved Craft button art/icon
 * Improved production status chip visuals/icons
-* Improved Mill menu/building placeholder
-* Clear Flour icon
+* Improved Mill/Bakery menu/building placeholders
+* Clear Flour and Bread icons
 * Improved tutorial completion reward feedback
 * Sound manager foundation
-* Placeholder/generated or temporary SFX hooks only if no assets exist yet, including Mill start/complete/collect hooks
+* Placeholder/generated or temporary SFX hooks only if no assets exist yet, including Mill/Bakery start/complete/collect hooks
 
 ## Out of Scope For First Art/Audio Pass
 
