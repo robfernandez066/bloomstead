@@ -133,7 +133,8 @@ The MVP should not include:
 * MVP stabilization status:
   * Tutorial auto-start, unified tutorial/hint behavior, Craft guidance, save/load, offline production, mobile portrait layouts, and legacy single-Mill production save migration have passed focused QA.
   * Mobile portrait QA passed at 390x844 and 360x740.
-  * Current compact sell rows and production chips are acceptable for MVP but should be improved in a future UI/art polish pass.
+  * Sell/inventory rows and compact production chips received a small MVP mobile usability polish pass and passed QA at 360x740 and 390x844.
+  * Very small phones and future added goods should still be watched, but sell rows and production chips are not an active MVP blocker.
   * Landscape is not ideal, but the layout recovers when returning to portrait.
 * Strategy level: 6/10.
 * Randomness: some randomness later, not core MVP.

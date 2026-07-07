@@ -70,10 +70,11 @@ Verified behavior:
 * Offline finished production loads as ready and does not auto-collect.
 * Older single-Mill saves migrate safely into keyed production state under `mill`, with `bakery` initialized normally.
 * Mobile portrait QA passed at `390x844` and `360x740`.
+* Sell/inventory rows and compact production chips received a small MVP mobile usability polish pass and passed QA at `360x740` and `390x844`.
 
 Current caveats:
 
-* Sell rows and production chips are compact and functional for MVP, but still need future art/UI polish.
+* Sell rows and production chips are acceptable for MVP, but very small phones and future added goods should still be watched.
 * Landscape layout is not ideal, but the UI recovers when returning to portrait.
 
 ## Implemented MVP UI / Game Feel Polish
@@ -88,7 +89,7 @@ The following polish items are implemented for the MVP:
 
 ## UI / Art Polish Backlog
 
-The current crop sell/inventory rows are readable and functional for MVP, but they are still text-only.
+The current crop sell/inventory rows are readable, functional, and recently polished for MVP tap comfort, but they are still text-only.
 
 In a future UI/art polish pass, consider replacing or augmenting text rows with small crop icons and a more polished row layout:
 
@@ -102,7 +103,7 @@ Future production polish:
 * Use this Production menu/status chip pattern for future systems such as Bakery, Press, Brewery, etc.
 * Give the Craft button/icon proper art so it reads clearly as production/crafting.
 * Add a stronger visual pointer or arrow for Craft if playtesting shows the highlight is not enough.
-* Polish production status chips with clearer visuals and icons.
+* Production status chips have MVP tap-target polish, but future art passes can still add clearer visuals and icons.
 * Replace placeholder Mill/Bakery/menu visuals with clear production building/UI art.
 * Give Flour and Bread readable icons for inventory, orders, and production output.
 * Improve processed-good and order onboarding later if Flour/Bread order goals are not obvious enough.
