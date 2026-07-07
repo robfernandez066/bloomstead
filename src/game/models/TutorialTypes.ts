@@ -6,7 +6,8 @@ export type TutorialStepId =
   | 'complete-order'
   | 'upgrade-plots'
   | 'sell-crop'
-  | 'complete';
+  | 'complete'
+  | 'craft-hint';
 
 export interface TutorialStepDefinition {
   id: TutorialStepId;
@@ -18,4 +19,6 @@ export interface TutorialState {
   currentStepId: TutorialStepId;
   completed: boolean;
   completionRewardClaimed: boolean;
+  craftHintActive: boolean;
+  craftHintShown: boolean;
 }

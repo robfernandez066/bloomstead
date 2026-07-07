@@ -3,8 +3,8 @@ import type { TutorialStepDefinition, TutorialStepId } from '../models/TutorialT
 export const TUTORIAL_STEPS: TutorialStepDefinition[] = [
   {
     id: 'welcome',
-    message: "Welcome to Bloomstead! Let's grow your first Sunwheat.",
-    requiresAcknowledgement: true
+    message: 'Welcome to Bloomstead! Tap or drag empty plots to grow your first Sunwheat.',
+    requiresAcknowledgement: false
   },
   {
     id: 'select-sunwheat',
@@ -40,6 +40,11 @@ export const TUTORIAL_STEPS: TutorialStepDefinition[] = [
     id: 'complete',
     message: 'Nice! Keep farming, completing orders, and unlocking new crops.',
     requiresAcknowledgement: true
+  },
+  {
+    id: 'craft-hint',
+    message: 'Use Craft to turn Sunwheat into Flour.',
+    requiresAcknowledgement: false
   }
 ];
 

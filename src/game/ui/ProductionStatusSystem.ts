@@ -3,6 +3,7 @@ import type { ProductionRecipeDefinition } from '../models/ProductionTypes';
 import type { ProductionSystem } from '../systems/ProductionSystem';
 
 const BUTTON_FILL = 0xe8f0bb;
+const BUTTON_HIGHLIGHT_FILL = 0xffe27a;
 const PANEL_FILL = 0xf4e6b3;
 const READY_FILL = 0xdff0ad;
 const BAR_BACK = 0x9ca28e;
@@ -23,6 +24,7 @@ interface ProductionStatusConfig {
   statusWidth: number;
   statusHeight: number;
   onOpen: () => void;
+  highlightButton?: () => boolean;
 }
 
 export class ProductionStatusSystem {
@@ -57,8 +59,35 @@ export class ProductionStatusSystem {
   }
 
   private renderButton(config: ProductionStatusConfig): void {
+    const highlighted = config.highlightButton?.() === true;
+    const fill = highlighted ? BUTTON_HIGHLIGHT_FILL : BUTTON_FILL;
+
+    if (highlighted) {
+      const glow = this.scene.add
+        .rectangle(
+          config.buttonX - 3,
+          config.buttonY - 3,
+          config.buttonWidth + 6,
+          config.buttonHeight + 6,
+          BUTTON_HIGHLIGHT_FILL,
+          0.26
+        )
+        .setOrigin(0, 0);
+
+      this.scene.tweens.add({
+        targets: glow,
+        alpha: 0.08,
+        duration: 520,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut'
+      });
+
+      this.objects.push(glow);
+    }
+
     const button = this.scene.add
-      .rectangle(config.buttonX, config.buttonY, config.buttonWidth, config.buttonHeight, BUTTON_FILL)
+      .rectangle(config.buttonX, config.buttonY, config.buttonWidth, config.buttonHeight, fill)
       .setOrigin(0, 0)
       .setStrokeStyle(2, PANEL_STROKE)
       .setInteractive({ useHandCursor: true });

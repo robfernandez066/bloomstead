@@ -13,6 +13,7 @@ import { SeedSelectorSystem } from '../ui/SeedSelectorSystem';
 import { TutorialPanelSystem } from '../ui/TutorialPanelSystem';
 import { UpgradePanelSystem } from '../ui/UpgradePanelSystem';
 import { AudioSystem } from '../systems/AudioSystem';
+import { MILL_FLOUR_RECIPE_ID } from '../data/ProductionRecipes';
 import { CropSellingSystem } from '../systems/CropSellingSystem';
 import { GameStateSystem } from '../systems/GameStateSystem';
 import { GridSystem } from '../systems/GridSystem';
@@ -101,6 +102,24 @@ export class FarmScene extends Phaser.Scene {
       }
     };
 
+    const refreshOnboardingUi = (): void => {
+      tutorialPanelSystem.refresh();
+      productionStatusSystem.refresh();
+    };
+
+    const maybeShowCraftGuidance = (): void => {
+      const craftIsRelevant =
+        gameStateSystem.getState().farmLevel >= 2 ||
+        productionSystem.canStartRecipe(MILL_FLOUR_RECIPE_ID);
+
+      if (!craftIsRelevant || !tutorialSystem.activateCraftGuidance()) {
+        return;
+      }
+
+      refreshOnboardingUi();
+      saveGame();
+    };
+
     const syncTutorialWithReadyCrop = (): boolean => {
       const hasReadyCrop = plotStateSystem
         .getPlots()
@@ -118,6 +137,16 @@ export class FarmScene extends Phaser.Scene {
     };
 
     const syncTutorialWithCurrentPlotState = (): boolean => {
+      let advanced = false;
+      const hasHarvestedSunwheat = gameStateSystem.getState().cropInventory.sunwheat > 0;
+
+      if (hasHarvestedSunwheat) {
+        advanced = tutorialSystem.recordCropPlanted('sunwheat') || advanced;
+        advanced = tutorialSystem.recordCropReady() || advanced;
+        advanced = tutorialSystem.recordCropHarvested() || advanced;
+        return advanced;
+      }
+
       const advancedFromSunwheat = syncTutorialWithExistingSunwheat();
       const advancedFromReadyCrop = syncTutorialWithReadyCrop();
 
@@ -130,6 +159,7 @@ export class FarmScene extends Phaser.Scene {
       seedSelectorSystem.refresh();
       audioSystem.playLevelUp();
       feedbackSystem.showLevelUp(level, width / 2, height * 0.28);
+      maybeShowCraftGuidance();
     };
 
     const showAggregateHarvestText = (harvestResult: HarvestResult): void => {
@@ -177,6 +207,7 @@ export class FarmScene extends Phaser.Scene {
       refreshProductionUi();
       refreshTutorialIfAdvanced(tutorialAdvanced);
       saveGame();
+      maybeShowCraftGuidance();
       const harvestPosition = gridSystem.getPlotScreenPosition(harvestResult.plot);
 
       feedbackSystem.showHarvestFeedback(harvestPosition, harvestResult.crop.name, false);
@@ -366,9 +397,14 @@ export class FarmScene extends Phaser.Scene {
       statusY: FARM_LAYOUT.productionStatus.y,
       statusWidth: FARM_LAYOUT.productionStatus.width,
       statusHeight: FARM_LAYOUT.productionStatus.height,
+      highlightButton: () => tutorialSystem.isCraftGuidanceActive(),
       onOpen: () => {
         audioSystem.playButtonTap();
         productionMenuSystem.openMenu();
+        if (tutorialSystem.completeCraftGuidance()) {
+          refreshOnboardingUi();
+          saveGame();
+        }
       }
     });
 
@@ -547,6 +583,7 @@ export class FarmScene extends Phaser.Scene {
             FARM_LAYOUT.hud.y + 20,
             result.coinReward
           );
+          maybeShowCraftGuidance();
           return;
         }
 
@@ -578,6 +615,8 @@ export class FarmScene extends Phaser.Scene {
       tutorialPanelSystem.refresh();
       saveGame();
     }
+
+    maybeShowCraftGuidance();
 
     devSaveControlsSystem.render({
       x: FARM_LAYOUT.devControls.x,

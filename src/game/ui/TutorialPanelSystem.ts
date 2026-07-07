@@ -70,7 +70,7 @@ export class TutorialPanelSystem {
     );
 
     if (step.requiresAcknowledgement) {
-      this.renderAcknowledgeButton(step.id === 'complete' ? 'Complete' : 'Start');
+      this.renderAcknowledgeButton(step.id === 'complete' ? 'Complete' : 'Next');
     }
   }
 

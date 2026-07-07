@@ -9,7 +9,9 @@ import type {
 const DEFAULT_TUTORIAL_STATE: TutorialState = {
   currentStepId: 'welcome',
   completed: false,
-  completionRewardClaimed: false
+  completionRewardClaimed: false,
+  craftHintActive: false,
+  craftHintShown: false
 };
 
 export const TUTORIAL_COMPLETION_REWARD_COINS = 75;
@@ -31,6 +33,10 @@ export class TutorialSystem {
 
   getCurrentStep(): TutorialStepDefinition | null {
     if (this.state.completed) {
+      if (this.isCraftGuidanceActive()) {
+        return TUTORIAL_STEP_BY_ID['craft-hint'];
+      }
+
       return null;
     }
 
@@ -64,7 +70,11 @@ export class TutorialSystem {
   }
 
   recordCropPlanted(cropId: CropId): boolean {
-    if (this.state.currentStepId !== 'select-sunwheat' || cropId !== 'sunwheat') {
+    if (
+      (this.state.currentStepId !== 'welcome' &&
+        this.state.currentStepId !== 'select-sunwheat') ||
+      cropId !== 'sunwheat'
+    ) {
       return false;
     }
 
@@ -111,6 +121,29 @@ export class TutorialSystem {
     return this.advanceTo('complete');
   }
 
+  activateCraftGuidance(): boolean {
+    if (!this.state.completed || this.state.craftHintShown || this.state.craftHintActive) {
+      return false;
+    }
+
+    this.state.craftHintActive = true;
+    return true;
+  }
+
+  completeCraftGuidance(): boolean {
+    if (!this.isCraftGuidanceActive()) {
+      return false;
+    }
+
+    this.state.craftHintActive = false;
+    this.state.craftHintShown = true;
+    return true;
+  }
+
+  isCraftGuidanceActive(): boolean {
+    return this.state.craftHintActive && !this.state.craftHintShown;
+  }
+
   private createInitialState(initialState?: TutorialState): TutorialState {
     if (
       initialState === undefined ||
@@ -124,7 +157,12 @@ export class TutorialSystem {
       currentStepId: initialState.currentStepId,
       completed: initialState.completed === true,
       completionRewardClaimed:
-        initialState.completed === true || initialState.completionRewardClaimed === true
+        initialState.completed === true || initialState.completionRewardClaimed === true,
+      craftHintActive:
+        initialState.completed === true &&
+        initialState.craftHintShown !== true &&
+        initialState.craftHintActive === true,
+      craftHintShown: initialState.craftHintShown === true
     };
   }
 
