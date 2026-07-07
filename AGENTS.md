@@ -1,4 +1,4 @@
-# AGENTS.md — Bloomstead Project Instructions
+# AGENTS.md - Bloomstead Project Instructions
 
 ## Project Identity
 
@@ -50,7 +50,6 @@ The MVP should include:
 * Isometric 2D farm grid
 * 12 unlocked crop plots
 * Three crops:
-
   * Sunwheat
   * Carrot
   * Glowberry
@@ -58,11 +57,13 @@ The MVP should include:
 * Tap/swipe harvesting
 * Crop growth timers
 * Coins
-* Crop inventory
+* Crop and processed-good inventory
 * Crop selling fallback
 * Seed purchasing
 * Order board
-* 5 basic MVP orders
+* MVP orders, including Baker's Flour
+* First production building: Mill
+* Flour as a processed good
 * Lightweight tutorial/onboarding prompts
 * Farm XP
 * Farm level
@@ -99,18 +100,23 @@ The MVP should not include:
 * Storage limits: not in MVP; add later.
 * Orders: no deadlines in MVP; timed premium orders later.
 * Order availability: active orders should not require crops above the current farm level.
-* Offline progress: crops grow offline.
+* Offline progress: crops and Mill production progress offline.
 * Starting coins: 100 coins for new game and Dev Reset.
 * Crop selling: harvested crops can be sold using current crop sell values as a fallback for seed money.
-* Crop sell UI: current `S +4c`, `C +12c`, and `G +32c` labels are functional but temporary; replace them in a future UI/art polish pass with readable rows such as `Sunwheat x7 — Sell +4c`.
+* Crop sell UI: current readable text rows are functional for MVP; future art/UI polish can replace or augment them with icons.
+* Production: the Mill is the first MVP production building.
+  * Recipe: 2 Sunwheat -> 1 Flour.
+  * Production time: 15 seconds.
+  * Flour is stored as a processed good and is not plantable.
+  * Mill production continues offline.
+  * Finished Mill production loads as ready but does not auto-collect.
+* Baker's Flour order: requires 2 Flour, rewards 90 coins and 20 XP, and is gated at farm level 2.
 * Starting plot layout: 3x4 centered crop bed, 12 unlocked plots.
 * Plot upgrades should preserve a uniform rectangular crop bed:
-
   * Start: 3x4 crop bed, 12 plots.
   * Upgrade 1: 4x4 crop bed, unlocks 4 plots.
   * Upgrade 2: 5x4 crop bed, unlocks 4 plots.
   * Upgrade 3: 6x4 crop bed, unlocks 4 plots.
-
 * The final MVP plot upgrade unlocks 4 plots, not 8.
 * Tutorial: includes a sell-crop step after the first plot upgrade and a one-time 75 coin completion reward.
 * Strategy level: 6/10.
@@ -189,6 +195,8 @@ Crop data should live outside the scene logic.
 Order data should live outside the scene logic.
 
 Upgrade data should live outside the scene logic.
+
+Production/building data should live outside the scene logic.
 
 Avoid scattering tuning numbers throughout the codebase.
 
