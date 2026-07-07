@@ -1,6 +1,3 @@
-New-Item -ItemType Directory -Force .github\workflows
-
-@'
 name: Deploy to GitHub Pages
 
 on:
@@ -41,4 +38,3 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
-'@ | Set-Content .github\workflows\pages.yml
