@@ -28,7 +28,16 @@ Ready crops should look clearly harvestable without relying only on a circle mar
 
 The MVP now includes the Mill as the first production building. Its current UI is functional placeholder art.
 
-Future Mill art should make it read as a cozy small farm building or workbench, not an industrial factory. It should support the simple chain `2 Sunwheat -> 1 Flour` without implying a large crafting system. Flour should get a clear, readable icon for production output, inventory, and orders.
+The current production UI pattern is:
+
+* Farm screen has a compact `Craft` button.
+* Full production details live in the `Production` menu.
+* Farm screen shows compact production status chips only when a job is producing or ready.
+* Idle production systems should not take farm-screen space.
+* Tapping a production chip opens the `Production` menu.
+* Tapping outside the `Production` menu closes it.
+
+Use this pattern for future production systems such as Bakery, Press, Brewery, etc. Future Mill art should make it read as a cozy small farm building or workbench, not an industrial factory. It should support the simple chain `2 Sunwheat -> 1 Flour` without implying a large crafting system. Flour should get a clear, readable icon for production output, inventory, and orders.
 
 ## UI Direction
 
@@ -83,7 +92,9 @@ Recommended first pass:
 * Improved plot tile art
 * Simple crop sprites or generated crop shapes
 * Improved crop sell UI
-* Improved Mill panel/building placeholder
+* Improved Craft button art/icon
+* Improved production status chip visuals/icons
+* Improved Mill menu/building placeholder
 * Clear Flour icon
 * Improved tutorial completion reward feedback
 * Sound manager foundation

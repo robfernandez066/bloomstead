@@ -22,6 +22,12 @@ The MVP includes:
   * Flour is not plantable.
   * Mill production continues offline.
   * Finished Mill production loads as ready but does not auto-collect.
+  * Farm screen production uses a compact `Craft` button.
+  * Full production details live in the `Production` menu.
+  * Farm screen production status uses compact chips only while a job is producing or ready.
+  * Idle production systems should not take farm-screen space.
+  * Tapping a production status chip opens the `Production` menu.
+  * Tapping outside the `Production` menu closes it.
 * Harvest-to-inventory feedback when crops are collected.
 * Order completion coin/XP fly-to-HUD reward feedback.
 * Swipe harvesting aggregate `Gathered X Crop` text to reduce clutter.
@@ -63,7 +69,11 @@ In a future UI/art polish pass, consider replacing or augmenting text rows with 
 
 Future Mill production polish:
 
-* Replace the placeholder Mill panel with clear Mill building/UI art.
+* The old full-width Mill farm-screen panel was replaced by the compact Craft button, Production menu, and status chip pattern.
+* Use this Production menu/status chip pattern for future systems such as Bakery, Press, Brewery, etc.
+* Give the Craft button/icon proper art so it reads clearly as production/crafting.
+* Polish production status chips with clearer visuals and icons.
+* Replace placeholder Mill/menu visuals with clear Mill building/UI art.
 * Give Flour a readable icon for inventory, orders, and production output.
 * Add SFX hooks/assets for Mill start, production complete, and Flour collect.
 * Future production chains may expand from the Mill pattern, but should stay simple and modular.
