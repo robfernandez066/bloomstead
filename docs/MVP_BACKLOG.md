@@ -11,16 +11,29 @@ The MVP includes:
 * A 3x4 starting crop bed with rectangular plot upgrades to 4x4, 5x4, and 6x4.
 * Level-aware order availability:
   * Level 1 orders should only require Sunwheat.
-  * Level 2 orders may require Sunwheat and Carrot.
+  * Level 2 orders may require Sunwheat and Carrot, plus the Flour order.
   * Level 3+ orders may use any MVP crop.
 * Crop selling as a fallback way to regain seed money.
 * Readable crop sell/inventory rows for each MVP crop.
+* First production building: the Mill.
+  * Recipe: `2 Sunwheat -> 1 Flour`.
+  * Production time: 15 seconds.
+  * Flour is stored as a processed good.
+  * Flour is not plantable.
+  * Mill production continues offline.
+  * Finished Mill production loads as ready but does not auto-collect.
 * Harvest-to-inventory feedback when crops are collected.
 * Order completion coin/XP fly-to-HUD reward feedback.
 * Swipe harvesting aggregate `Gathered X Crop` text to reduce clutter.
 * Save/load, active order persistence, and offline crop growth.
 * Tutorial flow with a sell-crop step after the first plot upgrade.
 * One-time 75 coin tutorial completion reward with basic reward feedback.
+
+Current MVP orders include Baker's Flour:
+
+* Requires: 2 Flour.
+* Rewards: 90 coins and 20 XP.
+* Gated at farm level 2.
 
 ## Tutorial Notes
 
@@ -44,12 +57,19 @@ The current crop sell/inventory rows are readable and functional for MVP, but th
 
 In a future UI/art polish pass, consider replacing or augmenting text rows with small crop icons and a more polished row layout:
 
-* `Sunwheat x7 — Sell +4c`
-* `Carrot x0 — Sell +12c`
-* `Glowberry x0 — Sell +32c`
+* `Sunwheat x7 - Sell +4c`
+* `Carrot x0 - Sell +12c`
+* `Glowberry x0 - Sell +32c`
+
+Future Mill production polish:
+
+* Replace the placeholder Mill panel with clear Mill building/UI art.
+* Give Flour a readable icon for inventory, orders, and production output.
+* Add SFX hooks/assets for Mill start, production complete, and Flour collect.
+* Future production chains may expand from the Mill pattern, but should stay simple and modular.
 
 * Later, add a satisfying coin sound and light haptic feedback when mobile support exists.
 
 ## Scope Guardrails
 
-Do not add storage, machines, workers, research, new crops, sound, haptics, daily rewards, monetization, or new gameplay systems unless explicitly requested.
+Do not add storage, additional machines, workers, research, new crops, sound assets, haptics, daily rewards, monetization, or new gameplay systems unless explicitly requested.

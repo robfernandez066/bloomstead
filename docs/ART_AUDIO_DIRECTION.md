@@ -24,6 +24,12 @@ Each crop should eventually have at least a planted/growing state and a ready-to
 
 Ready crops should look clearly harvestable without relying only on a circle marker.
 
+## Production Building Direction
+
+The MVP now includes the Mill as the first production building. Its current UI is functional placeholder art.
+
+Future Mill art should make it read as a cozy small farm building or workbench, not an industrial factory. It should support the simple chain `2 Sunwheat -> 1 Flour` without implying a large crafting system. Flour should get a clear, readable icon for production output, inventory, and orders.
+
 ## UI Direction
 
 UI should use rounded cream panels, soft borders, readable mobile text, large tap targets, and minimal clutter. Controls should be compact but understandable.
@@ -60,6 +66,9 @@ First SFX list:
 * Plot unlock
 * Disabled/error tap
 * Tutorial complete
+* Mill start
+* Mill production complete
+* Flour collect
 
 Style should be soft, bright, and cozy: small wooden taps, chimes, coin jingles, and gentle magical sparkles. Avoid harsh arcade sounds.
 
@@ -74,9 +83,11 @@ Recommended first pass:
 * Improved plot tile art
 * Simple crop sprites or generated crop shapes
 * Improved crop sell UI
+* Improved Mill panel/building placeholder
+* Clear Flour icon
 * Improved tutorial completion reward feedback
 * Sound manager foundation
-* Placeholder/generated or temporary SFX hooks only if no assets exist yet
+* Placeholder/generated or temporary SFX hooks only if no assets exist yet, including Mill start/complete/collect hooks
 
 ## Out of Scope For First Art/Audio Pass
 
