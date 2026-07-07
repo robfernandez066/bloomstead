@@ -186,7 +186,8 @@ export class FeedbackSystem {
     targetY: number,
     coins: number
   ): void {
-    this.showFloatingText(`+${coins} Coins`, sourceX, sourceY - 18, 1000, 30, '#fff4a8');
+    this.showFloatingText(`+${coins} coins`, sourceX, sourceY - 20, 1400, 36, '#fff4a8');
+    this.showFloatingText(`+${coins} coins`, targetX + 58, targetY + 18, 1600, 28, '#fff4a8');
 
     const glow = this.scene.add
       .ellipse(sourceX, sourceY, 92, 34, POP_FILL, 0.32)

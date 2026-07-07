@@ -11,7 +11,9 @@ const DEFAULT_TUTORIAL_STATE: TutorialState = {
   completed: false,
   completionRewardClaimed: false,
   craftHintActive: false,
-  craftHintShown: false
+  craftHintShown: false,
+  tutorialSunwheatRequiredPlots: 0,
+  tutorialSunwheatHarvested: 0
 };
 
 export const TUTORIAL_COMPLETION_REWARD_COINS = 75;
@@ -34,7 +36,7 @@ export class TutorialSystem {
   getCurrentStep(): TutorialStepDefinition | null {
     if (this.state.completed) {
       if (this.isCraftGuidanceActive()) {
-        return TUTORIAL_STEP_BY_ID['craft-hint'];
+        return TUTORIAL_STEP_BY_ID[this.state.currentStepId] ?? TUTORIAL_STEP_BY_ID['craft-open'];
       }
 
       return null;
@@ -66,16 +68,35 @@ export class TutorialSystem {
 
     this.state.completionRewardClaimed = true;
     this.state.completed = true;
+    this.state.craftHintActive = false;
+    this.state.craftHintShown = true;
     return { coinReward: TUTORIAL_COMPLETION_REWARD_COINS };
   }
 
   recordCropPlanted(cropId: CropId): boolean {
+    if (cropId !== 'sunwheat') {
+      return false;
+    }
+
+    return this.recordSunwheatPlantingProgress(1, 1);
+  }
+
+  recordSunwheatPlantingProgress(plantedSunwheatCount: number, requiredPlotCount: number): boolean {
     if (
+      this.state.completed ||
       (this.state.currentStepId !== 'welcome' &&
-        this.state.currentStepId !== 'select-sunwheat') ||
-      cropId !== 'sunwheat'
+        this.state.currentStepId !== 'select-sunwheat')
     ) {
       return false;
+    }
+
+    const requiredCount = Math.max(1, requiredPlotCount);
+    this.state.tutorialSunwheatRequiredPlots = requiredCount;
+
+    if (plantedSunwheatCount < requiredCount) {
+      return this.state.currentStepId === 'welcome' && plantedSunwheatCount > 0
+        ? this.advanceTo('select-sunwheat')
+        : false;
     }
 
     return this.advanceTo('wait-for-crop');
@@ -89,12 +110,25 @@ export class TutorialSystem {
     return this.advanceTo('harvest');
   }
 
-  recordCropHarvested(): boolean {
+  recordCropHarvested(cropId: CropId = 'sunwheat'): boolean {
     if (this.state.currentStepId !== 'harvest') {
       return false;
     }
 
-    return this.advanceTo('complete-order');
+    if (cropId !== 'sunwheat') {
+      return false;
+    }
+
+    this.state.tutorialSunwheatHarvested += 1;
+    return this.advanceHarvestIfComplete();
+  }
+
+  syncHarvestProgress(remainingPlantedSunwheatCount: number): boolean {
+    if (this.state.currentStepId !== 'harvest' || remainingPlantedSunwheatCount > 0) {
+      return false;
+    }
+
+    return this.advanceHarvestIfComplete();
   }
 
   recordOrderCompleted(): boolean {
@@ -118,7 +152,7 @@ export class TutorialSystem {
       return false;
     }
 
-    return this.advanceTo('complete');
+    return this.advanceTo('craft-open');
   }
 
   activateCraftGuidance(): boolean {
@@ -126,22 +160,84 @@ export class TutorialSystem {
       return false;
     }
 
+    this.state.currentStepId = 'craft-open';
     this.state.craftHintActive = true;
     return true;
   }
 
-  completeCraftGuidance(): boolean {
-    if (!this.isCraftGuidanceActive()) {
+  recordCraftOpened(): boolean {
+    if (this.state.currentStepId === 'craft-open') {
+      return this.advanceTo('craft-start-mill');
+    }
+
+    if (this.state.currentStepId === 'craft-open-ready') {
+      return this.advanceTo('craft-collect-flour');
+    }
+
+    return false;
+  }
+
+  recordMillStarted(): boolean {
+    if (this.state.currentStepId === 'craft-start-mill') {
+      return this.advanceTo('craft-wait-flour');
+    }
+
+    if (this.state.currentStepId === 'craft-start-second-mill') {
+      return this.advanceTo('craft-close-menu');
+    }
+
+    return false;
+  }
+
+  recordMillReady(): boolean {
+    if (this.state.currentStepId !== 'craft-wait-flour') {
       return false;
     }
 
-    this.state.craftHintActive = false;
-    this.state.craftHintShown = true;
-    return true;
+    return this.advanceTo('craft-open-ready');
+  }
+
+  recordFlourCollected(): boolean {
+    if (this.state.currentStepId !== 'craft-collect-flour') {
+      return false;
+    }
+
+    return this.advanceTo('craft-start-second-mill');
+  }
+
+  recordProductionMenuClosed(): boolean {
+    if (this.state.currentStepId !== 'craft-close-menu') {
+      return false;
+    }
+
+    return this.advanceTo('complete');
   }
 
   isCraftGuidanceActive(): boolean {
-    return this.state.craftHintActive && !this.state.craftHintShown;
+    return (
+      (this.state.craftHintActive && !this.state.craftHintShown) ||
+      (!this.state.completed && this.isCraftTutorialStep(this.state.currentStepId))
+    );
+  }
+
+  canPurchasePlotUpgrade(): boolean {
+    return this.state.completed || this.state.currentStepId === 'upgrade-plots';
+  }
+
+  shouldHighlightCraftButton(): boolean {
+    return this.state.currentStepId === 'craft-open';
+  }
+
+  shouldHighlightMillReady(): boolean {
+    return this.state.currentStepId === 'craft-open-ready';
+  }
+
+  shouldHighlightMillActionButton(): boolean {
+    return (
+      this.state.currentStepId === 'craft-start-mill' ||
+      this.state.currentStepId === 'craft-collect-flour' ||
+      this.state.currentStepId === 'craft-start-second-mill'
+    );
   }
 
   private createInitialState(initialState?: TutorialState): TutorialState {
@@ -153,8 +249,13 @@ export class TutorialSystem {
       return { ...DEFAULT_TUTORIAL_STATE };
     }
 
+    const currentStepId =
+      initialState.currentStepId === 'craft-hint'
+        ? 'craft-open'
+        : initialState.currentStepId;
+
     return {
-      currentStepId: initialState.currentStepId,
+      currentStepId,
       completed: initialState.completed === true,
       completionRewardClaimed:
         initialState.completed === true || initialState.completionRewardClaimed === true,
@@ -162,7 +263,15 @@ export class TutorialSystem {
         initialState.completed === true &&
         initialState.craftHintShown !== true &&
         initialState.craftHintActive === true,
-      craftHintShown: initialState.craftHintShown === true
+      craftHintShown: initialState.craftHintShown === true,
+      tutorialSunwheatRequiredPlots:
+        typeof initialState.tutorialSunwheatRequiredPlots === 'number'
+          ? initialState.tutorialSunwheatRequiredPlots
+          : DEFAULT_TUTORIAL_STATE.tutorialSunwheatRequiredPlots,
+      tutorialSunwheatHarvested:
+        typeof initialState.tutorialSunwheatHarvested === 'number'
+          ? initialState.tutorialSunwheatHarvested
+          : DEFAULT_TUTORIAL_STATE.tutorialSunwheatHarvested
     };
   }
 
@@ -173,5 +282,27 @@ export class TutorialSystem {
 
     this.state.currentStepId = stepId;
     return true;
+  }
+
+  private advanceHarvestIfComplete(): boolean {
+    const requiredCount = Math.max(1, this.state.tutorialSunwheatRequiredPlots);
+
+    if (this.state.tutorialSunwheatHarvested < requiredCount) {
+      return false;
+    }
+
+    return this.advanceTo('complete-order');
+  }
+
+  private isCraftTutorialStep(stepId: TutorialStepId): boolean {
+    return (
+      stepId === 'craft-open' ||
+      stepId === 'craft-start-mill' ||
+      stepId === 'craft-wait-flour' ||
+      stepId === 'craft-open-ready' ||
+      stepId === 'craft-collect-flour' ||
+      stepId === 'craft-start-second-mill' ||
+      stepId === 'craft-close-menu'
+    );
   }
 }

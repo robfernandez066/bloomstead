@@ -3,22 +3,22 @@ import type { TutorialStepDefinition, TutorialStepId } from '../models/TutorialT
 export const TUTORIAL_STEPS: TutorialStepDefinition[] = [
   {
     id: 'welcome',
-    message: 'Welcome to Bloomstead! Tap or drag empty plots to grow your first Sunwheat.',
+    message: 'Welcome to Bloomstead! Fill every starter plot with Sunwheat.',
     requiresAcknowledgement: false
   },
   {
     id: 'select-sunwheat',
-    message: 'Sunwheat is selected. Tap or drag over empty plots to plant.',
+    message: 'Sunwheat is selected. Tap or drag over every empty starter plot.',
     requiresAcknowledgement: false
   },
   {
     id: 'wait-for-crop',
-    message: "Crops grow over time. Sunwheat is quick - it'll be ready soon.",
+    message: "Nice field! Sunwheat grows quickly - wait until it is ready.",
     requiresAcknowledgement: false
   },
   {
     id: 'harvest',
-    message: 'Tap or swipe ready crops to harvest them.',
+    message: 'Tap or swipe to harvest all of your tutorial Sunwheat.',
     requiresAcknowledgement: false
   },
   {
@@ -28,7 +28,7 @@ export const TUTORIAL_STEPS: TutorialStepDefinition[] = [
   },
   {
     id: 'upgrade-plots',
-    message: 'Use coins to unlock more plots and grow more at once.',
+    message: 'You can spend gold to expand your farm. Tap here to upgrade.',
     requiresAcknowledgement: false
   },
   {
@@ -43,7 +43,42 @@ export const TUTORIAL_STEPS: TutorialStepDefinition[] = [
   },
   {
     id: 'craft-hint',
-    message: 'Use Craft to turn Sunwheat into Flour.',
+    message: 'You can refine your crops further using the Craft menu.',
+    requiresAcknowledgement: false
+  },
+  {
+    id: 'craft-open',
+    message: 'You can refine your crops further using the Craft menu.',
+    requiresAcknowledgement: false
+  },
+  {
+    id: 'craft-start-mill',
+    message: 'Tap Start to begin using the Mill and create some Flour.',
+    requiresAcknowledgement: false
+  },
+  {
+    id: 'craft-wait-flour',
+    message: 'Wait for the flour to be completed.',
+    requiresAcknowledgement: false
+  },
+  {
+    id: 'craft-open-ready',
+    message: 'Collect your flour from the mill by tapping here.',
+    requiresAcknowledgement: false
+  },
+  {
+    id: 'craft-collect-flour',
+    message: 'Tap the Collect button.',
+    requiresAcknowledgement: false
+  },
+  {
+    id: 'craft-start-second-mill',
+    message: 'Start another mill production order by clicking start.',
+    requiresAcknowledgement: false
+  },
+  {
+    id: 'craft-close-menu',
+    message: 'Tap here to close production window.',
     requiresAcknowledgement: false
   }
 ];

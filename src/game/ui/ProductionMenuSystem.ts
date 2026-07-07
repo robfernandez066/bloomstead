@@ -24,6 +24,7 @@ interface ProductionMenuConfig {
   onStart: (recipeId: ProductionRecipeId) => void;
   onCollect: (recipeId: ProductionRecipeId) => void;
   onClose: () => void;
+  shouldHighlightAction?: (recipeId: ProductionRecipeId, action: 'start' | 'collect') => boolean;
 }
 
 export class ProductionMenuSystem {
@@ -118,6 +119,9 @@ export class ProductionMenuSystem {
     const canStart = this.productionSystem.canStartRecipe(recipe.id);
     const buttonLabel = state.status === 'ready' ? 'Collect' : 'Start';
     const buttonEnabled = state.status === 'ready' || canStart;
+    const buttonAction = state.status === 'ready' ? 'collect' : 'start';
+    const highlighted =
+      buttonEnabled && this.config.shouldHighlightAction?.(recipe.id, buttonAction) === true;
 
     this.objects.push(
       this.scene.add
@@ -168,9 +172,20 @@ export class ProductionMenuSystem {
         buttonEnabled ? READY_FILL : DISABLED_FILL
       )
       .setOrigin(0, 0)
-      .setStrokeStyle(2, PANEL_STROKE)
+      .setStrokeStyle(highlighted ? 3 : 2, highlighted ? 0xffe27a : PANEL_STROKE)
       .setAlpha(buttonEnabled ? 1 : 0.78)
       .setDepth(DEPTH + 3);
+
+    if (highlighted) {
+      this.scene.tweens.add({
+        targets: button,
+        alpha: 0.72,
+        duration: 520,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut'
+      });
+    }
 
     if (buttonEnabled) {
       button.setInteractive({ useHandCursor: true });

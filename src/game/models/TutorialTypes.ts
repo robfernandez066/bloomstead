@@ -7,7 +7,14 @@ export type TutorialStepId =
   | 'upgrade-plots'
   | 'sell-crop'
   | 'complete'
-  | 'craft-hint';
+  | 'craft-hint'
+  | 'craft-open'
+  | 'craft-start-mill'
+  | 'craft-wait-flour'
+  | 'craft-open-ready'
+  | 'craft-collect-flour'
+  | 'craft-start-second-mill'
+  | 'craft-close-menu';
 
 export interface TutorialStepDefinition {
   id: TutorialStepId;
@@ -21,4 +28,6 @@ export interface TutorialState {
   completionRewardClaimed: boolean;
   craftHintActive: boolean;
   craftHintShown: boolean;
+  tutorialSunwheatRequiredPlots: number;
+  tutorialSunwheatHarvested: number;
 }

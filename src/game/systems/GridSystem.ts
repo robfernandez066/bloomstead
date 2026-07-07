@@ -9,12 +9,12 @@ import {
   gridToIso
 } from '../utils/isometric';
 
-const UNLOCKED_FILL = 0x86b85f;
-const UNLOCKED_STROKE = 0x496f38;
-const PLANTED_FILL = 0x789e4e;
+const UNLOCKED_FILL = 0x9b7449;
+const UNLOCKED_STROKE = 0x6f5734;
+const PLANTED_FILL = 0x6f8f4a;
 const LOCKED_FILL = 0x66746a;
 const LOCKED_STROKE = 0x3f4842;
-const HOVER_FILL = 0xa8d87d;
+const HOVER_FILL = 0xb48756;
 const HARVEST_PARTICLE_FILL = 0xffd65f;
 const LEAF_FILL = 0x67a845;
 const DARK_LEAF_FILL = 0x315f35;
@@ -90,6 +90,35 @@ export class GridSystem {
     return new Phaser.Math.Vector2(
       this.gridContainer.x + position.x,
       this.gridContainer.y + position.y
+    );
+  }
+
+  getVisiblePlotScreenBounds(padding = 6): Phaser.Geom.Rectangle {
+    const visiblePlots = this.plots.filter((plot) => plot.unlocked);
+
+    if (visiblePlots.length === 0) {
+      return new Phaser.Geom.Rectangle(this.config.area.x, this.config.area.y, 0, 0);
+    }
+
+    let minX = Number.POSITIVE_INFINITY;
+    let maxX = Number.NEGATIVE_INFINITY;
+    let minY = Number.POSITIVE_INFINITY;
+    let maxY = Number.NEGATIVE_INFINITY;
+
+    for (const plot of visiblePlots) {
+      const center = this.getPlotScreenPosition(plot);
+
+      minX = Math.min(minX, center.x - this.config.tileWidth / 2);
+      maxX = Math.max(maxX, center.x + this.config.tileWidth / 2);
+      minY = Math.min(minY, center.y - this.config.tileHeight / 2);
+      maxY = Math.max(maxY, center.y + this.config.tileHeight / 2);
+    }
+
+    return new Phaser.Geom.Rectangle(
+      minX - padding,
+      minY - padding,
+      maxX - minX + padding * 2,
+      maxY - minY + padding * 2
     );
   }
 

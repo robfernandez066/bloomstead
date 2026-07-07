@@ -1,11 +1,20 @@
 import Phaser from 'phaser';
 import type { TutorialSystem } from '../systems/TutorialSystem';
+import type { TutorialStepId } from '../models/TutorialTypes';
 
 const PANEL_FILL = 0xf7edc7;
 const PANEL_STROKE = 0x6f5734;
+const PANEL_HIGHLIGHT = 0xffe27a;
 const BUTTON_FILL = 0x6f5734;
 const TEXT_COLOR = '#2f3b26';
 const BUTTON_TEXT_COLOR = '#fff4d0';
+
+interface TutorialBounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
 interface TutorialPanelConfig {
   x: number;
@@ -13,6 +22,9 @@ interface TutorialPanelConfig {
   width: number;
   height: number;
   onAcknowledge: () => void;
+  getPanelBounds?: (stepId: TutorialStepId) => TutorialBounds;
+  getTargetBounds?: (stepId: TutorialStepId) => TutorialBounds | null;
+  shouldUseArrow?: (stepId: TutorialStepId) => boolean;
 }
 
 export class TutorialPanelSystem {
@@ -44,21 +56,39 @@ export class TutorialPanelSystem {
       return;
     }
 
+    const panelBounds = this.config.getPanelBounds?.(step.id) ?? this.config;
+    const targetBounds = this.config.getTargetBounds?.(step.id) ?? null;
+
+    if (targetBounds !== null) {
+      this.renderTargetGuidance(panelBounds, targetBounds);
+    }
+
     const panel = this.scene.add
-      .rectangle(this.config.x, this.config.y, this.config.width, this.config.height, PANEL_FILL)
+      .rectangle(panelBounds.x, panelBounds.y, panelBounds.width, panelBounds.height, PANEL_FILL)
       .setOrigin(0, 0)
-      .setStrokeStyle(2, PANEL_STROKE)
+      .setStrokeStyle(3, PANEL_STROKE)
       .setDepth(120);
 
     this.objects.push(panel);
 
+    if (step.id === 'complete') {
+      this.scene.tweens.add({
+        targets: panel,
+        alpha: 0.72,
+        duration: 520,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut'
+      });
+    }
+
     const textWidth = step.requiresAcknowledgement
-      ? this.config.width - 96
-      : this.config.width - 20;
+      ? panelBounds.width - 106
+      : panelBounds.width - 20;
 
     this.objects.push(
       this.scene.add
-        .text(this.config.x + 10, this.config.y + 10, step.message, {
+        .text(panelBounds.x + 10, panelBounds.y + 9, step.message, {
           color: TEXT_COLOR,
           fontFamily: 'Arial, sans-serif',
           fontSize: '13px',
@@ -70,19 +100,73 @@ export class TutorialPanelSystem {
     );
 
     if (step.requiresAcknowledgement) {
-      this.renderAcknowledgeButton(step.id === 'complete' ? 'Complete' : 'Next');
+      this.renderAcknowledgeButton(panelBounds, step.id === 'complete' ? 'Complete' : 'Next');
     }
   }
 
-  private renderAcknowledgeButton(label: string): void {
+  private renderTargetGuidance(panelBounds: TutorialBounds, targetBounds: TutorialBounds): void {
+    const highlight = this.scene.add
+      .rectangle(
+        targetBounds.x,
+        targetBounds.y,
+        targetBounds.width,
+        targetBounds.height,
+        PANEL_HIGHLIGHT,
+        0.12
+      )
+      .setOrigin(0, 0)
+      .setStrokeStyle(3, PANEL_HIGHLIGHT)
+      .setDepth(118);
+
+    this.scene.tweens.add({
+      targets: highlight,
+      alpha: 0.32,
+      duration: 520,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+
+    this.objects.push(highlight);
+
+    const step = this.tutorialSystem.getCurrentStep();
+
+    if (step !== null && this.config?.shouldUseArrow?.(step.id) === true) {
+      this.renderArrow(panelBounds, targetBounds);
+    }
+  }
+
+  private renderArrow(panelBounds: TutorialBounds, targetBounds: TutorialBounds): void {
+    const graphics = this.scene.add.graphics().setDepth(119);
+    const panelCenterX = panelBounds.x + panelBounds.width / 2;
+    const panelCenterY = panelBounds.y + panelBounds.height / 2;
+    const targetCenterX = targetBounds.x + targetBounds.width / 2;
+    const targetCenterY = targetBounds.y + targetBounds.height / 2;
+
+    graphics.lineStyle(3, PANEL_HIGHLIGHT, 0.95);
+    graphics.lineBetween(panelCenterX, panelCenterY, targetCenterX, targetCenterY);
+    graphics.fillStyle(PANEL_HIGHLIGHT, 0.95);
+    graphics.fillTriangle(
+      targetCenterX,
+      targetCenterY - 7,
+      targetCenterX + 7,
+      targetCenterY + 6,
+      targetCenterX - 7,
+      targetCenterY + 6
+    );
+
+    this.objects.push(graphics);
+  }
+
+  private renderAcknowledgeButton(bounds: TutorialBounds, label: string): void {
     if (this.config === undefined) {
       return;
     }
 
     const buttonWidth = label === 'Complete' ? 82 : 66;
     const buttonHeight = 30;
-    const buttonX = this.config.x + this.config.width - buttonWidth - 10;
-    const buttonY = this.config.y + (this.config.height - buttonHeight) / 2;
+    const buttonX = bounds.x + bounds.width - buttonWidth - 10;
+    const buttonY = bounds.y + (bounds.height - buttonHeight) / 2;
 
     const button = this.scene.add
       .rectangle(buttonX, buttonY, buttonWidth, buttonHeight, BUTTON_FILL)

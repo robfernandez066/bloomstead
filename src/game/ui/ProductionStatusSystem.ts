@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import type { ProductionRecipeDefinition } from '../models/ProductionTypes';
+import type { ProductionRecipeId } from '../models/ProductionTypes';
 import type { ProductionSystem } from '../systems/ProductionSystem';
 
 const BUTTON_FILL = 0xe8f0bb;
@@ -25,6 +26,7 @@ interface ProductionStatusConfig {
   statusHeight: number;
   onOpen: () => void;
   highlightButton?: () => boolean;
+  highlightRecipeChip?: (recipeId: ProductionRecipeId) => boolean;
 }
 
 export class ProductionStatusSystem {
@@ -116,6 +118,7 @@ export class ProductionStatusSystem {
   ): void {
     const state = this.productionSystem.getRecipeState(recipe.id);
     const ready = state.status === 'ready';
+    const highlighted = config.highlightRecipeChip?.(recipe.id) === true;
     const chipX = config.statusX + index * (CHIP_WIDTH + CHIP_GAP);
     const chipY = config.statusY + Math.max(0, (config.statusHeight - CHIP_HEIGHT) / 2);
     const chipWidth = Math.min(CHIP_WIDTH, config.statusX + config.statusWidth - chipX);
@@ -133,8 +136,19 @@ export class ProductionStatusSystem {
         ready ? READY_FILL : PANEL_FILL
       )
       .setOrigin(0, 0)
-      .setStrokeStyle(2, PANEL_STROKE)
+      .setStrokeStyle(highlighted ? 3 : 2, highlighted ? BUTTON_HIGHLIGHT_FILL : PANEL_STROKE)
       .setInteractive({ useHandCursor: true });
+
+    if (highlighted) {
+      this.scene.tweens.add({
+        targets: chip,
+        alpha: 0.7,
+        duration: 520,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut'
+      });
+    }
 
     chip.on('pointerdown', () => {
       config.onOpen();

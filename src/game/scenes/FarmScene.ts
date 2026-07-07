@@ -24,6 +24,7 @@ import { PlotStateSystem } from '../systems/PlotStateSystem';
 import { ProductionSystem } from '../systems/ProductionSystem';
 import { TutorialSystem } from '../systems/TutorialSystem';
 import { UpgradeSystem } from '../systems/UpgradeSystem';
+import type { TutorialStepId } from '../models/TutorialTypes';
 
 type DragMode = 'none' | 'plant' | 'harvest';
 
@@ -91,6 +92,16 @@ export class FarmScene extends Phaser.Scene {
     const productionStatusSystem = new ProductionStatusSystem(this, productionSystem);
     let gridSystem: GridSystem;
 
+    const getUnlockedPlotCount = (): number => {
+      return plotStateSystem.getPlots().filter((plot) => plot.unlocked).length;
+    };
+
+    const getPlantedSunwheatCount = (): number => {
+      return plotStateSystem
+        .getPlots()
+        .filter((plot) => plot.unlocked && plot.plantedCropId === 'sunwheat').length;
+    };
+
     const refreshProductionUi = (): void => {
       productionStatusSystem.refresh();
       productionMenuSystem.refresh();
@@ -123,34 +134,32 @@ export class FarmScene extends Phaser.Scene {
     const syncTutorialWithReadyCrop = (): boolean => {
       const hasReadyCrop = plotStateSystem
         .getPlots()
-        .some((plot) => plot.unlocked && plot.plantedCropId !== null && plot.ready);
+        .some((plot) => plot.unlocked && plot.plantedCropId === 'sunwheat' && plot.ready);
 
       return hasReadyCrop && tutorialSystem.recordCropReady();
     };
 
     const syncTutorialWithExistingSunwheat = (): boolean => {
-      const hasPlantedSunwheat = plotStateSystem
-        .getPlots()
-        .some((plot) => plot.unlocked && plot.plantedCropId === 'sunwheat');
-
-      return hasPlantedSunwheat && tutorialSystem.recordCropPlanted('sunwheat');
+      return tutorialSystem.recordSunwheatPlantingProgress(
+        getPlantedSunwheatCount(),
+        getUnlockedPlotCount()
+      );
     };
 
     const syncTutorialWithCurrentPlotState = (): boolean => {
       let advanced = false;
-      const hasHarvestedSunwheat = gameStateSystem.getState().cropInventory.sunwheat > 0;
-
-      if (hasHarvestedSunwheat) {
-        advanced = tutorialSystem.recordCropPlanted('sunwheat') || advanced;
-        advanced = tutorialSystem.recordCropReady() || advanced;
-        advanced = tutorialSystem.recordCropHarvested() || advanced;
-        return advanced;
-      }
 
       const advancedFromSunwheat = syncTutorialWithExistingSunwheat();
       const advancedFromReadyCrop = syncTutorialWithReadyCrop();
+      const advancedFromHarvest = tutorialSystem.syncHarvestProgress(getPlantedSunwheatCount());
 
-      return advancedFromSunwheat || advancedFromReadyCrop;
+      return advanced || advancedFromSunwheat || advancedFromReadyCrop || advancedFromHarvest;
+    };
+
+    const syncTutorialWithProductionState = (): boolean => {
+      const millState = productionSystem.getRecipeState(MILL_FLOUR_RECIPE_ID);
+
+      return millState.status === 'ready' && tutorialSystem.recordMillReady();
     };
 
     const handleLevelUp = (level: number): void => {
@@ -196,7 +205,9 @@ export class FarmScene extends Phaser.Scene {
       harvestResult: HarvestResult,
       textMode: 'defer-single' | 'aggregate'
     ): void => {
-      const tutorialAdvanced = tutorialSystem.recordCropHarvested();
+      const tutorialAdvanced =
+        tutorialSystem.recordCropHarvested(harvestResult.crop.id) ||
+        tutorialSystem.syncHarvestProgress(getPlantedSunwheatCount());
 
       gridSystem.refreshPlotVisuals();
       gridSystem.playHarvestEffect(harvestResult.plot);
@@ -233,7 +244,12 @@ export class FarmScene extends Phaser.Scene {
     };
 
     const handlePlantResult = (plantResult: PlantResult): void => {
-      const tutorialAdvanced = tutorialSystem.recordCropPlanted(plantResult.crop.id);
+      const tutorialAdvanced =
+        plantResult.crop.id === 'sunwheat' &&
+        tutorialSystem.recordSunwheatPlantingProgress(
+          getPlantedSunwheatCount(),
+          getUnlockedPlotCount()
+        );
 
       gridSystem.refreshPlotVisuals();
       gridSystem.playPlantEffect(plantResult.plot);
@@ -352,15 +368,22 @@ export class FarmScene extends Phaser.Scene {
         }
 
         audioSystem.playButtonTap();
+        const tutorialAdvanced =
+          recipeId === MILL_FLOUR_RECIPE_ID && tutorialSystem.recordMillStarted();
         refreshProductionUi();
         cropSellPanelSystem.refresh();
         orderBoardSystem.refresh();
+        refreshTutorialIfAdvanced(tutorialAdvanced);
         saveGame();
         feedbackSystem.showProductionStarted(
           width / 2,
           FARM_LAYOUT.productionStatus.y - 8,
           result.recipe.buildingName
         );
+
+        if (tutorialAdvanced && tutorialSystem.getCurrentStep()?.id === 'craft-wait-flour') {
+          productionMenuSystem.closeMenu();
+        }
       },
       onCollect: (recipeId) => {
         const result = productionSystem.collectReadyOutput(recipeId);
@@ -372,9 +395,12 @@ export class FarmScene extends Phaser.Scene {
 
         audioSystem.playButtonTap();
         audioSystem.playHarvest();
+        const tutorialAdvanced =
+          recipeId === MILL_FLOUR_RECIPE_ID && tutorialSystem.recordFlourCollected();
         refreshProductionUi();
         cropSellPanelSystem.refresh();
         orderBoardSystem.refresh();
+        refreshTutorialIfAdvanced(tutorialAdvanced);
         saveGame();
         feedbackSystem.showProductionCollected(
           width / 2,
@@ -385,6 +411,21 @@ export class FarmScene extends Phaser.Scene {
       },
       onClose: () => {
         audioSystem.playButtonTap();
+        refreshTutorialIfAdvanced(tutorialSystem.recordProductionMenuClosed());
+        saveGame();
+      },
+      shouldHighlightAction: (recipeId, action) => {
+        if (recipeId !== MILL_FLOUR_RECIPE_ID) {
+          return false;
+        }
+
+        const stepId = tutorialSystem.getCurrentStep()?.id;
+
+        return (
+          (action === 'start' &&
+            (stepId === 'craft-start-mill' || stepId === 'craft-start-second-mill')) ||
+          (action === 'collect' && stepId === 'craft-collect-flour')
+        );
       }
     });
 
@@ -397,11 +438,13 @@ export class FarmScene extends Phaser.Scene {
       statusY: FARM_LAYOUT.productionStatus.y,
       statusWidth: FARM_LAYOUT.productionStatus.width,
       statusHeight: FARM_LAYOUT.productionStatus.height,
-      highlightButton: () => tutorialSystem.isCraftGuidanceActive(),
+      highlightButton: () => tutorialSystem.shouldHighlightCraftButton(),
+      highlightRecipeChip: (recipeId) =>
+        recipeId === MILL_FLOUR_RECIPE_ID && tutorialSystem.shouldHighlightMillReady(),
       onOpen: () => {
         audioSystem.playButtonTap();
         productionMenuSystem.openMenu();
-        if (tutorialSystem.completeCraftGuidance()) {
+        if (tutorialSystem.recordCraftOpened()) {
           refreshOnboardingUi();
           saveGame();
         }
@@ -413,6 +456,8 @@ export class FarmScene extends Phaser.Scene {
       y: FARM_LAYOUT.plotUpgradePanel.y,
       width: FARM_LAYOUT.plotUpgradePanel.width,
       height: FARM_LAYOUT.plotUpgradePanel.height,
+      isLocked: () => !tutorialSystem.canPurchasePlotUpgrade(),
+      isHighlighted: () => tutorialSystem.getCurrentStep()?.id === 'upgrade-plots',
       onPurchase: () => {
         const result = upgradeSystem.purchaseNextPlotUpgrade();
 
@@ -460,7 +505,11 @@ export class FarmScene extends Phaser.Scene {
         orderBoardSystem.refresh();
         upgradePanelSystem.refresh();
         refreshProductionUi();
-        refreshTutorialIfAdvanced(tutorialSystem.recordOrderCompleted());
+        const tutorialAdvanced = tutorialSystem.recordOrderCompleted();
+        refreshTutorialIfAdvanced(tutorialAdvanced);
+        if (tutorialAdvanced) {
+          upgradePanelSystem.refresh();
+        }
         saveGame();
         audioSystem.playOrderComplete();
         audioSystem.playCoinGain();
@@ -527,6 +576,8 @@ export class FarmScene extends Phaser.Scene {
         }
 
         if (productionReadyRecipes.length > 0) {
+          let tutorialAdvanced = false;
+
           for (const recipe of productionReadyRecipes) {
             audioSystem.playCropReady();
             feedbackSystem.showProductionReady(
@@ -534,7 +585,13 @@ export class FarmScene extends Phaser.Scene {
               FARM_LAYOUT.productionStatus.y - 8,
               recipe.outputItemId
             );
+
+            if (recipe.id === MILL_FLOUR_RECIPE_ID) {
+              tutorialAdvanced = tutorialSystem.recordMillReady() || tutorialAdvanced;
+            }
           }
+          refreshTutorialIfAdvanced(tutorialAdvanced);
+          productionStatusSystem.refresh();
           saveGame();
         }
       }
@@ -553,11 +610,109 @@ export class FarmScene extends Phaser.Scene {
       }
     });
 
+    const getTutorialPanelBounds = (stepId: TutorialStepId) => {
+      const base = FARM_LAYOUT.tutorialPanel;
+
+      switch (stepId) {
+        case 'welcome':
+        case 'select-sunwheat':
+        case 'wait-for-crop':
+        case 'harvest':
+          return { ...base, y: 396, height: 66 };
+        case 'upgrade-plots':
+          return { ...base, y: 334, height: 62 };
+        case 'sell-crop':
+          return { ...base, y: 168, height: 62 };
+        case 'complete-order':
+          return { ...base, y: 650, height: 66 };
+        case 'craft-open':
+          return { ...base, y: 286, height: 66 };
+        case 'craft-start-mill':
+        case 'craft-wait-flour':
+        case 'craft-open-ready':
+        case 'craft-collect-flour':
+        case 'craft-start-second-mill':
+          return { ...base, y: 492, height: 66 };
+        case 'craft-close-menu':
+          return { ...base, y: 590, height: 58 };
+        default:
+          return base;
+      }
+    };
+
+    const getMillActionButtonBounds = () => ({
+      x: FARM_LAYOUT.productionMenu.x + FARM_LAYOUT.productionMenu.width - 104,
+      y: FARM_LAYOUT.productionMenu.y + 52 + 86 - 30 - 8,
+      width: 82,
+      height: 30
+    });
+
+    const getTutorialTargetBounds = (stepId: TutorialStepId) => {
+      switch (stepId) {
+        case 'welcome':
+        case 'select-sunwheat':
+        case 'wait-for-crop':
+        case 'harvest':
+          return gridSystem.getVisiblePlotScreenBounds();
+        case 'complete-order':
+          return {
+            x: FARM_LAYOUT.orderBoard.x + 10,
+            y: FARM_LAYOUT.orderBoard.y + 30,
+            width: FARM_LAYOUT.orderBoard.width - 20,
+            height: FARM_LAYOUT.orderBoard.orderHeight
+          };
+        case 'upgrade-plots':
+          return FARM_LAYOUT.plotUpgradePanel;
+        case 'sell-crop':
+          return {
+            x: FARM_LAYOUT.cropSellPanel.x,
+            y: FARM_LAYOUT.cropSellPanel.y,
+            width:
+              FARM_LAYOUT.cropSellPanel.buttonWidth * 3 +
+              FARM_LAYOUT.cropSellPanel.gap * 2,
+            height: FARM_LAYOUT.cropSellPanel.buttonHeight
+          };
+        case 'craft-open':
+          return FARM_LAYOUT.productionButton;
+        case 'craft-start-mill':
+        case 'craft-collect-flour':
+        case 'craft-start-second-mill':
+          return productionMenuSystem.isOpen()
+            ? getMillActionButtonBounds()
+            : FARM_LAYOUT.productionButton;
+        case 'craft-open-ready':
+          return {
+            x: FARM_LAYOUT.productionStatus.x,
+            y: FARM_LAYOUT.productionStatus.y,
+            width: 108,
+            height: FARM_LAYOUT.productionStatus.height
+          };
+        case 'craft-close-menu':
+          return {
+            x: 18,
+            y: FARM_LAYOUT.productionMenu.y + FARM_LAYOUT.productionMenu.height + 8,
+            width: 76,
+            height: 48
+          };
+        case 'craft-wait-flour':
+          return null;
+        default:
+          return null;
+      }
+    };
+
+    const shouldUseTutorialArrow = (stepId: TutorialStepId) => {
+      return stepId === 'craft-close-menu';
+    };
+
     tutorialPanelSystem.render({
       x: FARM_LAYOUT.tutorialPanel.x,
       y: FARM_LAYOUT.tutorialPanel.y,
       width: FARM_LAYOUT.tutorialPanel.width,
       height: FARM_LAYOUT.tutorialPanel.height,
+      getPanelBounds: getTutorialPanelBounds,
+      getTargetBounds: getTutorialTargetBounds,
+      shouldUseArrow: shouldUseTutorialArrow,
       onAcknowledge: () => {
         if (tutorialSystem.getCurrentStep()?.id === 'complete') {
           const result = tutorialSystem.completeTutorial();
@@ -576,9 +731,10 @@ export class FarmScene extends Phaser.Scene {
           saveGame();
           audioSystem.playTutorialComplete();
           audioSystem.playCoinGain();
+          const completionPanel = getTutorialPanelBounds('complete');
           feedbackSystem.showTutorialCompletionReward(
-            FARM_LAYOUT.tutorialPanel.x + FARM_LAYOUT.tutorialPanel.width - 52,
-            FARM_LAYOUT.tutorialPanel.y + FARM_LAYOUT.tutorialPanel.height / 2,
+            completionPanel.x + completionPanel.width - 52,
+            completionPanel.y + completionPanel.height / 2,
             FARM_LAYOUT.hud.x + 58,
             FARM_LAYOUT.hud.y + 20,
             result.coinReward
@@ -611,8 +767,9 @@ export class FarmScene extends Phaser.Scene {
       }
     });
 
-    if (syncTutorialWithCurrentPlotState()) {
+    if (syncTutorialWithCurrentPlotState() || syncTutorialWithProductionState()) {
       tutorialPanelSystem.refresh();
+      productionStatusSystem.refresh();
       saveGame();
     }
 
