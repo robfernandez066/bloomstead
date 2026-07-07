@@ -52,6 +52,8 @@ export class FarmScene extends Phaser.Scene {
     const tutorialSystem = new TutorialSystem(savedGameData?.tutorialState);
     const feedbackSystem = new FeedbackSystem(this);
     let dragMode: DragMode = 'none';
+    let pendingTapHarvest: HarvestResult | null = null;
+    let pendingTapHarvestPosition: Phaser.Math.Vector2 | null = null;
 
     const saveGame = (): void => {
       saveSystem.save(
@@ -82,12 +84,27 @@ export class FarmScene extends Phaser.Scene {
       }
     };
 
-    const syncTutorialWithLoadedReadyCrop = (): boolean => {
+    const syncTutorialWithReadyCrop = (): boolean => {
       const hasReadyCrop = plotStateSystem
         .getPlots()
         .some((plot) => plot.unlocked && plot.plantedCropId !== null && plot.ready);
 
       return hasReadyCrop && tutorialSystem.recordCropReady();
+    };
+
+    const syncTutorialWithExistingSunwheat = (): boolean => {
+      const hasPlantedSunwheat = plotStateSystem
+        .getPlots()
+        .some((plot) => plot.unlocked && plot.plantedCropId === 'sunwheat');
+
+      return hasPlantedSunwheat && tutorialSystem.recordCropPlanted('sunwheat');
+    };
+
+    const syncTutorialWithCurrentPlotState = (): boolean => {
+      const advancedFromSunwheat = syncTutorialWithExistingSunwheat();
+      const advancedFromReadyCrop = syncTutorialWithReadyCrop();
+
+      return advancedFromSunwheat || advancedFromReadyCrop;
     };
 
     const handleLevelUp = (level: number): void => {
@@ -97,7 +114,40 @@ export class FarmScene extends Phaser.Scene {
       feedbackSystem.showLevelUp(level, width / 2, height * 0.28);
     };
 
-    const handleHarvestResult = (harvestResult: HarvestResult): void => {
+    const showAggregateHarvestText = (harvestResult: HarvestResult): void => {
+      feedbackSystem.showAggregateHarvestFeedback(
+        harvestResult.crop.id,
+        harvestResult.crop.name,
+        FARM_LAYOUT.farmGrid.x + FARM_LAYOUT.farmGrid.width - 96,
+        FARM_LAYOUT.farmGrid.y + 42
+      );
+    };
+
+    const flushPendingTapHarvestText = (): void => {
+      if (pendingTapHarvest !== null && pendingTapHarvestPosition !== null) {
+        feedbackSystem.showHarvestText(
+          pendingTapHarvestPosition,
+          pendingTapHarvest.crop.name
+        );
+      }
+
+      pendingTapHarvest = null;
+      pendingTapHarvestPosition = null;
+    };
+
+    const movePendingTapHarvestToAggregate = (): void => {
+      if (pendingTapHarvest !== null) {
+        showAggregateHarvestText(pendingTapHarvest);
+      }
+
+      pendingTapHarvest = null;
+      pendingTapHarvestPosition = null;
+    };
+
+    const handleHarvestResult = (
+      harvestResult: HarvestResult,
+      textMode: 'defer-single' | 'aggregate'
+    ): void => {
       const tutorialAdvanced = tutorialSystem.recordCropHarvested();
 
       gridSystem.refreshPlotVisuals();
@@ -108,10 +158,22 @@ export class FarmScene extends Phaser.Scene {
       upgradePanelSystem.refresh();
       refreshTutorialIfAdvanced(tutorialAdvanced);
       saveGame();
-      feedbackSystem.showHarvestFeedback(
-        gridSystem.getPlotScreenPosition(harvestResult.plot),
-        harvestResult.crop.name
+      const harvestPosition = gridSystem.getPlotScreenPosition(harvestResult.plot);
+
+      feedbackSystem.showHarvestFeedback(harvestPosition, harvestResult.crop.name, false);
+      feedbackSystem.showHarvestToInventory(
+        harvestPosition,
+        cropSellPanelSystem.getCropTargetPosition(harvestResult.crop.id),
+        harvestResult.crop.id
       );
+
+      if (textMode === 'defer-single') {
+        pendingTapHarvest = harvestResult;
+        pendingTapHarvestPosition = harvestPosition;
+      } else {
+        movePendingTapHarvestToAggregate();
+        showAggregateHarvestText(harvestResult);
+      }
 
       if (harvestResult.xpResult.leveledUp) {
         handleLevelUp(harvestResult.xpResult.currentLevel);
@@ -145,7 +207,7 @@ export class FarmScene extends Phaser.Scene {
 
         if (harvestResult !== null) {
           dragMode = 'harvest';
-          handleHarvestResult(harvestResult);
+          handleHarvestResult(harvestResult, 'defer-single');
           return;
         }
 
@@ -164,7 +226,7 @@ export class FarmScene extends Phaser.Scene {
           const harvestResult = harvestingSystem.harvestOver(plot);
 
           if (harvestResult !== null) {
-            handleHarvestResult(harvestResult);
+            handleHarvestResult(harvestResult, 'aggregate');
           }
 
           return;
@@ -272,6 +334,16 @@ export class FarmScene extends Phaser.Scene {
           result.order.coinReward,
           result.order.xpReward
         );
+        feedbackSystem.showOrderRewardFlyEffects(
+          width / 2,
+          FARM_LAYOUT.orderBoard.y + 42,
+          FARM_LAYOUT.hud.x + 58,
+          FARM_LAYOUT.hud.y + 20,
+          FARM_LAYOUT.hud.x + 48,
+          FARM_LAYOUT.hud.y + 58
+        );
+        hudSystem.playCoinsPulse();
+        hudSystem.playXpPulse();
 
         if (result.xpResult.leveledUp) {
           handleLevelUp(result.xpResult.currentLevel);
@@ -280,6 +352,7 @@ export class FarmScene extends Phaser.Scene {
     });
 
     this.input.on('pointerup', () => {
+      flushPendingTapHarvestText();
       plantingSystem.endPaint();
       harvestingSystem.endHarvest();
       dragMode = 'none';
@@ -338,20 +411,34 @@ export class FarmScene extends Phaser.Scene {
 
           gameStateSystem.addCoins(result.coinReward);
           hudSystem.refresh();
+          hudSystem.playCoinsPulse();
           upgradePanelSystem.refresh();
           tutorialPanelSystem.refresh();
           saveGame();
+          feedbackSystem.showTutorialCompletionReward(
+            FARM_LAYOUT.tutorialPanel.x + FARM_LAYOUT.tutorialPanel.width - 52,
+            FARM_LAYOUT.tutorialPanel.y + FARM_LAYOUT.tutorialPanel.height / 2,
+            FARM_LAYOUT.hud.x + 58,
+            FARM_LAYOUT.hud.y + 20,
+            result.coinReward
+          );
           return;
         }
 
         if (tutorialSystem.acknowledgeCurrentStep()) {
+          const advancedFromPlotState = syncTutorialWithCurrentPlotState();
+
           tutorialPanelSystem.refresh();
           saveGame();
+
+          if (advancedFromPlotState) {
+            tutorialPanelSystem.refresh();
+          }
         }
       }
     });
 
-    if (syncTutorialWithLoadedReadyCrop()) {
+    if (syncTutorialWithCurrentPlotState()) {
       tutorialPanelSystem.refresh();
       saveGame();
     }

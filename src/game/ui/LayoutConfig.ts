@@ -25,11 +25,11 @@ export const FARM_LAYOUT = {
     debugAnchors: false
   },
   cropSellPanel: {
-    x: 178,
-    y: 96,
-    buttonWidth: 58,
-    buttonHeight: 22,
-    gap: 4
+    x: 18,
+    y: 128,
+    buttonWidth: 84,
+    buttonHeight: 30,
+    gap: 6
   },
   plotUpgradePanel: {
     x: 18,

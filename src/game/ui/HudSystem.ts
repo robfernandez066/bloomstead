@@ -12,7 +12,6 @@ export class HudSystem {
   private levelText?: Phaser.GameObjects.Text;
   private xpText?: Phaser.GameObjects.Text;
   private selectedSeedText?: Phaser.GameObjects.Text;
-  private inventoryText?: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene, gameState: GameStateSystem) {
     this.scene = scene;
@@ -29,7 +28,6 @@ export class HudSystem {
     this.levelText = this.createText(x + width - 106, y + 10);
     this.xpText = this.createText(x + 14, y + 40);
     this.selectedSeedText = this.createText(x + width - 174, y + 40);
-    this.inventoryText = this.createText(x + 14, y + 78, '14px');
 
     this.refresh();
   }
@@ -42,12 +40,28 @@ export class HudSystem {
     this.levelText?.setText(`Level: ${state.farmLevel}`);
     this.xpText?.setText(`XP: ${state.farmXp}`);
     this.selectedSeedText?.setText(`Seed: ${selectedSeed.name}`);
-    this.inventoryText?.setText(
-      `Inv  ${this.gameState
-        .getCrops()
-        .map((crop) => `${crop.name[0]}:${state.cropInventory[crop.id]}`)
-        .join(' ')}`
-    );
+  }
+
+  playCoinsPulse(): void {
+    this.playTextPulse(this.coinsText);
+  }
+
+  playXpPulse(): void {
+    this.playTextPulse(this.xpText);
+  }
+
+  private playTextPulse(text?: Phaser.GameObjects.Text): void {
+    if (text === undefined) {
+      return;
+    }
+
+    this.scene.tweens.add({
+      targets: text,
+      scale: 1.16,
+      yoyo: true,
+      duration: 150,
+      ease: 'Sine.easeOut'
+    });
   }
 
   private createText(x: number, y: number, fontSize = '18px'): Phaser.GameObjects.Text {

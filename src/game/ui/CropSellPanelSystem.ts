@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import type { CropDefinition } from '../models/CropTypes';
+import type { CropDefinition, CropId } from '../models/CropTypes';
 import type { CropSellingSystem } from '../systems/CropSellingSystem';
 import type { GameStateSystem } from '../systems/GameStateSystem';
 
@@ -21,7 +21,8 @@ interface CropSellPanelConfig {
 interface SellButton {
   crop: CropDefinition;
   button: Phaser.GameObjects.Rectangle;
-  label: Phaser.GameObjects.Text;
+  cropLabel: Phaser.GameObjects.Text;
+  sellLabel: Phaser.GameObjects.Text;
 }
 
 export class CropSellPanelSystem {
@@ -52,12 +53,15 @@ export class CropSellPanelSystem {
   }
 
   refresh(): void {
-    this.sellButtons.forEach(({ crop, button, label }) => {
+    this.sellButtons.forEach(({ crop, button, cropLabel, sellLabel }) => {
       const canSell = this.cropSellingSystem.canSell(crop.id);
+      const count = this.gameState.getState().cropInventory[crop.id];
 
       button.setFillStyle(canSell ? ENABLED_FILL : DISABLED_FILL);
       button.setAlpha(canSell ? 1 : 0.72);
-      label.setColor(canSell ? TEXT_COLOR : DISABLED_TEXT);
+      cropLabel.setText(`${crop.name} x${count}`);
+      cropLabel.setColor(canSell ? TEXT_COLOR : DISABLED_TEXT);
+      sellLabel.setColor(canSell ? TEXT_COLOR : DISABLED_TEXT);
 
       if (canSell) {
         button.setInteractive({ useHandCursor: true });
@@ -65,6 +69,19 @@ export class CropSellPanelSystem {
         button.disableInteractive();
       }
     });
+  }
+
+  getCropTargetPosition(cropId: CropId): Phaser.Math.Vector2 {
+    const button = this.sellButtons.find((sellButton) => sellButton.crop.id === cropId);
+
+    if (button !== undefined && this.config !== undefined) {
+      return new Phaser.Math.Vector2(
+        button.button.x + this.config.buttonWidth / 2,
+        button.button.y + this.config.buttonHeight / 2
+      );
+    }
+
+    return new Phaser.Math.Vector2(0, 0);
   }
 
   private renderButton(
@@ -84,17 +101,24 @@ export class CropSellPanelSystem {
       config.onSellCrop(crop);
     });
 
-    const labelText = `${crop.name[0]} +${crop.sellValue}c`;
-
-    const label = this.scene.add
-      .text(x + config.buttonWidth / 2, config.y + config.buttonHeight / 2, labelText, {
+    const cropLabel = this.scene.add
+      .text(x + config.buttonWidth / 2, config.y + 8, `${crop.name} x0`, {
         color: DISABLED_TEXT,
         fontFamily: 'Arial, sans-serif',
-        fontSize: '12px',
+        fontSize: '10px',
         fontStyle: 'bold'
       })
       .setOrigin(0.5);
 
-    this.sellButtons.push({ crop, button, label });
+    const sellLabel = this.scene.add
+      .text(x + config.buttonWidth / 2, config.y + 21, `Sell +${crop.sellValue}c`, {
+        color: DISABLED_TEXT,
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '10px',
+        fontStyle: 'bold'
+      })
+      .setOrigin(0.5);
+
+    this.sellButtons.push({ crop, button, cropLabel, sellLabel });
   }
 }
