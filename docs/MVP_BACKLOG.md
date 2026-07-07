@@ -14,9 +14,13 @@ The MVP includes:
   * Level 2 orders may require Sunwheat and Carrot.
   * Level 3+ orders may use any MVP crop.
 * Crop selling as a fallback way to regain seed money.
+* Readable crop sell/inventory rows for each MVP crop.
+* Harvest-to-inventory feedback when crops are collected.
+* Order completion coin/XP fly-to-HUD reward feedback.
+* Swipe harvesting aggregate `Gathered X Crop` text to reduce clutter.
 * Save/load, active order persistence, and offline crop growth.
 * Tutorial flow with a sell-crop step after the first plot upgrade.
-* One-time 75 coin tutorial completion reward.
+* One-time 75 coin tutorial completion reward with basic reward feedback.
 
 ## Tutorial Notes
 
@@ -24,31 +28,27 @@ The tutorial should teach the core loop in this order: welcome, plant Sunwheat, 
 
 The final tutorial completion reward is 75 coins and must only be granted once per save. Dev Reset clears the save, so the reward can be earned again from a fresh start.
 
+## Implemented MVP UI / Game Feel Polish
+
+The following polish items are implemented for the MVP:
+
+* Crop sell/inventory rows now use readable crop names and counts, such as `Sunwheat x7` with `Sell +4c`.
+* Harvested crops show visual feedback moving toward the crop inventory/sell area.
+* Order completion now includes coin and XP fly-to-HUD reward feedback.
+* Swipe harvesting now uses aggregate `Gathered X Crop` text instead of many separate `+1 Crop` popups.
+* The tutorial `Complete` button now has basic reward juice for the one-time 75 coin reward, including reward text, generated coin fly feedback, and a coin HUD pulse.
+
 ## UI / Art Polish Backlog
 
-The current crop sell UI is functional but temporary. Labels like `S +4c`, `C +12c`, and `G +32c` are ugly and unclear.
+The current crop sell/inventory rows are readable and functional for MVP, but they are still text-only.
 
-Handle this in the upcoming UI/art polish pass, not as an immediate gameplay-system change. Preferred direction:
+In a future UI/art polish pass, consider replacing or augmenting text rows with small crop icons and a more polished row layout:
 
 * `Sunwheat x7 — Sell +4c`
 * `Carrot x0 — Sell +12c`
 * `Glowberry x0 — Sell +32c`
 
-Readable crop rows and/or small crop icons should replace the current compact labels when the HUD/inventory area gets a proper polish pass.
-
-### Tutorial Completion Reward Feedback
-
-The tutorial completion reward works mechanically: clicking the final `Complete` button grants the one-time 75 coin reward. The action should feel more satisfying in the upcoming UI/art/game-feel polish pass.
-
-Preferred future direction:
-
-* Animate coins flying from the `Complete` button or tutorial panel into the coin counter.
-* Show clear reward text like `+75 Coins`.
-* Add a small burst, pop, or glow on the `Complete` button.
-* Pulse or count up the coin HUD.
 * Later, add a satisfying coin sound and light haptic feedback when mobile support exists.
-
-Do not implement this now. Do not change the reward amount, add sound, add haptics, or modify TypeScript for this backlog item yet.
 
 ## Scope Guardrails
 
