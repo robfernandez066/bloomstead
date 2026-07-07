@@ -24,6 +24,13 @@ export const FARM_LAYOUT = {
     markerAnchorOffsetY: 0,
     debugAnchors: false
   },
+  millPanel: {
+    x: 18,
+    y: 356,
+    width: 354,
+    height: 44,
+    buttonWidth: 72
+  },
   cropSellPanel: {
     x: 18,
     y: 128,

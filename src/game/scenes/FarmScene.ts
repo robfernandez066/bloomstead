@@ -1,10 +1,12 @@
 import Phaser from 'phaser';
+import { MILL_FLOUR_RECIPE_ID } from '../data/ProductionRecipes';
 import { SaveSystem } from '../save/SaveSystem';
 import { CropSellPanelSystem } from '../ui/CropSellPanelSystem';
 import { DevSaveControlsSystem } from '../ui/DevSaveControlsSystem';
 import { FeedbackSystem } from '../ui/FeedbackSystem';
 import { HudSystem } from '../ui/HudSystem';
 import { FARM_LAYOUT } from '../ui/LayoutConfig';
+import { MillPanelSystem } from '../ui/MillPanelSystem';
 import { MuteToggleSystem } from '../ui/MuteToggleSystem';
 import { OrderBoardSystem } from '../ui/OrderBoardSystem';
 import { SeedSelectorSystem } from '../ui/SeedSelectorSystem';
@@ -18,6 +20,7 @@ import { HarvestingSystem, type HarvestResult } from '../systems/HarvestingSyste
 import { OrderSystem } from '../systems/OrderSystem';
 import { PlantingSystem, type PlantResult } from '../systems/PlantingSystem';
 import { PlotStateSystem } from '../systems/PlotStateSystem';
+import { ProductionSystem } from '../systems/ProductionSystem';
 import { TutorialSystem } from '../systems/TutorialSystem';
 import { UpgradeSystem } from '../systems/UpgradeSystem';
 
@@ -53,6 +56,7 @@ export class FarmScene extends Phaser.Scene {
     const cropSellingSystem = new CropSellingSystem(gameStateSystem);
     const tutorialSystem = new TutorialSystem(savedGameData?.tutorialState);
     const audioSystem = new AudioSystem(this, savedGameData?.audioState);
+    const productionSystem = new ProductionSystem(gameStateSystem, savedGameData?.productionState);
     const feedbackSystem = new FeedbackSystem(this);
     let dragMode: DragMode = 'none';
     let pendingTapHarvest: HarvestResult | null = null;
@@ -65,7 +69,8 @@ export class FarmScene extends Phaser.Scene {
         upgradeSystem,
         orderSystem,
         tutorialSystem,
-        audioSystem
+        audioSystem,
+        productionSystem
       );
     };
 
@@ -81,6 +86,7 @@ export class FarmScene extends Phaser.Scene {
     const tutorialPanelSystem = new TutorialPanelSystem(this, tutorialSystem);
     const devSaveControlsSystem = new DevSaveControlsSystem(this);
     const muteToggleSystem = new MuteToggleSystem(this, audioSystem);
+    const millPanelSystem = new MillPanelSystem(this, productionSystem);
     let gridSystem: GridSystem;
 
     const refreshTutorialIfAdvanced = (advanced: boolean): void => {
@@ -162,6 +168,7 @@ export class FarmScene extends Phaser.Scene {
       cropSellPanelSystem.refresh();
       orderBoardSystem.refresh();
       upgradePanelSystem.refresh();
+      millPanelSystem.refresh();
       refreshTutorialIfAdvanced(tutorialAdvanced);
       saveGame();
       const harvestPosition = gridSystem.getPlotScreenPosition(harvestResult.plot);
@@ -280,6 +287,7 @@ export class FarmScene extends Phaser.Scene {
         cropSellPanelSystem.refresh();
         orderBoardSystem.refresh();
         upgradePanelSystem.refresh();
+        millPanelSystem.refresh();
         refreshTutorialIfAdvanced(tutorialSystem.recordCropSold());
         saveGame();
         audioSystem.playSellCrop();
@@ -289,6 +297,50 @@ export class FarmScene extends Phaser.Scene {
           FARM_LAYOUT.hud.y + FARM_LAYOUT.hud.height - 8,
           result.crop.name,
           result.coinValue
+        );
+      }
+    });
+
+    millPanelSystem.render({
+      x: FARM_LAYOUT.millPanel.x,
+      y: FARM_LAYOUT.millPanel.y,
+      width: FARM_LAYOUT.millPanel.width,
+      height: FARM_LAYOUT.millPanel.height,
+      buttonWidth: FARM_LAYOUT.millPanel.buttonWidth,
+      onStart: () => {
+        const result = productionSystem.startRecipe(MILL_FLOUR_RECIPE_ID);
+
+        if (result === null) {
+          audioSystem.playDisabledTap();
+          return;
+        }
+
+        audioSystem.playButtonTap();
+        millPanelSystem.refresh();
+        cropSellPanelSystem.refresh();
+        orderBoardSystem.refresh();
+        saveGame();
+        feedbackSystem.showProductionStarted(width / 2, FARM_LAYOUT.millPanel.y - 8);
+      },
+      onCollect: () => {
+        const result = productionSystem.collectReadyOutput();
+
+        if (result === null) {
+          audioSystem.playDisabledTap();
+          return;
+        }
+
+        audioSystem.playButtonTap();
+        audioSystem.playHarvest();
+        millPanelSystem.refresh();
+        cropSellPanelSystem.refresh();
+        orderBoardSystem.refresh();
+        saveGame();
+        feedbackSystem.showProductionCollected(
+          width / 2,
+          FARM_LAYOUT.millPanel.y - 8,
+          result.outputName,
+          result.outputAmount
         );
       }
     });
@@ -344,6 +396,7 @@ export class FarmScene extends Phaser.Scene {
         cropSellPanelSystem.refresh();
         orderBoardSystem.refresh();
         upgradePanelSystem.refresh();
+        millPanelSystem.refresh();
         refreshTutorialIfAdvanced(tutorialSystem.recordOrderCompleted());
         saveGame();
         audioSystem.playOrderComplete();
@@ -388,7 +441,12 @@ export class FarmScene extends Phaser.Scene {
           .getPlots()
           .filter((plot) => plot.plantedCropId !== null && !plot.ready);
         const readyStatesChanged = plotStateSystem.refreshReadyStates();
+        const productionBecameReady = productionSystem.refreshProductionState();
         gridSystem.refreshPlotVisuals();
+
+        if (productionSystem.getState().status === 'producing' || productionBecameReady) {
+          millPanelSystem.refresh();
+        }
 
         if (readyStatesChanged) {
           let tutorialAdvanced = false;
@@ -402,6 +460,12 @@ export class FarmScene extends Phaser.Scene {
           }
 
           refreshTutorialIfAdvanced(tutorialAdvanced);
+          saveGame();
+        }
+
+        if (productionBecameReady) {
+          audioSystem.playCropReady();
+          feedbackSystem.showProductionReady(width / 2, FARM_LAYOUT.millPanel.y - 8);
           saveGame();
         }
       }

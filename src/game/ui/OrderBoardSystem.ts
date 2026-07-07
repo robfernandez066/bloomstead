@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import { CROPS } from '../data/Crops';
-import type { CropId } from '../models/CropTypes';
+import { getItemName } from '../data/Items';
+import type { ItemId } from '../models/ItemTypes';
 import type { OrderDefinition } from '../models/OrderTypes';
 import type { OrderSystem } from '../systems/OrderSystem';
 
@@ -129,7 +129,7 @@ export class OrderBoardSystem {
 
   private formatRequirements(order: OrderDefinition): string {
     return Object.entries(order.requirements)
-      .map(([cropId, count]) => `${count} ${CROPS[cropId as CropId].name}`)
+      .map(([itemId, count]) => `${count} ${getItemName(itemId as ItemId)}`)
       .join(', ');
   }
 

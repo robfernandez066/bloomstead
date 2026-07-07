@@ -1,5 +1,7 @@
 import { MVP_ORDERS } from '../data/Orders';
 import { CROPS } from '../data/Crops';
+import { isCropId } from '../data/Items';
+import type { ItemId } from '../models/ItemTypes';
 import type { OrderDefinition, OrderId } from '../models/OrderTypes';
 import type { SavedOrderState } from '../save/SaveTypes';
 import type { FarmXpResult, GameStateSystem } from './GameStateSystem';
@@ -49,7 +51,7 @@ export class OrderSystem {
   }
 
   canCompleteOrder(order: OrderDefinition): boolean {
-    return this.gameState.hasCropInventory(order.requirements);
+    return this.gameState.hasItemInventory(order.requirements);
   }
 
   completeOrder(orderId: OrderId): OrderCompletionResult | null {
@@ -59,7 +61,7 @@ export class OrderSystem {
       return null;
     }
 
-    this.gameState.removeCropInventory(order.requirements);
+    this.gameState.removeItemInventory(order.requirements);
     this.gameState.addCoins(order.coinReward);
     const xpResult = this.gameState.addFarmXp(order.xpReward);
     this.replaceOrder(order.id);
@@ -174,8 +176,18 @@ export class OrderSystem {
   }
 
   private isOrderEligible(order: OrderDefinition): boolean {
-    return Object.keys(order.requirements).every((cropId) => {
-      return this.gameState.isCropUnlocked(CROPS[cropId as keyof typeof CROPS]);
+    if (order.minFarmLevel !== undefined && this.gameState.getState().farmLevel < order.minFarmLevel) {
+      return false;
+    }
+
+    return Object.keys(order.requirements).every((itemId) => {
+      const typedItemId = itemId as ItemId;
+
+      if (!isCropId(typedItemId)) {
+        return true;
+      }
+
+      return this.gameState.isCropUnlocked(CROPS[typedItemId]);
     });
   }
 }

@@ -47,5 +47,15 @@ export const MVP_ORDERS: OrderDefinition[] = [
     },
     coinReward: 120,
     xpReward: 25
+  },
+  {
+    id: 'bakers-flour',
+    name: "Baker's Flour",
+    requirements: {
+      flour: 2
+    },
+    coinReward: 90,
+    xpReward: 20,
+    minFarmLevel: 2
   }
 ];

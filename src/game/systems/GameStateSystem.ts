@@ -1,12 +1,18 @@
 import { CROPS, MVP_CROPS } from '../data/Crops';
+import { isCropId } from '../data/Items';
 import { getFarmLevelForXp } from '../data/LevelProgression';
 import type { CropDefinition, CropId } from '../models/CropTypes';
 import type { CropInventory, GameState } from '../models/GameStateTypes';
+import type { ItemId, ProcessedGoodInventory } from '../models/ItemTypes';
 
 const STARTING_CROP_INVENTORY: CropInventory = {
   sunwheat: 0,
   carrot: 0,
   glowberry: 0
+};
+
+const STARTING_PROCESSED_GOOD_INVENTORY: ProcessedGoodInventory = {
+  flour: 0
 };
 
 export interface FarmXpResult {
@@ -19,12 +25,21 @@ export class GameStateSystem {
   private readonly state: GameState;
 
   constructor(initialState?: GameState) {
-    this.state = initialState ?? {
-      coins: 100,
-      farmXp: 0,
-      farmLevel: 1,
-      cropInventory: { ...STARTING_CROP_INVENTORY },
-      selectedSeedId: 'sunwheat'
+    this.state = {
+      ...(initialState ?? {
+        coins: 100,
+        farmXp: 0,
+        farmLevel: 1,
+        selectedSeedId: 'sunwheat'
+      }),
+      cropInventory: {
+        ...STARTING_CROP_INVENTORY,
+        ...initialState?.cropInventory
+      },
+      processedGoodInventory: {
+        ...STARTING_PROCESSED_GOOD_INVENTORY,
+        ...initialState?.processedGoodInventory
+      }
     };
   }
 
@@ -65,20 +80,51 @@ export class GameStateSystem {
     this.state.cropInventory[cropId] += amount;
   }
 
+  addItemToInventory(itemId: ItemId, amount: number): void {
+    if (isCropId(itemId)) {
+      this.state.cropInventory[itemId] += amount;
+      return;
+    }
+
+    this.state.processedGoodInventory[itemId] += amount;
+  }
+
+  getItemCount(itemId: ItemId): number {
+    if (isCropId(itemId)) {
+      return this.state.cropInventory[itemId];
+    }
+
+    return this.state.processedGoodInventory[itemId];
+  }
+
   hasCropInventory(requirements: Partial<CropInventory>): boolean {
-    return Object.entries(requirements).every(([cropId, count]) => {
-      return count === undefined || this.state.cropInventory[cropId as CropId] >= count;
+    return this.hasItemInventory(requirements);
+  }
+
+  hasItemInventory(requirements: Partial<Record<ItemId, number>>): boolean {
+    return Object.entries(requirements).every(([itemId, count]) => {
+      return count === undefined || this.getItemCount(itemId as ItemId) >= count;
     });
   }
 
   removeCropInventory(requirements: Partial<CropInventory>): boolean {
-    if (!this.hasCropInventory(requirements)) {
+    return this.removeItemInventory(requirements);
+  }
+
+  removeItemInventory(requirements: Partial<Record<ItemId, number>>): boolean {
+    if (!this.hasItemInventory(requirements)) {
       return false;
     }
 
-    Object.entries(requirements).forEach(([cropId, count]) => {
+    Object.entries(requirements).forEach(([itemId, count]) => {
       if (count !== undefined) {
-        this.state.cropInventory[cropId as CropId] -= count;
+        const typedItemId = itemId as ItemId;
+
+        if (isCropId(typedItemId)) {
+          this.state.cropInventory[typedItemId] -= count;
+        } else {
+          this.state.processedGoodInventory[typedItemId] -= count;
+        }
       }
     });
 
