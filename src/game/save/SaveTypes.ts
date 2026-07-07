@@ -1,4 +1,5 @@
 import type { GameState } from '../models/GameStateTypes';
+import type { AudioState } from '../models/AudioTypes';
 import type { OrderId } from '../models/OrderTypes';
 import type { PlotState } from '../models/PlotTypes';
 import type { TutorialState } from '../models/TutorialTypes';
@@ -20,6 +21,7 @@ export interface SavedGameData {
   purchasedPlotUpgradeCount: number;
   orderState?: SavedOrderState;
   tutorialState?: TutorialState;
+  audioState?: AudioState;
 }
 
 export interface SaveLoadResult {

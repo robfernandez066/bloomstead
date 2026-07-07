@@ -1,5 +1,6 @@
 import type { PlotState } from '../models/PlotTypes';
 import type { GameStateSystem } from '../systems/GameStateSystem';
+import type { AudioSystem } from '../systems/AudioSystem';
 import type { OrderSystem } from '../systems/OrderSystem';
 import type { PlotStateSystem } from '../systems/PlotStateSystem';
 import type { TutorialSystem } from '../systems/TutorialSystem';
@@ -34,7 +35,8 @@ export class SaveSystem {
     plotStateSystem: PlotStateSystem,
     upgradeSystem: UpgradeSystem,
     orderSystem: OrderSystem,
-    tutorialSystem: TutorialSystem
+    tutorialSystem: TutorialSystem,
+    audioSystem: AudioSystem
   ): void {
     const saveData: SavedGameData = {
       version: 1,
@@ -43,7 +45,8 @@ export class SaveSystem {
       plots: this.createSavedPlots(plotStateSystem.getPlots()),
       purchasedPlotUpgradeCount: upgradeSystem.getPurchasedPlotUpgradeCount(),
       orderState: orderSystem.getSavedOrderState(),
-      tutorialState: structuredClone(tutorialSystem.getState())
+      tutorialState: structuredClone(tutorialSystem.getState()),
+      audioState: structuredClone(audioSystem.getState())
     };
 
     localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));

@@ -31,6 +31,12 @@ export const FARM_LAYOUT = {
     buttonHeight: 30,
     gap: 6
   },
+  muteToggle: {
+    x: 304,
+    y: 94,
+    width: 56,
+    height: 22
+  },
   plotUpgradePanel: {
     x: 18,
     y: 406,
