@@ -12,17 +12,17 @@ Use warm greens for the farm, soft soil browns for plots, cream UI panels, golde
 
 ## Isometric Farm Plot Direction
 
-Plots should become readable isometric soil tiles. Unlocked plots should feel fertile and inviting. Locked or future plots should be subtle or hidden, not large gray debug tiles. Crop visuals must sit clearly on their own tile. Crop markers and circles were temporary placeholders and should not be the final read for crop state.
+Plots should become readable isometric soil tiles. Unlocked plots should feel fertile and inviting. Locked or future plots should be subtle or hidden, not large gray debug tiles. Crop visuals must sit clearly on their own tile. The MVP now uses simple generated crop shapes on farm plots so Sunwheat, Carrot, and Glowberry read differently; final crop art remains future polish.
 
 ## Crop Art Direction
 
-Each crop should eventually have at least a planted/growing state and a ready-to-harvest state.
+Each crop should have at least a planted/growing state and a ready-to-harvest state. The MVP currently uses simple generated shapes:
 
 * Sunwheat: small green shoots while growing, then a golden wheat bundle or bright grain tuft when ready.
 * Carrot: leafy green tops while growing, then a visible orange carrot crown or clustered carrot top when ready.
 * Glowberry: small vine or sprout while growing, then glowing berries with a gentle magical accent when ready.
 
-Ready crops should look clearly harvestable without relying only on a circle marker.
+Ready crops should look clearly harvestable without relying only on a circle marker. Future art can replace the generated shapes with final sprites or more polished generated art.
 
 ## Production Building Direction
 
@@ -42,7 +42,7 @@ Use this pattern for future production systems such as Press, Brewery, etc. Futu
 * Mill: `2 Sunwheat -> 1 Flour`
 * Bakery: `2 Flour -> 1 Bread`
 
-Flour and Bread should get clear, readable icons for production output, inventory, and orders.
+Flour and Bread have simple generated MVP icons for production output, inventory, and orders. Final icons remain future art polish.
 
 ## UI Direction
 
@@ -52,13 +52,13 @@ Onboarding guidance should feel unified and lightweight. The tutorial starts aut
 
 Craft guidance uses the existing tutorial/onboarding panel instead of a separate floating popup. When Craft becomes relevant, the player should see `Use Craft to turn Sunwheat into Flour.` and the Craft button should receive a clear but non-intrusive highlight. Opening Craft dismisses that guidance. Future polish may add a stronger arrow or pointer if the highlight is not enough.
 
-Readable crop sell/inventory rows are implemented for MVP. They should stay clear and mobile-tappable, using crop names, counts, and sell values:
+Readable crop sell/inventory rows are implemented for MVP. They include simple generated icons and should stay clear and mobile-tappable, using crop names, counts, and sell values:
 
 * `Sunwheat x7 - Sell +4c`
 * `Carrot x0 - Sell +12c`
 * `Glowberry x0 - Sell +32c`
 
-Proper crop and processed-good icons remain future art polish. Icons can replace or augment text rows later, but they are not required for the MVP release candidate.
+Generated icons are implemented for Sunwheat, Carrot, Glowberry, Flour, and Bread. They appear in sell/inventory rows, order requirements, and production recipe inputs/outputs. Final art assets can replace these generated icons later without changing gameplay.
 
 ## Reward / Juice Direction
 
@@ -104,8 +104,8 @@ Music should be a cozy magical farm loop with light plucked strings, soft bells,
 Future polish should improve presentation without changing MVP gameplay scope:
 
 * Improved plot tile art
-* Simple crop sprites or generated crop shapes
-* Proper crop and processed-good icons for inventory, selling, production, and orders
+* Final crop sprites or more polished generated crop shapes
+* Final crop and processed-good icons for inventory, selling, production, and orders
 * Improved Craft button art/icon
 * Stronger Craft pointer/arrow if needed
 * Improved production status chip visuals/icons

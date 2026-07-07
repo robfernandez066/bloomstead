@@ -16,7 +16,7 @@ The MVP includes:
   * Level 4+ orders add larger Bread/Flour and Glowberry goals.
   * Level 5 includes the Village Feast capstone MVP order.
 * Crop selling as a fallback way to regain seed money.
-* Readable crop sell/inventory rows for each MVP crop.
+* Readable crop sell/inventory rows for each MVP crop, with simple generated item icons.
 * MVP production buildings:
   * Mill: `2 Sunwheat -> 1 Flour`, 15 seconds.
   * Bakery: `2 Flour -> 1 Bread`, 30 seconds.
@@ -78,6 +78,13 @@ Verified behavior:
 * Older single-Mill saves migrate safely into keyed production state under `mill`, with `bakery` initialized normally.
 * Mobile portrait QA passed at `390x844` and `360x740`.
 * Sell/inventory rows and compact production chips received a small MVP mobile usability polish pass and passed QA at `360x740` and `390x844`.
+* Simple generated icons for Sunwheat, Carrot, Glowberry, Flour, and Bread appear in sell/inventory rows, order requirements, and production recipe inputs/outputs.
+* Sell row text overflow from icon spacing was addressed with tighter spacing and label sizing.
+* Farm plot crop visuals now distinguish Sunwheat, Carrot, and Glowberry.
+* Carrot visual style is aligned between farm plots and shared menu/order icons.
+* The item-icon and farm-plot crop visual clarity pass passed mobile QA at `390x844` and `360x740`.
+* Build passes with only the existing Vite large chunk warning.
+* The item-icon and crop-visual pass changed no gameplay behavior.
 * The level 3-5 MVP order content pass is complete using only existing crops, Flour, and Bread.
 * The level 3-5 order pass added no new crops, processed goods, production buildings, tutorial steps, save/load changes, or UI systems.
 * Level 3 pacing is acceptable.
@@ -95,6 +102,9 @@ Current caveats:
 The following polish items are implemented for the MVP:
 
 * Crop sell/inventory rows now use readable crop names and counts, such as `Sunwheat x7` with `Sell +4c`.
+* Simple generated item icons now support Sunwheat, Carrot, Glowberry, Flour, and Bread.
+* Item icons appear in sell/inventory rows, order requirements, and production recipe inputs/outputs.
+* Farm plot crop visuals now make Sunwheat, Carrot, and Glowberry visually distinct while preserving existing growth and harvest behavior.
 * Harvested crops show visual feedback moving toward the crop inventory/sell area.
 * Order completion now includes coin and XP fly-to-HUD reward feedback.
 * Swipe harvesting now uses aggregate `Gathered X Crop` text instead of many separate `+1 Crop` popups.
@@ -102,9 +112,9 @@ The following polish items are implemented for the MVP:
 
 ## UI / Art Polish Backlog
 
-The current crop sell/inventory rows are readable, functional, and recently polished for MVP tap comfort, but they are still text-only.
+The current crop sell/inventory rows are readable, functional, and include simple generated icons. They have passed MVP tap-comfort checks at `390x844` and `360x740`.
 
-In a future UI/art polish pass, consider replacing or augmenting text rows with small crop icons and a more polished row layout:
+In a future UI/art polish pass, replace generated placeholder icons and text rows with final readable art and a more polished row layout:
 
 * `Sunwheat x7 - Sell +4c`
 * `Carrot x0 - Sell +12c`
@@ -118,7 +128,8 @@ Future production polish:
 * Add a stronger visual pointer or arrow for Craft if playtesting shows the highlight is not enough.
 * Production status chips have MVP tap-target polish, but future art passes can still add clearer visuals and icons.
 * Replace placeholder Mill/Bakery/menu visuals with clear production building/UI art.
-* Give Flour and Bread readable icons for inventory, orders, and production output.
+* Replace generated Flour and Bread placeholder icons with final icons for inventory, orders, and production output.
+* Replace generated crop plot visuals with final crop sprites or polished generated shapes.
 * Improve processed-good and order onboarding later if Flour/Bread order goals are not obvious enough.
 * Add SFX hooks/assets for Mill/Bakery start, production complete, and collect.
 * Future production chains may expand from this pattern, but should stay simple and modular.
