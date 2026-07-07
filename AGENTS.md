@@ -122,7 +122,14 @@ The MVP should not include:
   * Upgrade 2: 5x4 crop bed, unlocks 4 plots.
   * Upgrade 3: 6x4 crop bed, unlocks 4 plots.
 * The final MVP plot upgrade unlocks 4 plots, not 8.
-* Tutorial: includes a sell-crop step after the first plot upgrade and a one-time 75 coin completion reward.
+* Tutorial/onboarding:
+  * Starts automatically on new saves and Dev Reset; do not reintroduce a Start button.
+  * Includes a sell-crop step after the first plot upgrade.
+  * Tutorial completion still grants a one-time 75 coin reward.
+  * Tutorial and hint guidance should be unified so only one tutorial/hint message is visible at a time.
+  * Craft guidance appears through the tutorial/onboarding UI when Craft becomes relevant.
+  * Craft guidance highlights Craft and tells the player to use Craft to turn Sunwheat into Flour.
+  * Opening Craft completes/dismisses Craft guidance and prevents replay.
 * Strategy level: 6/10.
 * Randomness: some randomness later, not core MVP.
 

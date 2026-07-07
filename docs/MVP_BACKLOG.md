@@ -34,8 +34,9 @@ The MVP includes:
 * Order completion coin/XP fly-to-HUD reward feedback.
 * Swipe harvesting aggregate `Gathered X Crop` text to reduce clutter.
 * Save/load, active order persistence, and offline crop growth.
-* Tutorial flow with a sell-crop step after the first plot upgrade.
+* Tutorial flow that starts automatically on new saves and Dev Reset, with a sell-crop step after the first plot upgrade.
 * One-time 75 coin tutorial completion reward with basic reward feedback.
+* Craft guidance that appears through the tutorial/onboarding UI when Craft becomes relevant.
 
 Current MVP processed-good orders:
 
@@ -44,9 +45,15 @@ Current MVP processed-good orders:
 
 ## Tutorial Notes
 
+The tutorial starts automatically on new saves and Dev Reset. The old tutorial `Start` button has been removed.
+
 The tutorial should teach the core loop in this order: welcome, plant Sunwheat, wait for crop, harvest, complete an order, buy the first plot upgrade, sell a crop, then complete the tutorial.
 
 The final tutorial completion reward is 75 coins and must only be granted once per save. Dev Reset clears the save, so the reward can be earned again from a fresh start.
+
+Tutorial and hint guidance should be unified: only one tutorial/hint message should be visible at a time.
+
+After the main tutorial is complete, Craft guidance appears through the tutorial/onboarding panel when Craft becomes relevant: farm level 2 or enough Sunwheat to start the Mill. The message guides the player to use Craft to turn Sunwheat into Flour. The Craft button is highlighted while this guidance is active, and opening Craft completes/dismisses the guidance. Tutorial completion reward behavior remains unchanged.
 
 ## Implemented MVP UI / Game Feel Polish
 
@@ -73,9 +80,11 @@ Future production polish:
 * The old full-width Mill farm-screen panel was replaced by the compact Craft button, Production menu, and status chip pattern.
 * Use this Production menu/status chip pattern for future systems such as Bakery, Press, Brewery, etc.
 * Give the Craft button/icon proper art so it reads clearly as production/crafting.
+* Add a stronger visual pointer or arrow for Craft if playtesting shows the highlight is not enough.
 * Polish production status chips with clearer visuals and icons.
 * Replace placeholder Mill/Bakery/menu visuals with clear production building/UI art.
 * Give Flour and Bread readable icons for inventory, orders, and production output.
+* Improve processed-good and order onboarding later if Flour/Bread order goals are not obvious enough.
 * Add SFX hooks/assets for Mill/Bakery start, production complete, and collect.
 * Future production chains may expand from this pattern, but should stay simple and modular.
 

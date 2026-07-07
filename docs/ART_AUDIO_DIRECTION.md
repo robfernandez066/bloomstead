@@ -48,6 +48,10 @@ Flour and Bread should get clear, readable icons for production output, inventor
 
 UI should use rounded cream panels, soft borders, readable mobile text, large tap targets, and minimal clutter. Controls should be compact but understandable.
 
+Onboarding guidance should feel unified and lightweight. The tutorial starts automatically on new saves and Dev Reset; the old Start button is no longer part of the intended experience. Only one tutorial or hint message should be visible at a time.
+
+Craft guidance uses the existing tutorial/onboarding panel instead of a separate floating popup. When Craft becomes relevant, the player should see `Use Craft to turn Sunwheat into Flour.` and the Craft button should receive a clear but non-intrusive highlight. Opening Craft dismisses that guidance. Future polish may add a stronger arrow or pointer if the highlight is not enough.
+
 Known UI backlog item: current sell buttons like `S +4c`, `C +12c`, and `G +32c` are functional but ugly. Future direction should use readable crop rows and/or icons:
 
 * `Sunwheat x7 — Sell +4c`
@@ -101,9 +105,11 @@ Recommended first pass:
 * Simple crop sprites or generated crop shapes
 * Improved crop sell UI
 * Improved Craft button art/icon
+* Stronger Craft pointer/arrow if needed
 * Improved production status chip visuals/icons
 * Improved Mill/Bakery menu/building placeholders
 * Clear Flour and Bread icons
+* Better processed-good/order onboarding if needed after playtesting
 * Improved tutorial completion reward feedback
 * Sound manager foundation
 * Placeholder/generated or temporary SFX hooks only if no assets exist yet, including Mill/Bakery start/complete/collect hooks
