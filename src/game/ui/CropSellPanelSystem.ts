@@ -2,12 +2,18 @@ import Phaser from 'phaser';
 import type { CropDefinition, CropId } from '../models/CropTypes';
 import type { CropSellingSystem } from '../systems/CropSellingSystem';
 import type { GameStateSystem } from '../systems/GameStateSystem';
+import { createItemIcon } from './ItemIcon';
 
 const ENABLED_FILL = 0xe8f0bb;
 const DISABLED_FILL = 0x9ca28e;
 const BUTTON_STROKE = 0x5e6b45;
 const TEXT_COLOR = '#263522';
 const DISABLED_TEXT = '#ece7d7';
+const ICON_SIZE = 14;
+const LABEL_FONT_SIZE = 10;
+const MIN_LABEL_FONT_SIZE = 8;
+const TEXT_LEFT_PADDING = 21;
+const TEXT_RIGHT_PADDING = 4;
 
 interface CropSellPanelConfig {
   x: number;
@@ -21,6 +27,7 @@ interface CropSellPanelConfig {
 interface SellButton {
   crop: CropDefinition;
   button: Phaser.GameObjects.Rectangle;
+  icon: Phaser.GameObjects.Container;
   cropLabel: Phaser.GameObjects.Text;
   sellLabel: Phaser.GameObjects.Text;
 }
@@ -53,13 +60,14 @@ export class CropSellPanelSystem {
   }
 
   refresh(): void {
-    this.sellButtons.forEach(({ crop, button, cropLabel, sellLabel }) => {
+    this.sellButtons.forEach(({ crop, button, icon, cropLabel, sellLabel }) => {
       const canSell = this.cropSellingSystem.canSell(crop.id);
       const count = this.gameState.getState().cropInventory[crop.id];
 
       button.setFillStyle(canSell ? ENABLED_FILL : DISABLED_FILL);
       button.setAlpha(canSell ? 1 : 0.72);
-      cropLabel.setText(`${crop.name} x${count}`);
+      icon.setAlpha(canSell ? 1 : 0.58);
+      this.setTextToFit(cropLabel, `${crop.name} x${count}`, this.getLabelMaxWidth());
       cropLabel.setColor(canSell ? TEXT_COLOR : DISABLED_TEXT);
       sellLabel.setColor(canSell ? TEXT_COLOR : DISABLED_TEXT);
 
@@ -101,24 +109,44 @@ export class CropSellPanelSystem {
       config.onSellCrop(crop);
     });
 
+    const icon = createItemIcon(this.scene, crop.id, x + 11, config.y + config.buttonHeight / 2, ICON_SIZE, {
+      alpha: 0.58
+    });
+
     const cropLabel = this.scene.add
-      .text(x + config.buttonWidth / 2, config.y + 8, `${crop.name} x0`, {
+      .text(x + TEXT_LEFT_PADDING, config.y + 7, `${crop.name} x0`, {
         color: DISABLED_TEXT,
         fontFamily: 'Arial, sans-serif',
-        fontSize: '11px',
+        fontSize: `${LABEL_FONT_SIZE}px`,
         fontStyle: 'bold'
       })
-      .setOrigin(0.5, 0);
+      .setOrigin(0, 0);
 
     const sellLabel = this.scene.add
-      .text(x + config.buttonWidth / 2, config.y + 22, `Sell +${crop.sellValue}c`, {
+      .text(x + TEXT_LEFT_PADDING, config.y + 21, `Sell +${crop.sellValue}c`, {
         color: DISABLED_TEXT,
         fontFamily: 'Arial, sans-serif',
-        fontSize: '11px',
+        fontSize: `${LABEL_FONT_SIZE}px`,
         fontStyle: 'bold'
       })
-      .setOrigin(0.5, 0);
+      .setOrigin(0, 0);
 
-    this.sellButtons.push({ crop, button, cropLabel, sellLabel });
+    this.setTextToFit(cropLabel, `${crop.name} x0`, this.getLabelMaxWidth());
+    this.setTextToFit(sellLabel, `Sell +${crop.sellValue}c`, this.getLabelMaxWidth());
+
+    this.sellButtons.push({ crop, button, icon, cropLabel, sellLabel });
+  }
+
+  private getLabelMaxWidth(): number {
+    return (this.config?.buttonWidth ?? 84) - TEXT_LEFT_PADDING - TEXT_RIGHT_PADDING;
+  }
+
+  private setTextToFit(text: Phaser.GameObjects.Text, value: string, maxWidth: number): void {
+    text.setText(value);
+    text.setFontSize(LABEL_FONT_SIZE);
+
+    for (let fontSize = LABEL_FONT_SIZE; text.width > maxWidth && fontSize > MIN_LABEL_FONT_SIZE; fontSize -= 1) {
+      text.setFontSize(fontSize - 1);
+    }
   }
 }

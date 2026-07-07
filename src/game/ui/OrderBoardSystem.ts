@@ -3,6 +3,7 @@ import { getItemName } from '../data/Items';
 import type { ItemId } from '../models/ItemTypes';
 import type { OrderDefinition } from '../models/OrderTypes';
 import type { OrderSystem } from '../systems/OrderSystem';
+import { createItemIcon } from './ItemIcon';
 
 const BOARD_FILL = 0xf4e6b3;
 const BOARD_STROKE = 0x6f5734;
@@ -11,6 +12,7 @@ const DISABLED_FILL = 0x9ca28e;
 const READY_STROKE = 0x496f38;
 const TEXT_COLOR = '#2f3b26';
 const DISABLED_TEXT = '#ece7d7';
+const REWARD_TEXT_WIDTH = 96;
 
 interface OrderBoardConfig {
   x: number;
@@ -109,16 +111,10 @@ export class OrderBoardSystem {
       })
     );
 
-    this.objects.push(
-      this.scene.add.text(x + 8, y + 25, this.formatRequirements(order), {
-        color: textColor,
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '12px'
-      })
-    );
+    this.renderRequirements(order, x + 8, y + 31, width - REWARD_TEXT_WIDTH - 18, textColor, ready ? 1 : 0.78);
 
     this.objects.push(
-      this.scene.add.text(x + width - 96, y + 25, `${order.coinReward}c  ${order.xpReward} XP`, {
+      this.scene.add.text(x + width - REWARD_TEXT_WIDTH, y + 25, `${order.coinReward}c  ${order.xpReward} XP`, {
         color: textColor,
         fontFamily: 'Arial, sans-serif',
         fontSize: '12px',
@@ -127,10 +123,37 @@ export class OrderBoardSystem {
     );
   }
 
-  private formatRequirements(order: OrderDefinition): string {
-    return Object.entries(order.requirements)
-      .map(([itemId, count]) => `${count} ${getItemName(itemId as ItemId)}`)
-      .join(', ');
+  private renderRequirements(
+    order: OrderDefinition,
+    x: number,
+    y: number,
+    maxWidth: number,
+    textColor: string,
+    alpha: number
+  ): void {
+    let cursorX = x;
+
+    Object.entries(order.requirements).forEach(([itemId, count]) => {
+      const typedItemId = itemId as ItemId;
+      const label = `${count} ${getItemName(typedItemId)}`;
+      const icon = createItemIcon(this.scene, typedItemId, cursorX + 6, y + 2, 13, { alpha });
+      const text = this.scene.add.text(cursorX + 15, y - 6, label, {
+        color: textColor,
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '11px'
+      });
+      const entryWidth = 17 + Math.min(text.width, 60) + 5;
+
+      icon.setAlpha(alpha);
+      text.setAlpha(alpha);
+
+      if (cursorX + entryWidth > x + maxWidth) {
+        text.setText(`${count} ${getItemName(typedItemId).slice(0, 4)}.`);
+      }
+
+      this.objects.push(icon, text);
+      cursorX += entryWidth;
+    });
   }
 
   private clearObjects(): void {

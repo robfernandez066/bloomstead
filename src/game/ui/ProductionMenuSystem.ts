@@ -3,6 +3,7 @@ import { getItemName } from '../data/Items';
 import type { ItemId } from '../models/ItemTypes';
 import type { ProductionRecipeDefinition, ProductionRecipeId } from '../models/ProductionTypes';
 import type { ProductionSystem } from '../systems/ProductionSystem';
+import { createItemIcon } from './ItemIcon';
 
 const OVERLAY_FILL = 0x263522;
 const PANEL_FILL = 0xf7edc7;
@@ -137,16 +138,7 @@ export class ProductionMenuSystem {
         .setDepth(DEPTH + 3)
     );
 
-    this.objects.push(
-      this.scene.add
-        .text(entryX + 10, entryY + 31, this.formatRecipe(recipe), {
-          color: TEXT_COLOR,
-          fontFamily: 'Arial, sans-serif',
-          fontSize: '13px',
-          fontStyle: 'bold'
-        })
-        .setDepth(DEPTH + 3)
-    );
+    this.renderRecipeLine(recipe, entryX + 10, entryY + 40);
 
     this.objects.push(
       this.scene.add
@@ -231,12 +223,47 @@ export class ProductionMenuSystem {
     );
   }
 
-  private formatRecipe(recipe: ProductionRecipeDefinition): string {
-    const inputText = Object.entries(recipe.input)
-      .map(([itemId, count]) => `${count} ${getItemName(itemId as ItemId)}`)
-      .join(', ');
+  private renderRecipeLine(recipe: ProductionRecipeDefinition, x: number, y: number): void {
+    let cursorX = x;
 
-    return `${inputText} -> ${recipe.outputAmount} ${getItemName(recipe.outputItemId)}`;
+    Object.entries(recipe.input).forEach(([itemId, count], index) => {
+      if (index > 0) {
+        const comma = this.scene.add.text(cursorX, y - 8, ',', {
+          color: TEXT_COLOR,
+          fontFamily: 'Arial, sans-serif',
+          fontSize: '13px',
+          fontStyle: 'bold'
+        }).setDepth(DEPTH + 3);
+
+        this.objects.push(comma);
+        cursorX += comma.width + 4;
+      }
+
+      cursorX = this.renderRecipeItem(itemId as ItemId, count ?? 0, cursorX, y);
+    });
+
+    const arrow = this.scene.add.text(cursorX + 2, y - 8, '->', {
+      color: TEXT_COLOR,
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '13px',
+      fontStyle: 'bold'
+    }).setDepth(DEPTH + 3);
+
+    this.objects.push(arrow);
+    this.renderRecipeItem(recipe.outputItemId, recipe.outputAmount, cursorX + arrow.width + 10, y);
+  }
+
+  private renderRecipeItem(itemId: ItemId, count: number, x: number, y: number): number {
+    const icon = createItemIcon(this.scene, itemId, x + 7, y - 1, 15, { depth: DEPTH + 3 });
+    const label = this.scene.add.text(x + 17, y - 8, `${count} ${getItemName(itemId)}`, {
+      color: TEXT_COLOR,
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '13px',
+      fontStyle: 'bold'
+    }).setDepth(DEPTH + 3);
+
+    this.objects.push(icon, label);
+    return x + 20 + label.width + 8;
   }
 
   private formatStatus(recipe: ProductionRecipeDefinition): string {

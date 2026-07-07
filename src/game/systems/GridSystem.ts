@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import type { CropId } from '../models/CropTypes';
 import type { GridPosition, GridSystemConfig } from '../models/GridTypes';
 import type { PlotState } from '../models/PlotTypes';
 import {
@@ -14,25 +15,33 @@ const PLANTED_FILL = 0x789e4e;
 const LOCKED_FILL = 0x66746a;
 const LOCKED_STROKE = 0x3f4842;
 const HOVER_FILL = 0xa8d87d;
-const SPROUT_FILL = 0x315f35;
-const READY_FILL = 0xffd65f;
-const SPROUT_STEM_FILL = 0x2f6b37;
-const SPROUT_LEAF_FILL = 0x67a845;
-const READY_GRAIN_FILL = 0xffcf56;
-const READY_STEM_FILL = 0x8c6b2f;
+const HARVEST_PARTICLE_FILL = 0xffd65f;
+const LEAF_FILL = 0x67a845;
+const DARK_LEAF_FILL = 0x315f35;
+const WHEAT_FILL = 0xffcf56;
+const WHEAT_STEM_FILL = 0x8c6b2f;
+const CARROT_FILL = 0xe87832;
+const CARROT_SHADOW_FILL = 0xb7532b;
+const GLOWBERRY_FILL = 0x8c58d8;
+const GLOWBERRY_LIGHT_FILL = 0xd8b7ff;
 const DEBUG_ANCHOR_FILL = 0xff3355;
 const DEBUG_LABEL_COLOR = '#1b2b1b';
+const CROP_VISUAL_LOCAL_Y = 3;
 
 interface GridSystemHandlers {
   onPlotPressed?: (plot: PlotState) => void;
   onPlotDraggedOver?: (plot: PlotState) => void;
 }
 
+interface CropStageVisuals {
+  growing: Phaser.GameObjects.Container;
+  ready: Phaser.GameObjects.Container;
+}
+
 interface PlotRenderObjects {
   tile: Phaser.GameObjects.Polygon;
   cropVisual: Phaser.GameObjects.Container;
-  sproutVisual: Phaser.GameObjects.Container;
-  readyVisual: Phaser.GameObjects.Container;
+  cropVisuals: Record<CropId, CropStageVisuals>;
 }
 
 export class GridSystem {
@@ -128,7 +137,7 @@ export class GridSystem {
     for (let index = 0; index < 5; index += 1) {
       const angle = Phaser.Math.DegToRad(Phaser.Math.Between(210, 330));
       const distance = Phaser.Math.Between(8, 16);
-      const particle = this.scene.add.circle(anchor.x, anchor.y, 2, READY_FILL, 0.9).setDepth(100);
+      const particle = this.scene.add.circle(anchor.x, anchor.y, 2, HARVEST_PARTICLE_FILL, 0.9).setDepth(100);
 
       this.scene.tweens.add({
         targets: particle,
@@ -176,9 +185,7 @@ export class GridSystem {
         Phaser.Geom.Polygon.Contains
       );
 
-    const cropVisual = this.createCropVisual();
-    const sproutVisual = cropVisual.getByName('sprout') as Phaser.GameObjects.Container;
-    const readyVisual = cropVisual.getByName('ready') as Phaser.GameObjects.Container;
+    const { cropVisual, cropVisuals } = this.createCropVisual();
 
     this.tileLayer.add(diamond);
     this.markerLayer.add(cropVisual);
@@ -190,8 +197,7 @@ export class GridSystem {
     this.renderObjects.set(this.getPlotKey(plot), {
       tile: diamond,
       cropVisual,
-      sproutVisual,
-      readyVisual
+      cropVisuals
     });
     this.refreshPlotVisual(plot);
 
@@ -245,8 +251,9 @@ export class GridSystem {
     }
 
     objects.cropVisual.setVisible(true);
-    objects.sproutVisual.setVisible(!plot.ready);
-    objects.readyVisual.setVisible(plot.ready);
+    this.hideCropStageVisuals(objects.cropVisuals);
+    objects.cropVisuals[plot.plantedCropId].growing.setVisible(!plot.ready);
+    objects.cropVisuals[plot.plantedCropId].ready.setVisible(plot.ready);
   }
 
   private getPlotFill(plot: PlotState): number {
@@ -320,23 +327,123 @@ export class GridSystem {
       .map((plot) => ({ row: plot.row, column: plot.column }));
   }
 
-  private createCropVisual(): Phaser.GameObjects.Container {
-    const sprout = this.scene.add.container(0, 0).setName('sprout');
-    const sproutStem = this.scene.add.rectangle(0, -1, 2, 6, SPROUT_STEM_FILL);
-    const leftLeaf = this.scene.add.ellipse(-3, -3, 6, 3, SPROUT_LEAF_FILL).setAngle(-25);
-    const rightLeaf = this.scene.add.ellipse(3, -3, 6, 3, SPROUT_LEAF_FILL).setAngle(25);
+  private createCropVisual(): {
+    cropVisual: Phaser.GameObjects.Container;
+    cropVisuals: Record<CropId, CropStageVisuals>;
+  } {
+    const cropVisuals: Record<CropId, CropStageVisuals> = {
+      sunwheat: {
+        growing: this.createSunwheatGrowingVisual().setY(CROP_VISUAL_LOCAL_Y),
+        ready: this.createSunwheatReadyVisual().setY(CROP_VISUAL_LOCAL_Y)
+      },
+      carrot: {
+        growing: this.createCarrotGrowingVisual().setY(CROP_VISUAL_LOCAL_Y),
+        ready: this.createCarrotReadyVisual().setY(CROP_VISUAL_LOCAL_Y)
+      },
+      glowberry: {
+        growing: this.createGlowberryGrowingVisual().setY(CROP_VISUAL_LOCAL_Y),
+        ready: this.createGlowberryReadyVisual().setY(CROP_VISUAL_LOCAL_Y)
+      }
+    };
+    const cropVisual = this.scene.add.container(0, 0).setVisible(false);
 
-    sprout.add([sproutStem, leftLeaf, rightLeaf]);
+    Object.values(cropVisuals).forEach(({ growing, ready }) => {
+      cropVisual.add([growing, ready]);
+      growing.setVisible(false);
+      ready.setVisible(false);
+    });
 
-    const ready = this.scene.add.container(0, 0).setName('ready');
-    const readyStem = this.scene.add.rectangle(0, -1, 2, 7, READY_STEM_FILL);
-    const grainA = this.scene.add.ellipse(-3, -5, 4, 6, READY_GRAIN_FILL).setAngle(-18);
-    const grainB = this.scene.add.ellipse(0, -6, 4, 7, READY_FILL);
-    const grainC = this.scene.add.ellipse(3, -5, 4, 6, READY_GRAIN_FILL).setAngle(18);
+    return { cropVisual, cropVisuals };
+  }
 
-    ready.add([readyStem, grainA, grainB, grainC]);
+  private hideCropStageVisuals(cropVisuals: Record<CropId, CropStageVisuals>): void {
+    Object.values(cropVisuals).forEach(({ growing, ready }) => {
+      growing.setVisible(false);
+      ready.setVisible(false);
+    });
+  }
 
-    return this.scene.add.container(0, 0, [sprout, ready]).setVisible(false);
+  private createSunwheatGrowingVisual(): Phaser.GameObjects.Container {
+    const container = this.scene.add.container(0, 0);
+    const stalkA = this.scene.add.rectangle(-3, -3, 1.5, 8, WHEAT_STEM_FILL).setAngle(-10);
+    const stalkB = this.scene.add.rectangle(1, -4, 1.5, 10, WHEAT_STEM_FILL);
+    const grainA = this.scene.add.ellipse(-3, -8, 3, 5, WHEAT_FILL).setAngle(-18);
+    const grainB = this.scene.add.ellipse(1, -10, 3, 5, WHEAT_FILL);
+
+    return container.add([stalkA, stalkB, grainA, grainB]);
+  }
+
+  private createSunwheatReadyVisual(): Phaser.GameObjects.Container {
+    const container = this.scene.add.container(0, 0);
+    const stalks = [
+      this.scene.add.rectangle(-5, -3, 1.5, 11, WHEAT_STEM_FILL).setAngle(-16),
+      this.scene.add.rectangle(0, -4, 1.5, 13, WHEAT_STEM_FILL),
+      this.scene.add.rectangle(5, -3, 1.5, 11, WHEAT_STEM_FILL).setAngle(16)
+    ];
+    const grains = [
+      this.scene.add.ellipse(-6, -10, 4, 6, WHEAT_FILL).setAngle(-18),
+      this.scene.add.ellipse(-2, -12, 4, 7, WHEAT_FILL).setAngle(-8),
+      this.scene.add.ellipse(2, -12, 4, 7, WHEAT_FILL).setAngle(8),
+      this.scene.add.ellipse(6, -10, 4, 6, WHEAT_FILL).setAngle(18)
+    ];
+
+    return container.add([...stalks, ...grains]);
+  }
+
+  private createCarrotGrowingVisual(): Phaser.GameObjects.Container {
+    const container = this.scene.add.container(0, 0);
+    const carrot = this.scene.add.graphics();
+
+    carrot.fillStyle(DARK_LEAF_FILL, 1);
+    carrot.fillTriangle(-5, -1, -2, -8, 0, -1);
+    carrot.fillTriangle(-2, -2, 1, -10, 3, -2);
+    carrot.fillTriangle(1, -1, 6, -7, 5, 0);
+    carrot.fillStyle(CARROT_FILL, 1);
+    carrot.fillEllipse(0, 2, 7, 6);
+    carrot.lineStyle(1, CARROT_SHADOW_FILL, 0.55);
+    carrot.lineBetween(-2, 2, 2, 2);
+
+    return container.add(carrot);
+  }
+
+  private createCarrotReadyVisual(): Phaser.GameObjects.Container {
+    const container = this.scene.add.container(0, 0);
+    const carrot = this.scene.add.graphics();
+
+    carrot.fillStyle(DARK_LEAF_FILL, 1);
+    carrot.fillTriangle(-7, -1, -3, -10, 0, -1);
+    carrot.fillTriangle(-3, -2, 0, -12, 3, -2);
+    carrot.fillTriangle(1, -1, 7, -9, 6, 0);
+    carrot.fillStyle(CARROT_FILL, 1);
+    carrot.fillEllipse(0, 3, 10, 8);
+    carrot.lineStyle(1, CARROT_SHADOW_FILL, 0.7);
+    carrot.lineBetween(-3, 2, 3, 2);
+    carrot.lineBetween(-2, 5, 2, 5);
+
+    return container.add(carrot);
+  }
+
+  private createGlowberryGrowingVisual(): Phaser.GameObjects.Container {
+    const container = this.scene.add.container(0, 0);
+    const base = this.scene.add.ellipse(0, -2, 12, 7, DARK_LEAF_FILL);
+    const leafA = this.scene.add.ellipse(-4, -5, 6, 3, LEAF_FILL).setAngle(-25);
+    const leafB = this.scene.add.ellipse(4, -5, 6, 3, LEAF_FILL).setAngle(25);
+    const berry = this.scene.add.circle(0, -7, 2.4, GLOWBERRY_FILL);
+
+    return container.add([base, leafA, leafB, berry]);
+  }
+
+  private createGlowberryReadyVisual(): Phaser.GameObjects.Container {
+    const container = this.scene.add.container(0, 0);
+    const base = this.scene.add.ellipse(0, -2, 14, 8, DARK_LEAF_FILL);
+    const leafA = this.scene.add.ellipse(-5, -6, 7, 3, LEAF_FILL).setAngle(-25);
+    const leafB = this.scene.add.ellipse(5, -6, 7, 3, LEAF_FILL).setAngle(25);
+    const berryA = this.scene.add.circle(-4, -8, 3, GLOWBERRY_FILL);
+    const berryB = this.scene.add.circle(1, -10, 3.2, GLOWBERRY_FILL);
+    const berryC = this.scene.add.circle(5, -6, 2.8, GLOWBERRY_FILL);
+    const glint = this.scene.add.circle(0, -11, 1, GLOWBERRY_LIGHT_FILL);
+
+    return container.add([base, leafA, leafB, berryA, berryB, berryC, glint]);
   }
 
   private logTilePosition(position: GridPosition): void {
