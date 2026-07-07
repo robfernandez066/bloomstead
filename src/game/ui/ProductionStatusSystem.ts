@@ -8,6 +8,9 @@ const BAR_BACK = 0x9ca28e;
 const BAR_FILL = 0x6fae57;
 const PANEL_STROKE = 0x6f5734;
 const TEXT_COLOR = '#2f3b26';
+const CHIP_WIDTH = 96;
+const CHIP_HEIGHT = 30;
+const CHIP_GAP = 6;
 
 interface ProductionStatusConfig {
   buttonX: number;
@@ -42,16 +45,18 @@ export class ProductionStatusSystem {
       return;
     }
 
+    const config = this.config;
+
     this.clearObjects();
-    this.renderButton(this.config);
+    this.renderButton(config);
 
-    const state = this.productionSystem.getState();
-
-    if (state.status === 'idle') {
+    if (this.productionSystem.getState().status === 'idle') {
       return;
     }
 
-    this.renderStatus(this.config);
+    this.productionSystem.getAvailableRecipes().forEach((recipe, index) => {
+      this.renderStatusChip(recipe.buildingName, index, config);
+    });
   }
 
   private renderButton(config: ProductionStatusConfig): void {
@@ -68,7 +73,7 @@ export class ProductionStatusSystem {
     this.objects.push(
       button,
       this.scene.add
-        .text(config.buttonX + config.buttonWidth / 2, config.buttonY + config.buttonHeight / 2, 'Make', {
+        .text(config.buttonX + config.buttonWidth / 2, config.buttonY + config.buttonHeight / 2, 'Craft', {
           color: TEXT_COLOR,
           fontFamily: 'Arial, sans-serif',
           fontSize: '12px',
@@ -78,33 +83,41 @@ export class ProductionStatusSystem {
     );
   }
 
-  private renderStatus(config: ProductionStatusConfig): void {
+  private renderStatusChip(label: string, index: number, config: ProductionStatusConfig): void {
     const state = this.productionSystem.getState();
     const ready = state.status === 'ready';
-    const panel = this.scene.add
+    const chipX = config.statusX + index * (CHIP_WIDTH + CHIP_GAP);
+    const chipY = config.statusY + Math.max(0, (config.statusHeight - CHIP_HEIGHT) / 2);
+    const chipWidth = Math.min(CHIP_WIDTH, config.statusX + config.statusWidth - chipX);
+
+    if (chipWidth < 48) {
+      return;
+    }
+
+    const chip = this.scene.add
       .rectangle(
-        config.statusX,
-        config.statusY,
-        config.statusWidth,
-        config.statusHeight,
+        chipX,
+        chipY,
+        chipWidth,
+        CHIP_HEIGHT,
         ready ? READY_FILL : PANEL_FILL
       )
       .setOrigin(0, 0)
       .setStrokeStyle(2, PANEL_STROKE)
       .setInteractive({ useHandCursor: true });
 
-    panel.on('pointerdown', () => {
+    chip.on('pointerdown', () => {
       config.onOpen();
     });
 
-    this.objects.push(panel);
+    this.objects.push(chip);
 
     if (ready) {
       this.objects.push(
-        this.scene.add.text(config.statusX + 10, config.statusY + 12, 'Mill Ready', {
+        this.scene.add.text(chipX + 8, chipY + 8, `${label} Ready`, {
           color: TEXT_COLOR,
           fontFamily: 'Arial, sans-serif',
-          fontSize: '13px',
+          fontSize: '12px',
           fontStyle: 'bold'
         })
       );
@@ -115,18 +128,12 @@ export class ProductionStatusSystem {
     const durationMs = state.durationMs ?? 1;
     const remainingMs = this.productionSystem.getRemainingMs();
     const progress = Phaser.Math.Clamp(1 - remainingMs / durationMs, 0, 1);
-    const barX = config.statusX + 56;
-    const barY = config.statusY + 25;
-    const barWidth = config.statusWidth - 118;
+    const barX = chipX + 8;
+    const barY = chipY + 21;
+    const barWidth = chipWidth - 16;
 
     this.objects.push(
-      this.scene.add.text(config.statusX + 10, config.statusY + 6, 'Mill', {
-        color: TEXT_COLOR,
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '13px',
-        fontStyle: 'bold'
-      }),
-      this.scene.add.text(config.statusX + config.statusWidth - 52, config.statusY + 6, `${remainingSeconds}s`, {
+      this.scene.add.text(chipX + 8, chipY + 5, `${label} ${remainingSeconds}s`, {
         color: TEXT_COLOR,
         fontFamily: 'Arial, sans-serif',
         fontSize: '12px',

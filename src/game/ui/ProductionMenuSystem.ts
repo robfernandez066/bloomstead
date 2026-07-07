@@ -66,19 +66,24 @@ export class ProductionMenuSystem {
 
     const { x, y, width, height } = this.config;
 
-    this.objects.push(
-      this.scene.add
-        .rectangle(0, 0, this.scene.scale.width, this.scene.scale.height, OVERLAY_FILL, 0.18)
-        .setOrigin(0, 0)
-        .setInteractive()
-        .setDepth(DEPTH)
-    );
+    const overlay = this.scene.add
+      .rectangle(0, 0, this.scene.scale.width, this.scene.scale.height, OVERLAY_FILL, 0.18)
+      .setOrigin(0, 0)
+      .setInteractive()
+      .setDepth(DEPTH);
+
+    overlay.on('pointerdown', () => {
+      this.closeMenu();
+    });
+
+    this.objects.push(overlay);
 
     this.objects.push(
       this.scene.add
         .rectangle(x, y, width, height, PANEL_FILL)
         .setOrigin(0, 0)
         .setStrokeStyle(2, PANEL_STROKE)
+        .setInteractive()
         .setDepth(DEPTH + 1)
     );
 
