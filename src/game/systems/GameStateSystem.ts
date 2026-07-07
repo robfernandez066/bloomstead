@@ -12,7 +12,8 @@ const STARTING_CROP_INVENTORY: CropInventory = {
 };
 
 const STARTING_PROCESSED_GOOD_INVENTORY: ProcessedGoodInventory = {
-  flour: 0
+  flour: 0,
+  bread: 0
 };
 
 export interface FarmXpResult {

@@ -57,5 +57,15 @@ export const MVP_ORDERS: OrderDefinition[] = [
     coinReward: 90,
     xpReward: 20,
     minFarmLevel: 2
+  },
+  {
+    id: 'fresh-bread',
+    name: 'Fresh Bread',
+    requirements: {
+      bread: 1
+    },
+    coinReward: 130,
+    xpReward: 30,
+    minFarmLevel: 3
   }
 ];

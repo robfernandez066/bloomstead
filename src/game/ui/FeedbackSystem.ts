@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import type { CropId } from '../models/CropTypes';
 import type { IsometricPoint } from '../models/GridTypes';
+import { getItemName } from '../data/Items';
+import type { ItemId } from '../models/ItemTypes';
 
 const FLOAT_TEXT_COLOR = '#fff7cc';
 const FLOAT_TEXT_STROKE = '#3f512e';
@@ -123,12 +125,12 @@ export class FeedbackSystem {
     this.showFloatingText(`Sold ${cropName} +${coins}c`, x, y, 760, 22, '#fff4a8');
   }
 
-  showProductionStarted(x: number, y: number): void {
-    this.showFloatingText('Mill Started', x, y, 720, 20, '#fff4a8');
+  showProductionStarted(x: number, y: number, buildingName: string): void {
+    this.showFloatingText(`${buildingName} Started`, x, y, 720, 20, '#fff4a8');
   }
 
-  showProductionReady(x: number, y: number): void {
-    this.showFloatingText('Flour Ready!', x, y, 850, 22, '#fff4a8');
+  showProductionReady(x: number, y: number, itemId: ItemId): void {
+    this.showFloatingText(`${getItemName(itemId)} Ready!`, x, y, 850, 22, '#fff4a8');
     this.showPop(x, y + 8, POP_FILL);
   }
 

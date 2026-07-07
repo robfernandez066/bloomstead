@@ -1,19 +1,24 @@
 import { PRODUCTION_RECIPES } from '../data/ProductionRecipes';
 import { getItemName } from '../data/Items';
 import type {
+  ProductionBuildingId,
+  ProductionJobState,
   ProductionRecipeDefinition,
   ProductionRecipeId,
+  SavedProductionState,
   ProductionState
 } from '../models/ProductionTypes';
 import type { ItemId } from '../models/ItemTypes';
 import type { GameStateSystem } from './GameStateSystem';
 
-const DEFAULT_PRODUCTION_STATE: ProductionState = {
+const DEFAULT_JOB_STATE: ProductionJobState = {
   status: 'idle',
   recipeId: null,
   startedAt: null,
   durationMs: null
 };
+
+const PRODUCTION_BUILDINGS: ProductionBuildingId[] = ['mill', 'bakery'];
 
 export interface ProductionStartResult {
   recipe: ProductionRecipeDefinition;
@@ -29,7 +34,7 @@ export class ProductionSystem {
   private readonly gameState: GameStateSystem;
   private readonly state: ProductionState;
 
-  constructor(gameState: GameStateSystem, initialState?: ProductionState) {
+  constructor(gameState: GameStateSystem, initialState?: SavedProductionState) {
     this.gameState = gameState;
     this.state = this.normalizeState(initialState);
     this.refreshProductionState();
@@ -39,12 +44,24 @@ export class ProductionSystem {
     return this.state;
   }
 
-  getCurrentRecipe(): ProductionRecipeDefinition {
-    return PRODUCTION_RECIPES['mill-flour'];
+  getAvailableRecipes(): ProductionRecipeDefinition[] {
+    return Object.values(PRODUCTION_RECIPES);
   }
 
-  getAvailableRecipes(): ProductionRecipeDefinition[] {
-    return [this.getCurrentRecipe()];
+  getRecipeState(recipeId: ProductionRecipeId): ProductionJobState {
+    return this.state[PRODUCTION_RECIPES[recipeId].buildingId];
+  }
+
+  getActiveRecipes(): ProductionRecipeDefinition[] {
+    return this.getAvailableRecipes().filter((recipe) => {
+      return this.getRecipeState(recipe.id).status !== 'idle';
+    });
+  }
+
+  hasProducingJobs(): boolean {
+    return this.getAvailableRecipes().some((recipe) => {
+      return this.getRecipeState(recipe.id).status === 'producing';
+    });
   }
 
   getItemCount(itemId: ItemId): number {
@@ -52,11 +69,14 @@ export class ProductionSystem {
   }
 
   canStartRecipe(recipeId: ProductionRecipeId): boolean {
-    if (this.state.status !== 'idle') {
+    const recipe = PRODUCTION_RECIPES[recipeId];
+    const state = this.state[recipe.buildingId];
+
+    if (state.status !== 'idle') {
       return false;
     }
 
-    return this.gameState.hasItemInventory(PRODUCTION_RECIPES[recipeId].input);
+    return this.gameState.hasItemInventory(recipe.input);
   }
 
   startRecipe(recipeId: ProductionRecipeId): ProductionStartResult | null {
@@ -70,28 +90,31 @@ export class ProductionSystem {
       return null;
     }
 
-    this.state.status = 'producing';
-    this.state.recipeId = recipe.id;
-    this.state.startedAt = Date.now();
-    this.state.durationMs = recipe.durationMs;
+    const state = this.state[recipe.buildingId];
+
+    state.status = 'producing';
+    state.recipeId = recipe.id;
+    state.startedAt = Date.now();
+    state.durationMs = recipe.durationMs;
 
     return { recipe };
   }
 
-  collectReadyOutput(): ProductionCollectResult | null {
+  collectReadyOutput(recipeId: ProductionRecipeId): ProductionCollectResult | null {
     this.refreshProductionState();
+    const state = this.getRecipeState(recipeId);
 
-    if (this.state.status !== 'ready' || this.state.recipeId === null) {
+    if (state.status !== 'ready' || state.recipeId !== recipeId) {
       return null;
     }
 
-    const recipe = PRODUCTION_RECIPES[this.state.recipeId];
+    const recipe = PRODUCTION_RECIPES[state.recipeId];
 
     this.gameState.addItemToInventory(recipe.outputItemId, recipe.outputAmount);
-    this.state.status = 'idle';
-    this.state.recipeId = null;
-    this.state.startedAt = null;
-    this.state.durationMs = null;
+    state.status = 'idle';
+    state.recipeId = null;
+    state.startedAt = null;
+    state.durationMs = null;
 
     return {
       recipe,
@@ -100,54 +123,91 @@ export class ProductionSystem {
     };
   }
 
-  getRemainingMs(): number {
+  getRemainingMs(recipeId: ProductionRecipeId): number {
+    const state = this.getRecipeState(recipeId);
+
     if (
-      this.state.status !== 'producing' ||
-      this.state.startedAt === null ||
-      this.state.durationMs === null
+      state.status !== 'producing' ||
+      state.startedAt === null ||
+      state.durationMs === null
     ) {
       return 0;
     }
 
-    return Math.max(0, this.state.durationMs - (Date.now() - this.state.startedAt));
+    return Math.max(0, state.durationMs - (Date.now() - state.startedAt));
   }
 
-  refreshProductionState(): boolean {
-    if (
-      this.state.status !== 'producing' ||
-      this.state.startedAt === null ||
-      this.state.durationMs === null
-    ) {
-      return false;
+  refreshProductionState(): ProductionRecipeDefinition[] {
+    const becameReady: ProductionRecipeDefinition[] = [];
+
+    for (const recipe of this.getAvailableRecipes()) {
+      const state = this.state[recipe.buildingId];
+
+      if (
+        state.status !== 'producing' ||
+        state.startedAt === null ||
+        state.durationMs === null ||
+        Date.now() - state.startedAt < state.durationMs
+      ) {
+        continue;
+      }
+
+      state.status = 'ready';
+      becameReady.push(recipe);
     }
 
-    if (Date.now() - this.state.startedAt < this.state.durationMs) {
-      return false;
-    }
-
-    this.state.status = 'ready';
-    return true;
+    return becameReady;
   }
 
-  private normalizeState(initialState?: ProductionState): ProductionState {
+  private normalizeState(initialState?: SavedProductionState): ProductionState {
+    const normalizedState = this.createDefaultState();
+
+    if (initialState === undefined) {
+      return normalizedState;
+    }
+
+    if (this.isLegacyJobState(initialState)) {
+      normalizedState.mill = this.normalizeJobState('mill', initialState);
+      return normalizedState;
+    }
+
+    for (const buildingId of PRODUCTION_BUILDINGS) {
+      normalizedState[buildingId] = this.normalizeJobState(buildingId, initialState[buildingId]);
+    }
+
+    return normalizedState;
+  }
+
+  private createDefaultState(): ProductionState {
+    return {
+      mill: { ...DEFAULT_JOB_STATE },
+      bakery: { ...DEFAULT_JOB_STATE }
+    };
+  }
+
+  private normalizeJobState(
+    buildingId: ProductionBuildingId,
+    initialState?: ProductionJobState
+  ): ProductionJobState {
     if (
       initialState === undefined ||
       (initialState.status !== 'idle' &&
         initialState.status !== 'producing' &&
         initialState.status !== 'ready')
     ) {
-      return { ...DEFAULT_PRODUCTION_STATE };
+      return { ...DEFAULT_JOB_STATE };
     }
 
     if (initialState.status === 'idle') {
-      return { ...DEFAULT_PRODUCTION_STATE };
+      return { ...DEFAULT_JOB_STATE };
     }
 
     if (
       initialState.recipeId === null ||
-      PRODUCTION_RECIPES[initialState.recipeId] === undefined
+      PRODUCTION_RECIPES[initialState.recipeId] === undefined ||
+      PRODUCTION_RECIPES[initialState.recipeId].buildingId !== buildingId
     ) {
-      return { ...DEFAULT_PRODUCTION_STATE };
+      return { ...DEFAULT_JOB_STATE };
     }
 
     return {
@@ -159,5 +219,9 @@ export class ProductionSystem {
           ? initialState.durationMs
           : PRODUCTION_RECIPES[initialState.recipeId].durationMs
     };
+  }
+
+  private isLegacyJobState(state: SavedProductionState): state is ProductionJobState {
+    return 'status' in state;
   }
 }

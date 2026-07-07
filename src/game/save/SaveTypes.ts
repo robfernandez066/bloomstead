@@ -2,7 +2,7 @@ import type { GameState } from '../models/GameStateTypes';
 import type { AudioState } from '../models/AudioTypes';
 import type { OrderId } from '../models/OrderTypes';
 import type { PlotState } from '../models/PlotTypes';
-import type { ProductionState } from '../models/ProductionTypes';
+import type { SavedProductionState } from '../models/ProductionTypes';
 import type { TutorialState } from '../models/TutorialTypes';
 
 export interface SavedPlotState extends PlotState {
@@ -23,7 +23,7 @@ export interface SavedGameData {
   orderState?: SavedOrderState;
   tutorialState?: TutorialState;
   audioState?: AudioState;
-  productionState?: ProductionState;
+  productionState?: SavedProductionState;
 }
 
 export interface SaveLoadResult {

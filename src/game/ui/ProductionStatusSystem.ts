@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import type { ProductionRecipeDefinition } from '../models/ProductionTypes';
 import type { ProductionSystem } from '../systems/ProductionSystem';
 
 const BUTTON_FILL = 0xe8f0bb;
@@ -50,12 +51,8 @@ export class ProductionStatusSystem {
     this.clearObjects();
     this.renderButton(config);
 
-    if (this.productionSystem.getState().status === 'idle') {
-      return;
-    }
-
-    this.productionSystem.getAvailableRecipes().forEach((recipe, index) => {
-      this.renderStatusChip(recipe.buildingName, index, config);
+    this.productionSystem.getActiveRecipes().forEach((recipe, index) => {
+      this.renderStatusChip(recipe, index, config);
     });
   }
 
@@ -83,8 +80,12 @@ export class ProductionStatusSystem {
     );
   }
 
-  private renderStatusChip(label: string, index: number, config: ProductionStatusConfig): void {
-    const state = this.productionSystem.getState();
+  private renderStatusChip(
+    recipe: ProductionRecipeDefinition,
+    index: number,
+    config: ProductionStatusConfig
+  ): void {
+    const state = this.productionSystem.getRecipeState(recipe.id);
     const ready = state.status === 'ready';
     const chipX = config.statusX + index * (CHIP_WIDTH + CHIP_GAP);
     const chipY = config.statusY + Math.max(0, (config.statusHeight - CHIP_HEIGHT) / 2);
@@ -114,7 +115,7 @@ export class ProductionStatusSystem {
 
     if (ready) {
       this.objects.push(
-        this.scene.add.text(chipX + 8, chipY + 8, `${label} Ready`, {
+        this.scene.add.text(chipX + 8, chipY + 8, `${recipe.buildingName} Ready`, {
           color: TEXT_COLOR,
           fontFamily: 'Arial, sans-serif',
           fontSize: '12px',
@@ -124,16 +125,16 @@ export class ProductionStatusSystem {
       return;
     }
 
-    const remainingSeconds = Math.ceil(this.productionSystem.getRemainingMs() / 1000);
+    const remainingSeconds = Math.ceil(this.productionSystem.getRemainingMs(recipe.id) / 1000);
     const durationMs = state.durationMs ?? 1;
-    const remainingMs = this.productionSystem.getRemainingMs();
+    const remainingMs = this.productionSystem.getRemainingMs(recipe.id);
     const progress = Phaser.Math.Clamp(1 - remainingMs / durationMs, 0, 1);
     const barX = chipX + 8;
     const barY = chipY + 21;
     const barWidth = chipWidth - 16;
 
     this.objects.push(
-      this.scene.add.text(chipX + 8, chipY + 5, `${label} ${remainingSeconds}s`, {
+      this.scene.add.text(chipX + 8, chipY + 5, `${recipe.buildingName} ${remainingSeconds}s`, {
         color: TEXT_COLOR,
         fontFamily: 'Arial, sans-serif',
         fontSize: '12px',

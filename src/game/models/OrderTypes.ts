@@ -6,7 +6,8 @@ export type OrderId =
   | 'village-breakfast'
   | 'glowberry-treats'
   | 'market-starter-crate'
-  | 'bakers-flour';
+  | 'bakers-flour'
+  | 'fresh-bread';
 
 export type OrderRequirements = Partial<Record<ItemId, number>>;
 

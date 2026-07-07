@@ -1,8 +1,7 @@
 import Phaser from 'phaser';
 import { getItemName } from '../data/Items';
-import { MILL_FLOUR_RECIPE_ID } from '../data/ProductionRecipes';
 import type { ItemId } from '../models/ItemTypes';
-import type { ProductionRecipeDefinition } from '../models/ProductionTypes';
+import type { ProductionRecipeDefinition, ProductionRecipeId } from '../models/ProductionTypes';
 import type { ProductionSystem } from '../systems/ProductionSystem';
 
 const OVERLAY_FILL = 0x263522;
@@ -21,8 +20,8 @@ interface ProductionMenuConfig {
   y: number;
   width: number;
   height: number;
-  onStart: () => void;
-  onCollect: () => void;
+  onStart: (recipeId: ProductionRecipeId) => void;
+  onCollect: (recipeId: ProductionRecipeId) => void;
   onClose: () => void;
 }
 
@@ -111,10 +110,10 @@ export class ProductionMenuSystem {
     }
 
     const entryX = this.config.x + 12;
-    const entryY = this.config.y + 52 + index * 118;
+    const entryY = this.config.y + 52 + index * 94;
     const entryWidth = this.config.width - 24;
-    const entryHeight = 104;
-    const state = this.productionSystem.getState();
+    const entryHeight = 86;
+    const state = this.productionSystem.getRecipeState(recipe.id);
     const canStart = this.productionSystem.canStartRecipe(recipe.id);
     const buttonLabel = state.status === 'ready' ? 'Collect' : 'Start';
     const buttonEnabled = state.status === 'ready' || canStart;
@@ -151,7 +150,7 @@ export class ProductionMenuSystem {
 
     this.objects.push(
       this.scene.add
-        .text(entryX + 10, entryY + 52, this.formatStatus(), {
+        .text(entryX + 10, entryY + 52, this.formatStatus(recipe), {
           color: TEXT_COLOR,
           fontFamily: 'Arial, sans-serif',
           fontSize: '12px',
@@ -167,7 +166,7 @@ export class ProductionMenuSystem {
     const buttonWidth = 82;
     const buttonHeight = 30;
     const buttonX = entryX + entryWidth - buttonWidth - 10;
-    const buttonY = entryY + entryHeight - buttonHeight - 10;
+    const buttonY = entryY + entryHeight - buttonHeight - 8;
     const button = this.scene.add
       .rectangle(
         buttonX,
@@ -185,9 +184,9 @@ export class ProductionMenuSystem {
       button.setInteractive({ useHandCursor: true });
       button.on('pointerdown', () => {
         if (state.status === 'ready') {
-          this.config?.onCollect();
+          this.config?.onCollect(recipe.id);
         } else {
-          this.config?.onStart();
+          this.config?.onStart(recipe.id);
         }
       });
     }
@@ -240,19 +239,20 @@ export class ProductionMenuSystem {
     return `${inputText} -> ${recipe.outputAmount} ${getItemName(recipe.outputItemId)}`;
   }
 
-  private formatStatus(): string {
-    const state = this.productionSystem.getState();
-    const flourCount = this.productionSystem.getItemCount('flour');
+  private formatStatus(recipe: ProductionRecipeDefinition): string {
+    const state = this.productionSystem.getRecipeState(recipe.id);
+    const outputName = getItemName(recipe.outputItemId);
+    const outputCount = this.productionSystem.getItemCount(recipe.outputItemId);
 
     if (state.status === 'ready') {
-      return `Status: ready | Flour x${flourCount}`;
+      return `Status: ready | ${outputName} x${outputCount}`;
     }
 
     if (state.status === 'producing') {
-      return `Status: producing | ${Math.ceil(this.productionSystem.getRemainingMs() / 1000)}s left | Flour x${flourCount}`;
+      return `Status: producing | ${Math.ceil(this.productionSystem.getRemainingMs(recipe.id) / 1000)}s left | ${outputName} x${outputCount}`;
     }
 
-    return `Status: idle | Flour x${flourCount}`;
+    return `Status: idle | ${outputName} x${outputCount}`;
   }
 
   private clearObjects(): void {

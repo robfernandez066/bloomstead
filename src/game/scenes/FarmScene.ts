@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { MILL_FLOUR_RECIPE_ID } from '../data/ProductionRecipes';
 import { SaveSystem } from '../save/SaveSystem';
 import { CropSellPanelSystem } from '../ui/CropSellPanelSystem';
 import { DevSaveControlsSystem } from '../ui/DevSaveControlsSystem';
@@ -313,8 +312,8 @@ export class FarmScene extends Phaser.Scene {
       y: FARM_LAYOUT.productionMenu.y,
       width: FARM_LAYOUT.productionMenu.width,
       height: FARM_LAYOUT.productionMenu.height,
-      onStart: () => {
-        const result = productionSystem.startRecipe(MILL_FLOUR_RECIPE_ID);
+      onStart: (recipeId) => {
+        const result = productionSystem.startRecipe(recipeId);
 
         if (result === null) {
           audioSystem.playDisabledTap();
@@ -326,10 +325,14 @@ export class FarmScene extends Phaser.Scene {
         cropSellPanelSystem.refresh();
         orderBoardSystem.refresh();
         saveGame();
-        feedbackSystem.showProductionStarted(width / 2, FARM_LAYOUT.productionStatus.y - 8);
+        feedbackSystem.showProductionStarted(
+          width / 2,
+          FARM_LAYOUT.productionStatus.y - 8,
+          result.recipe.buildingName
+        );
       },
-      onCollect: () => {
-        const result = productionSystem.collectReadyOutput();
+      onCollect: (recipeId) => {
+        const result = productionSystem.collectReadyOutput(recipeId);
 
         if (result === null) {
           audioSystem.playDisabledTap();
@@ -465,10 +468,10 @@ export class FarmScene extends Phaser.Scene {
           .getPlots()
           .filter((plot) => plot.plantedCropId !== null && !plot.ready);
         const readyStatesChanged = plotStateSystem.refreshReadyStates();
-        const productionBecameReady = productionSystem.refreshProductionState();
+        const productionReadyRecipes = productionSystem.refreshProductionState();
         gridSystem.refreshPlotVisuals();
 
-        if (productionSystem.getState().status === 'producing' || productionBecameReady) {
+        if (productionSystem.hasProducingJobs() || productionReadyRecipes.length > 0) {
           refreshProductionUi();
         }
 
@@ -487,9 +490,15 @@ export class FarmScene extends Phaser.Scene {
           saveGame();
         }
 
-        if (productionBecameReady) {
-          audioSystem.playCropReady();
-          feedbackSystem.showProductionReady(width / 2, FARM_LAYOUT.productionStatus.y - 8);
+        if (productionReadyRecipes.length > 0) {
+          for (const recipe of productionReadyRecipes) {
+            audioSystem.playCropReady();
+            feedbackSystem.showProductionReady(
+              width / 2,
+              FARM_LAYOUT.productionStatus.y - 8,
+              recipe.outputItemId
+            );
+          }
           saveGame();
         }
       }
