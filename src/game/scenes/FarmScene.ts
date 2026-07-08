@@ -29,6 +29,8 @@ import type { TutorialStepId } from '../models/TutorialTypes';
 
 type DragMode = 'none' | 'plant' | 'harvest';
 
+const PLANT_SUPPRESSION_AFTER_HARVEST_MS = 400;
+
 export class FarmScene extends Phaser.Scene {
   constructor() {
     super('FarmScene');
@@ -64,6 +66,7 @@ export class FarmScene extends Phaser.Scene {
     let dragMode: DragMode = 'none';
     let pendingTapHarvest: HarvestResult | null = null;
     let pendingTapHarvestPosition: Phaser.Math.Vector2 | null = null;
+    let suppressPlantingUntil = 0;
 
     const saveGame = (): void => {
       saveSystem.save(
@@ -209,6 +212,11 @@ export class FarmScene extends Phaser.Scene {
       harvestResult: HarvestResult,
       textMode: 'defer-single' | 'aggregate'
     ): void => {
+      suppressPlantingUntil = Math.max(
+        suppressPlantingUntil,
+        this.time.now + PLANT_SUPPRESSION_AFTER_HARVEST_MS
+      );
+
       const tutorialAdvanced =
         tutorialSystem.recordCropHarvested(harvestResult.crop.id) ||
         tutorialSystem.syncHarvestProgress(getPlantedSunwheatCount());
@@ -284,6 +292,11 @@ export class FarmScene extends Phaser.Scene {
           return;
         }
 
+        if (this.time.now < suppressPlantingUntil) {
+          dragMode = 'none';
+          return;
+        }
+
         const plantResult = plantingSystem.beginPaint(plot);
 
         if (plantResult !== null) {
@@ -307,6 +320,10 @@ export class FarmScene extends Phaser.Scene {
         }
 
         if (dragMode === 'plant') {
+          if (this.time.now < suppressPlantingUntil) {
+            return;
+          }
+
           const plantResult = plantingSystem.paintOver(plot);
 
           if (plantResult !== null) {
