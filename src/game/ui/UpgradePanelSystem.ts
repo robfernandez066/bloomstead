@@ -15,6 +15,7 @@ interface UpgradePanelConfig {
   width: number;
   height: number;
   onPurchase: () => void;
+  onCompletionHidden?: () => void;
   isLocked?: () => boolean;
   isHighlighted?: () => boolean;
 }
@@ -24,6 +25,8 @@ export class UpgradePanelSystem {
   private readonly upgradeSystem: UpgradeSystem;
   private config?: UpgradePanelConfig;
   private confirmingPurchase = false;
+  private completionHidden = false;
+  private completionHideEvent?: Phaser.Time.TimerEvent;
   private readonly objects: Phaser.GameObjects.GameObject[] = [];
 
   constructor(scene: Phaser.Scene, upgradeSystem: UpgradeSystem) {
@@ -34,6 +37,10 @@ export class UpgradePanelSystem {
   render(config: UpgradePanelConfig): void {
     this.config = config;
     this.refresh();
+  }
+
+  isCompletionHidden(): boolean {
+    return this.completionHidden;
   }
 
   refresh(): void {
@@ -48,8 +55,19 @@ export class UpgradePanelSystem {
     const locked = this.config.isLocked?.() === true;
     const highlighted = this.config.isHighlighted?.() === true;
 
+    if (upgrade !== null) {
+      this.completionHidden = false;
+      this.completionHideEvent?.remove(false);
+      this.completionHideEvent = undefined;
+    }
+
     if (upgrade === null || locked || !canAfford) {
       this.confirmingPurchase = false;
+    }
+
+    if (upgrade === null) {
+      this.renderCompletionNotice();
+      return;
     }
 
     if (this.confirmingPurchase && upgrade !== null) {
@@ -59,16 +77,16 @@ export class UpgradePanelSystem {
 
     const fillColor = locked
       ? LOCKED_FILL
-      : upgrade !== null && canAfford
+      : canAfford
         ? READY_FILL
         : DISABLED_FILL;
-    const textColor = upgrade !== null && !locked && canAfford ? TEXT_COLOR : DISABLED_TEXT;
+    const textColor = !locked && canAfford ? TEXT_COLOR : DISABLED_TEXT;
 
     const panel = this.scene.add
       .rectangle(this.config.x, this.config.y, this.config.width, this.config.height, fillColor)
       .setOrigin(0, 0)
       .setStrokeStyle(highlighted ? 3 : 2, highlighted ? 0xffe27a : PANEL_STROKE)
-      .setAlpha(upgrade !== null && !locked && canAfford ? 1 : 0.78);
+      .setAlpha(!locked && canAfford ? 1 : 0.78);
 
     this.objects.push(panel);
 
@@ -83,7 +101,7 @@ export class UpgradePanelSystem {
       });
     }
 
-    if (upgrade !== null && !locked && canAfford) {
+    if (!locked && canAfford) {
       panel.setInteractive({ useHandCursor: true });
       panel.on('pointerdown', () => {
         this.confirmingPurchase = true;
@@ -92,17 +110,13 @@ export class UpgradePanelSystem {
     }
 
     const title =
-      upgrade === null
-        ? 'All plot upgrades purchased'
-        : locked
-          ? 'Plot Upgrade Locked'
-          : 'Purchase More Plots';
+      locked
+        ? 'Plot Upgrade Locked'
+        : 'Purchase More Plots';
     const details =
-      upgrade === null
-        ? 'All MVP plot upgrades are complete'
-        : locked
-          ? 'Follow the tutorial to unlock this'
-          : `${upgrade.plotsToUnlock} plots  |  Price: ${upgrade.coinCost} coins`;
+      locked
+        ? 'Follow the tutorial to unlock this'
+        : `${upgrade.plotsToUnlock} plots  |  Price: ${upgrade.coinCost} coins`;
 
     this.objects.push(
       this.scene.add.text(this.config.x + 12, this.config.y + 6, title, {
@@ -120,6 +134,45 @@ export class UpgradePanelSystem {
         fontSize: '13px'
       })
     );
+  }
+
+  private renderCompletionNotice(): void {
+    if (this.config === undefined || this.completionHidden) {
+      return;
+    }
+
+    const panel = this.scene.add
+      .rectangle(this.config.x, this.config.y, this.config.width, this.config.height, READY_FILL)
+      .setOrigin(0, 0)
+      .setStrokeStyle(2, PANEL_STROKE);
+    const text = this.scene.add
+      .text(this.config.x + this.config.width / 2, this.config.y + this.config.height / 2, 'All plots purchased', {
+        color: TEXT_COLOR,
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '15px',
+        fontStyle: 'bold'
+      })
+      .setOrigin(0.5);
+
+    this.objects.push(panel, text);
+
+    this.scene.tweens.add({
+      targets: [panel, text],
+      alpha: 0.72,
+      duration: 360,
+      yoyo: true,
+      repeat: 2,
+      ease: 'Sine.easeInOut'
+    });
+
+    if (this.completionHideEvent === undefined) {
+      this.completionHideEvent = this.scene.time.delayedCall(2000, () => {
+        this.completionHidden = true;
+        this.completionHideEvent = undefined;
+        this.clearObjects();
+        this.config?.onCompletionHidden?.();
+      });
+    }
   }
 
   private renderConfirmation(plotsToUnlock: number, coinCost: number): void {
