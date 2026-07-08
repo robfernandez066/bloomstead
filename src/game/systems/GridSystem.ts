@@ -12,6 +12,7 @@ import {
 const UNLOCKED_FILL = 0x9b7449;
 const UNLOCKED_STROKE = 0x6f5734;
 const PLANTED_FILL = 0x6f8f4a;
+const READY_FILL = 0xaedb75;
 const LOCKED_FILL = 0x66746a;
 const LOCKED_STROKE = 0x3f4842;
 const HOVER_FILL = 0xb48756;
@@ -291,6 +292,10 @@ export class GridSystem {
     }
 
     if (plot.plantedCropId !== null) {
+      if (plot.ready) {
+        return READY_FILL;
+      }
+
       return PLANTED_FILL;
     }
 
