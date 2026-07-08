@@ -4,6 +4,8 @@ Bloomstead is a mobile-first cozy idle farming MVP built as a browser prototype 
 
 Current status: MVP playtest candidate.
 
+Live playtest: https://robfernandez066.github.io/bloomstead/
+
 ## Commands
 
 Install dependencies:
