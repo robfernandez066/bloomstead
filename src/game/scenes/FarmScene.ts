@@ -7,6 +7,7 @@ import { HudSystem } from '../ui/HudSystem';
 import { FARM_LAYOUT } from '../ui/LayoutConfig';
 import { MuteToggleSystem } from '../ui/MuteToggleSystem';
 import { OrderBoardSystem } from '../ui/OrderBoardSystem';
+import { ProcessedGoodsStripSystem } from '../ui/ProcessedGoodsStripSystem';
 import { ProductionMenuSystem } from '../ui/ProductionMenuSystem';
 import { ProductionStatusSystem } from '../ui/ProductionStatusSystem';
 import { SeedSelectorSystem } from '../ui/SeedSelectorSystem';
@@ -90,6 +91,7 @@ export class FarmScene extends Phaser.Scene {
     const muteToggleSystem = new MuteToggleSystem(this, audioSystem);
     const productionMenuSystem = new ProductionMenuSystem(this, productionSystem);
     const productionStatusSystem = new ProductionStatusSystem(this, productionSystem);
+    const processedGoodsStripSystem = new ProcessedGoodsStripSystem(this, gameStateSystem);
     let gridSystem: GridSystem;
 
     const getUnlockedPlotCount = (): number => {
@@ -104,6 +106,7 @@ export class FarmScene extends Phaser.Scene {
 
     const refreshProductionUi = (): void => {
       productionStatusSystem.refresh();
+      processedGoodsStripSystem.refresh();
       productionMenuSystem.refresh();
     };
 
@@ -116,6 +119,7 @@ export class FarmScene extends Phaser.Scene {
     const refreshOnboardingUi = (): void => {
       tutorialPanelSystem.refresh();
       productionStatusSystem.refresh();
+      processedGoodsStripSystem.refresh();
     };
 
     const maybeShowCraftGuidance = (): void => {
@@ -451,6 +455,24 @@ export class FarmScene extends Phaser.Scene {
       }
     });
 
+    processedGoodsStripSystem.render({
+      x: FARM_LAYOUT.productionStatus.x,
+      y: FARM_LAYOUT.productionStatus.y,
+      width: FARM_LAYOUT.productionStatus.width,
+      height: FARM_LAYOUT.productionStatus.height,
+      isVisible: () => {
+        const { farmLevel, processedGoodInventory } = gameStateSystem.getState();
+
+        return (
+          processedGoodInventory.flour > 0 ||
+          processedGoodInventory.bread > 0 ||
+          farmLevel >= 2 ||
+          tutorialSystem.getState().completed
+        );
+      },
+      getActiveProductionChipCount: () => productionSystem.getActiveRecipes().length
+    });
+
     upgradePanelSystem.render({
       x: FARM_LAYOUT.plotUpgradePanel.x,
       y: FARM_LAYOUT.plotUpgradePanel.y,
@@ -591,7 +613,7 @@ export class FarmScene extends Phaser.Scene {
             }
           }
           refreshTutorialIfAdvanced(tutorialAdvanced);
-          productionStatusSystem.refresh();
+          refreshProductionUi();
           saveGame();
         }
       }
@@ -769,7 +791,7 @@ export class FarmScene extends Phaser.Scene {
 
     if (syncTutorialWithCurrentPlotState() || syncTutorialWithProductionState()) {
       tutorialPanelSystem.refresh();
-      productionStatusSystem.refresh();
+      refreshProductionUi();
       saveGame();
     }
 
