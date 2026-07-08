@@ -166,8 +166,46 @@ export class FarmScene extends Phaser.Scene {
 
     const syncTutorialWithProductionState = (): boolean => {
       const millState = productionSystem.getRecipeState(MILL_FLOUR_RECIPE_ID);
+      let advanced = false;
+      let stepId = tutorialSystem.getCurrentStep()?.id;
 
-      return millState.status === 'ready' && tutorialSystem.recordMillReady();
+      if (
+        stepId === 'craft-start-mill' &&
+        millState.recipeId === MILL_FLOUR_RECIPE_ID &&
+        millState.status !== 'idle'
+      ) {
+        advanced = tutorialSystem.recordMillStarted() || advanced;
+        stepId = tutorialSystem.getCurrentStep()?.id;
+      }
+
+      if (stepId === 'craft-wait-flour' && millState.status === 'ready') {
+        advanced = tutorialSystem.recordMillReady() || advanced;
+        stepId = tutorialSystem.getCurrentStep()?.id;
+      }
+
+      if (
+        stepId === 'craft-collect-flour' &&
+        gameStateSystem.getItemCount('flour') > 0 &&
+        productionSystem.getClaimableQuantity(MILL_FLOUR_RECIPE_ID) === 0
+      ) {
+        advanced = tutorialSystem.recordFlourCollected() || advanced;
+        stepId = tutorialSystem.getCurrentStep()?.id;
+      }
+
+      if (
+        stepId === 'craft-start-second-mill' &&
+        millState.recipeId === MILL_FLOUR_RECIPE_ID &&
+        millState.status !== 'idle'
+      ) {
+        advanced = tutorialSystem.recordMillStarted() || advanced;
+        stepId = tutorialSystem.getCurrentStep()?.id;
+      }
+
+      if (stepId === 'craft-close-menu' && !productionMenuSystem.isOpen()) {
+        advanced = tutorialSystem.recordProductionMenuClosed() || advanced;
+      }
+
+      return advanced;
     };
 
     const handleLevelUp = (level: number): void => {
