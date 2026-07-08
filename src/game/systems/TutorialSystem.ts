@@ -128,6 +128,12 @@ export class TutorialSystem {
       return false;
     }
 
+    const requiredCount = Math.max(1, this.state.tutorialSunwheatRequiredPlots);
+    this.state.tutorialSunwheatHarvested = Math.max(
+      this.state.tutorialSunwheatHarvested,
+      requiredCount
+    );
+
     return this.advanceHarvestIfComplete();
   }
 
@@ -243,12 +249,32 @@ export class TutorialSystem {
   private createInitialState(initialState?: TutorialState): TutorialState {
     if (
       initialState === undefined ||
-      initialState.currentStepId === undefined ||
-      TUTORIAL_STEP_BY_ID[initialState.currentStepId] === undefined
+      initialState === null ||
+      typeof initialState !== 'object'
     ) {
       return { ...DEFAULT_TUTORIAL_STATE };
     }
 
+    const completed =
+      initialState.completed === true || initialState.completionRewardClaimed === true;
+
+    if (
+      initialState.currentStepId === undefined ||
+      TUTORIAL_STEP_BY_ID[initialState.currentStepId] === undefined
+    ) {
+      return completed
+        ? {
+            ...DEFAULT_TUTORIAL_STATE,
+            currentStepId: 'complete',
+            completed: true,
+            completionRewardClaimed: true,
+            craftHintShown: true
+          }
+        : { ...DEFAULT_TUTORIAL_STATE };
+    }
+
+    const preserveActiveCraftGuidance =
+      completed && initialState.craftHintActive === true && initialState.craftHintShown !== true;
     const currentStepId =
       initialState.currentStepId === 'craft-hint'
         ? 'craft-open'
@@ -256,14 +282,11 @@ export class TutorialSystem {
 
     return {
       currentStepId,
-      completed: initialState.completed === true,
-      completionRewardClaimed:
-        initialState.completed === true || initialState.completionRewardClaimed === true,
-      craftHintActive:
-        initialState.completed === true &&
-        initialState.craftHintShown !== true &&
-        initialState.craftHintActive === true,
-      craftHintShown: initialState.craftHintShown === true,
+      completed,
+      completionRewardClaimed: completed,
+      craftHintActive: preserveActiveCraftGuidance,
+      craftHintShown:
+        initialState.craftHintShown === true || (completed && !preserveActiveCraftGuidance),
       tutorialSunwheatRequiredPlots:
         typeof initialState.tutorialSunwheatRequiredPlots === 'number'
           ? initialState.tutorialSunwheatRequiredPlots

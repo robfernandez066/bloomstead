@@ -164,28 +164,92 @@ export class FarmScene extends Phaser.Scene {
       return advanced || advancedFromSunwheat || advancedFromReadyCrop || advancedFromHarvest;
     };
 
+    const syncTutorialWithOrderState = (): boolean => {
+      const stepId = tutorialSystem.getCurrentStep()?.id;
+
+      if (stepId !== 'complete-order') {
+        return false;
+      }
+
+      const sunwheatSackIsActive = orderSystem
+        .getActiveOrders()
+        .some((order) => order.id === 'sunwheat-sack');
+
+      return !sunwheatSackIsActive && tutorialSystem.recordOrderCompleted();
+    };
+
+    const syncTutorialWithUpgradeState = (): boolean => {
+      return tutorialSystem.recordFirstPlotUpgradePurchased(
+        upgradeSystem.getPurchasedPlotUpgradeCount()
+      );
+    };
+
+    const syncTutorialWithSellState = (): boolean => {
+      const stepId = tutorialSystem.getCurrentStep()?.id;
+
+      if (
+        stepId !== 'sell-crop' ||
+        upgradeSystem.getPurchasedPlotUpgradeCount() < 1 ||
+        gameStateSystem.getState().coins <= 0
+      ) {
+        return false;
+      }
+
+      return tutorialSystem.recordCropSold();
+    };
+
     const syncTutorialWithProductionState = (): boolean => {
-      const millState = productionSystem.getRecipeState(MILL_FLOUR_RECIPE_ID);
       let advanced = false;
       let stepId = tutorialSystem.getCurrentStep()?.id;
+      const getMillState = () => productionSystem.getRecipeState(MILL_FLOUR_RECIPE_ID);
+      const hasActiveMillJob = () => {
+        const millState = getMillState();
+
+        return millState.recipeId === MILL_FLOUR_RECIPE_ID && millState.status !== 'idle';
+      };
+
+      if (
+        stepId === 'craft-open' &&
+        (hasActiveMillJob() || gameStateSystem.getItemCount('flour') > 0)
+      ) {
+        advanced = tutorialSystem.recordCraftOpened() || advanced;
+        stepId = tutorialSystem.getCurrentStep()?.id;
+      }
 
       if (
         stepId === 'craft-start-mill' &&
-        millState.recipeId === MILL_FLOUR_RECIPE_ID &&
-        millState.status !== 'idle'
+        hasActiveMillJob()
       ) {
         advanced = tutorialSystem.recordMillStarted() || advanced;
         stepId = tutorialSystem.getCurrentStep()?.id;
       }
 
-      if (stepId === 'craft-wait-flour' && millState.status === 'ready') {
+      const claimableMillQuantity = productionSystem.getClaimableQuantity(MILL_FLOUR_RECIPE_ID);
+      const flourCount = gameStateSystem.getItemCount('flour');
+
+      if (
+        (stepId === 'craft-start-mill' ||
+          stepId === 'craft-wait-flour' ||
+          stepId === 'craft-open-ready' ||
+          stepId === 'craft-collect-flour') &&
+        flourCount > 0 &&
+        claimableMillQuantity === 0
+      ) {
+        advanced = tutorialSystem.recordMillStarted() || advanced;
+        advanced = tutorialSystem.recordMillReady() || advanced;
+        advanced = tutorialSystem.recordCraftOpened() || advanced;
+        advanced = tutorialSystem.recordFlourCollected() || advanced;
+        stepId = tutorialSystem.getCurrentStep()?.id;
+      }
+
+      if (stepId === 'craft-wait-flour' && getMillState().status === 'ready') {
         advanced = tutorialSystem.recordMillReady() || advanced;
         stepId = tutorialSystem.getCurrentStep()?.id;
       }
 
       if (
         stepId === 'craft-collect-flour' &&
-        gameStateSystem.getItemCount('flour') > 0 &&
+        flourCount > 0 &&
         productionSystem.getClaimableQuantity(MILL_FLOUR_RECIPE_ID) === 0
       ) {
         advanced = tutorialSystem.recordFlourCollected() || advanced;
@@ -194,8 +258,7 @@ export class FarmScene extends Phaser.Scene {
 
       if (
         stepId === 'craft-start-second-mill' &&
-        millState.recipeId === MILL_FLOUR_RECIPE_ID &&
-        millState.status !== 'idle'
+        hasActiveMillJob()
       ) {
         advanced = tutorialSystem.recordMillStarted() || advanced;
         stepId = tutorialSystem.getCurrentStep()?.id;
@@ -203,6 +266,27 @@ export class FarmScene extends Phaser.Scene {
 
       if (stepId === 'craft-close-menu' && !productionMenuSystem.isOpen()) {
         advanced = tutorialSystem.recordProductionMenuClosed() || advanced;
+      }
+
+      return advanced;
+    };
+
+    const syncTutorialWithSavedGameState = (): boolean => {
+      let advanced = false;
+
+      for (let index = 0; index < 4; index += 1) {
+        let advancedThisPass = false;
+
+        advancedThisPass = syncTutorialWithCurrentPlotState() || advancedThisPass;
+        advancedThisPass = syncTutorialWithOrderState() || advancedThisPass;
+        advancedThisPass = syncTutorialWithUpgradeState() || advancedThisPass;
+        advancedThisPass = syncTutorialWithSellState() || advancedThisPass;
+        advancedThisPass = syncTutorialWithProductionState() || advancedThisPass;
+        advanced = advancedThisPass || advanced;
+
+        if (!advancedThisPass) {
+          break;
+        }
       }
 
       return advanced;
@@ -859,12 +943,12 @@ export class FarmScene extends Phaser.Scene {
 
         if (tutorialSystem.acknowledgeCurrentStep()) {
           audioSystem.playButtonTap();
-          const advancedFromPlotState = syncTutorialWithCurrentPlotState();
+          const advancedFromSavedState = syncTutorialWithSavedGameState();
 
           tutorialPanelSystem.refresh();
           saveGame();
 
-          if (advancedFromPlotState) {
+          if (advancedFromSavedState) {
             tutorialPanelSystem.refresh();
           }
         }
@@ -881,7 +965,7 @@ export class FarmScene extends Phaser.Scene {
       }
     });
 
-    if (syncTutorialWithCurrentPlotState() || syncTutorialWithProductionState()) {
+    if (syncTutorialWithSavedGameState()) {
       tutorialPanelSystem.refresh();
       refreshProductionUi();
       saveGame();
