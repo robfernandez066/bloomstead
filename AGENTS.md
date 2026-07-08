@@ -73,7 +73,7 @@ The MVP should include:
 * Offline crop growth
 * Basic particles
 * Floating reward text
-* Sound hook placeholders
+* Generated WebAudio SFX feedback with a saved mute toggle
 
 The MVP should not include:
 

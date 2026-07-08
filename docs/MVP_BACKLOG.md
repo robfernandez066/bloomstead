@@ -117,6 +117,16 @@ Craft onboarding is integrated into the tutorial flow:
 
 Recent focused QA passes have verified the current tutorial, production, save/load, mobile usability, and legacy production migration behavior for MVP.
 
+Release-candidate handoff checkpoint:
+
+* Fresh-save first-session QA passed with no must-fix blockers.
+* Returning-player / idle-state QA passed with no fixes needed.
+* Completed tutorial saves load without restarting tutorial prompts or duplicating the 75 coin tutorial reward.
+* Crop growth, ready crop state, inventory, coins, active/ready production, production collection, order availability, order completion, and plot upgrade state persist across reloads.
+* Mobile viewport checks passed at `390x844` and `360x740`.
+* Generated WebAudio SFX and the saved `SFX On/Off` toggle are acceptable for MVP playtesting.
+* Before sharing a build with playtesters, run the checklist in `docs/MVP_PLAYTEST_CHECKLIST.md`.
+
 Latest smoke QA checkpoint after the ready-crop color, production feedback, batch production, and upgrade panel completion API fixes:
 
 * Empty/harvested plots return to brown dirt.
