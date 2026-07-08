@@ -12,7 +12,7 @@ Use warm greens for the farm, soft soil browns for plots, cream UI panels, golde
 
 ## Isometric Farm Plot Direction
 
-Plots should become readable isometric soil tiles. Unlocked plots should feel fertile and inviting. Locked or future plots should be subtle or hidden, not large gray debug tiles. Crop visuals must sit clearly on their own tile. The MVP now uses simple generated crop shapes on farm plots so Sunwheat, Carrot, and Glowberry read differently; final crop art remains future polish.
+Plots should become readable isometric soil tiles. Unlocked plots should feel fertile and inviting. Locked or future plots should be subtle or hidden, not large gray debug tiles. Crop visuals must sit clearly on their own tile. The MVP now uses brown dirt for empty/harvested plots, darker green for growing plots, and light green for ready/finished crop plots. Simple generated crop shapes on farm plots make Sunwheat, Carrot, and Glowberry read differently; final crop art remains future polish.
 
 ## Crop Art Direction
 

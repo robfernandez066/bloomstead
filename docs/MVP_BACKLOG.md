@@ -106,6 +106,17 @@ Craft onboarding is integrated into the tutorial flow:
 
 Recent focused QA passes have verified the current tutorial, production, save/load, mobile usability, and legacy production migration behavior for MVP.
 
+Latest smoke QA checkpoint after the ready-crop color, production feedback, batch production, and upgrade panel completion API fixes:
+
+* Empty/harvested plots return to brown dirt.
+* Growing crop plots remain darker green.
+* Ready/finished crop plots now use light green and remain readable at mobile size.
+* Plot upgrade flow still uses `Purchase More Plots`, clear price display, and a `Yes / No` confirmation.
+* The upgrade panel safely handles the no-upgrades-remaining state with a brief, non-blocking `All plots purchased` completion notice.
+* Batch production, partial-ready collection, production start/collect feedback, and the processed-goods strip passed smoke QA.
+* Mobile smoke QA passed at `390x844` and `360x740`.
+* Build passes with only the existing Vite large chunk warning.
+
 Verified behavior:
 
 * Tutorial guidance auto-starts on new saves and Dev Reset.
