@@ -180,7 +180,7 @@ The MVP should not include:
   * Bread-heavy order clusters and Baker's Basket generosity are watch items, not current MVP blockers.
   * Build passes with only the existing Vite large chunk warning.
   * Production batch controls passed mobile QA at 390x844 and 360x740.
-  * Production start/collect juice is deferred polish and should not be added unless explicitly requested.
+  * Production start/collect juice is implemented for MVP; future work should only tune timing, art, or audio if explicitly requested.
 * Strategy level: 6/10.
 * Randomness: some randomness later, not core MVP.
 

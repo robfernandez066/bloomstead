@@ -840,9 +840,9 @@ export class FarmScene extends Phaser.Scene {
 
     const getMillActionButtonBounds = () => ({
       x: FARM_LAYOUT.productionMenu.x + FARM_LAYOUT.productionMenu.width - 100,
-      y: FARM_LAYOUT.productionMenu.y + 52 + 98 - 30 - 10,
+      y: FARM_LAYOUT.productionMenu.y + 52 + 78 - 14,
       width: 86,
-      height: 32
+      height: 30
     });
 
     const getTutorialTargetBounds = (stepId: TutorialStepId) => {

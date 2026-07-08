@@ -22,7 +22,7 @@ const ENTRY_HEIGHT = 98;
 const ENTRY_GAP = 8;
 const ENTRY_STEP = ENTRY_HEIGHT + ENTRY_GAP;
 const ACTION_BUTTON_WIDTH = 78;
-const ACTION_BUTTON_HEIGHT = 30;
+const ACTION_BUTTON_HEIGHT = 28;
 const ACTION_BUTTON_INSET = 10;
 
 interface ProductionMenuConfig {
@@ -210,7 +210,7 @@ export class ProductionMenuSystem {
     const buttonWidth = ACTION_BUTTON_WIDTH;
     const buttonHeight = ACTION_BUTTON_HEIGHT;
     const buttonX = entryX + entryWidth - buttonWidth - ACTION_BUTTON_INSET;
-    const buttonY = entryY + entryHeight - buttonHeight - ACTION_BUTTON_INSET;
+    const buttonY = entryY + 78 - 14;
     const button = this.scene.add
       .rectangle(
         buttonX,
