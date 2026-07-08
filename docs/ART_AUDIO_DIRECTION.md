@@ -60,7 +60,7 @@ Readable crop sell/inventory rows are implemented for MVP. They include simple g
 
 Generated icons are implemented for Sunwheat, Carrot, Glowberry, Flour, and Bread. They appear in sell/inventory rows, order requirements, and production recipe inputs/outputs. Final art assets can replace these generated icons later without changing gameplay.
 
-Order cards now include compact source labels and simple generated source icons for cozy village flavor. Current source groups are Farm Stand, Village Market, Village Cook, Baker, and Lantern Guild. This is flavor/readability only: order requirements, rewards, level gates, rotation, pacing, and save/load behavior remain unchanged. Final order-board art, more polished source icons, villager/customer portraits, and order SFX remain future polish.
+Order cards now include compact `From: X` source labels and simple generated source icons for cozy village flavor. Current source groups are Farm Stand, Village Market, Village Cook, Baker, and Lantern Guild. Source labels should stay visually secondary to order names. Order requirement item/material names use a warm accent color while quantities remain in the normal readable text color; Production menu recipe material names use the same accent treatment. This is flavor/readability only: order requirements, rewards, level gates, rotation, pacing, tutorial behavior, production behavior, and save/load behavior remain unchanged. Final order-board art, more polished source icons, villager/customer portraits, and order SFX remain future polish.
 
 ## Reward / Juice Direction
 

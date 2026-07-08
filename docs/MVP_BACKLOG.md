@@ -56,8 +56,12 @@ The MVP includes:
 * Order completion coin/XP fly-to-HUD reward feedback.
 * Order board flavor/readability:
   * Existing orders support optional source/flavor metadata.
-  * Order cards display compact source labels and small generated source icons.
+  * Order cards display compact source labels in the `From: X` format, such as `From: Baker` and `From: Village Market`.
+  * Existing small generated source icons were kept.
+  * Source labels remain visually secondary to order names.
   * Current source groups are `Farm Stand`, `Village Market`, `Village Cook`, `Baker`, and `Lantern Guild`.
+  * Order requirement item/material names use a warm accent color, while requirement quantities remain in the normal readable text color.
+  * Production menu recipe material names use the same accent treatment.
   * This is flavor/readability only; it added no orders, crops, goods, recipes, buildings, rewards, currencies, systems, tutorial steps, save/load behavior, or pacing changes.
   * Existing order requirements, rewards, level gates, and rotation behavior are unchanged.
   * Mobile QA passed at `390x844` and `360x740`; checked level 5 three-item orders remained readable.
@@ -192,7 +196,8 @@ The following polish items are implemented for the MVP:
 * Crop sell/inventory rows now use readable crop names and counts, such as `Sunwheat x7` with `Sell +4c`.
 * Simple generated item icons now support Sunwheat, Carrot, Glowberry, Flour, and Bread.
 * Item icons appear in sell/inventory rows, order requirements, and production recipe inputs/outputs.
-* Order cards now include compact source labels and simple generated source icons for Farm Stand, Village Market, Village Cook, Baker, and Lantern Guild requests.
+* Order cards now include compact `From: X` source labels and simple generated source icons for Farm Stand, Village Market, Village Cook, Baker, and Lantern Guild requests.
+* Order requirement item/material names and Production menu recipe material names now use a warm accent color, while quantities remain in the normal readable text color.
 * Farm plot crop visuals now make Sunwheat, Carrot, and Glowberry visually distinct while preserving existing growth and harvest behavior.
 * Harvested crops show visual feedback moving toward the crop inventory/sell area.
 * Order completion now includes coin and XP fly-to-HUD reward feedback.
