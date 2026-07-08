@@ -41,6 +41,11 @@ The MVP includes:
 * Harvest-to-inventory feedback when crops are collected.
 * Order completion coin/XP fly-to-HUD reward feedback.
 * Swipe harvesting aggregate `Gathered X Crop` text to reduce clutter.
+* Accidental replant protection after harvest:
+  * After a successful harvest, empty-plot planting is silently suppressed for 400ms.
+  * Harvesting other ready crops and tapping UI buttons still work during the suppression window.
+  * Suppressed planting spends no coins and does not change the selected seed.
+  * Deliberate planting works normally after the short delay.
 * Save/load, active order persistence, and offline crop growth.
 * Tutorial flow that starts automatically on new saves and Dev Reset, with target-specific pulsing highlights and a sell-crop step after the first plot upgrade.
 * One-time 75 coin tutorial completion reward with improved visible reward feedback.
@@ -104,6 +109,7 @@ Verified behavior:
 * Mobile portrait QA passed at `390x844` and `360x740`.
 * Sell/inventory rows and compact production chips received a small MVP mobile usability polish pass and passed QA at `360x740` and `390x844`.
 * The processed-goods visibility strip for Flour/Bread passed mobile QA at `390x844` and `360x740`.
+* The 400ms post-harvest planting suppression passed manual QA at `390x844` and `360x740`.
 * Simple generated icons for Sunwheat, Carrot, Glowberry, Flour, and Bread appear in sell/inventory rows, order requirements, and production recipe inputs/outputs.
 * Sell row text overflow from icon spacing was addressed with tighter spacing and label sizing.
 * Farm plot crop visuals now distinguish Sunwheat, Carrot, and Glowberry.

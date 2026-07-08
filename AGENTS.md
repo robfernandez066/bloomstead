@@ -95,6 +95,11 @@ The MVP should not include:
 * Layout: hybrid long-term; crops use fixed grid, buildings/decorations may be placeable later.
 * Camera: one-screen farm for MVP; no scrolling yet.
 * Planting: paint mode in MVP.
+* Input feel: after a successful harvest, empty-plot planting is silently suppressed for 400ms to prevent accidental replanting during rapid/broad tap-harvesting.
+  * Harvesting other ready crops and UI buttons still work during the suppression window.
+  * Suppressed planting spends no coins and does not change the selected seed.
+  * Deliberate planting works normally after the short delay.
+  * Treat this as an MVP input-feel fix, not a new planting mode or system.
 * Smart replant: later.
 * Crop death: never.
 * Storage limits: not in MVP; add later.
@@ -156,6 +161,7 @@ The MVP should not include:
   * Mobile portrait QA passed at 390x844 and 360x740.
   * Sell/inventory rows and compact production chips received a small MVP mobile usability polish pass and passed QA at 360x740 and 390x844.
   * The processed-goods strip passed mobile QA at 390x844 and 360x740.
+  * The 400ms post-harvest planting suppression passed manual QA at 390x844 and 360x740.
   * Very small phones and future added goods should still be watched, but sell rows and production chips are not an active MVP blocker.
   * Landscape is not ideal, but the layout recovers when returning to portrait.
   * Level 3 pacing is acceptable; level 4 pacing is acceptable but slightly fast; level 5 was reached and felt like a natural milestone.
