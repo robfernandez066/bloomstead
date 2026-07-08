@@ -16,9 +16,17 @@ export type OrderId =
 
 export type OrderRequirements = Partial<Record<ItemId, number>>;
 
+export type OrderSource =
+  | 'Farm Stand'
+  | 'Baker'
+  | 'Village Market'
+  | 'Village Cook'
+  | 'Lantern Guild';
+
 export interface OrderDefinition {
   id: OrderId;
   name: string;
+  source?: OrderSource;
   requirements: OrderRequirements;
   coinReward: number;
   xpReward: number;

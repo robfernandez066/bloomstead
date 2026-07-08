@@ -4,6 +4,7 @@ export const MVP_ORDERS: OrderDefinition[] = [
   {
     id: 'sunwheat-sack',
     name: 'Sunwheat Sack',
+    source: 'Farm Stand',
     requirements: {
       sunwheat: 5
     },
@@ -13,6 +14,7 @@ export const MVP_ORDERS: OrderDefinition[] = [
   {
     id: 'carrot-bundle',
     name: 'Carrot Bundle',
+    source: 'Village Market',
     requirements: {
       carrot: 3
     },
@@ -22,6 +24,7 @@ export const MVP_ORDERS: OrderDefinition[] = [
   {
     id: 'village-breakfast',
     name: 'Village Breakfast',
+    source: 'Village Cook',
     requirements: {
       sunwheat: 4,
       carrot: 2
@@ -32,6 +35,7 @@ export const MVP_ORDERS: OrderDefinition[] = [
   {
     id: 'glowberry-treats',
     name: 'Glowberry Treats',
+    source: 'Lantern Guild',
     requirements: {
       glowberry: 2
     },
@@ -41,6 +45,7 @@ export const MVP_ORDERS: OrderDefinition[] = [
   {
     id: 'market-starter-crate',
     name: 'Market Starter Crate',
+    source: 'Village Market',
     requirements: {
       sunwheat: 8,
       carrot: 4
@@ -51,6 +56,7 @@ export const MVP_ORDERS: OrderDefinition[] = [
   {
     id: 'bakers-flour',
     name: "Baker's Flour",
+    source: 'Baker',
     requirements: {
       flour: 2
     },
@@ -61,6 +67,7 @@ export const MVP_ORDERS: OrderDefinition[] = [
   {
     id: 'fresh-bread',
     name: 'Fresh Bread',
+    source: 'Baker',
     requirements: {
       bread: 1
     },
@@ -71,6 +78,7 @@ export const MVP_ORDERS: OrderDefinition[] = [
   {
     id: 'glowberry-toast',
     name: 'Glowberry Toast',
+    source: 'Baker',
     requirements: {
       bread: 1,
       glowberry: 2
@@ -82,6 +90,7 @@ export const MVP_ORDERS: OrderDefinition[] = [
   {
     id: 'harvest-lunchbox',
     name: 'Harvest Lunchbox',
+    source: 'Village Cook',
     requirements: {
       sunwheat: 3,
       carrot: 2,
@@ -94,6 +103,7 @@ export const MVP_ORDERS: OrderDefinition[] = [
   {
     id: 'bakers-basket',
     name: "Baker's Basket",
+    source: 'Baker',
     requirements: {
       bread: 2,
       flour: 2
@@ -105,6 +115,7 @@ export const MVP_ORDERS: OrderDefinition[] = [
   {
     id: 'lanternberry-crate',
     name: 'Lanternberry Crate',
+    source: 'Lantern Guild',
     requirements: {
       glowberry: 4,
       carrot: 2
@@ -116,6 +127,7 @@ export const MVP_ORDERS: OrderDefinition[] = [
   {
     id: 'village-feast',
     name: 'Village Feast',
+    source: 'Village Cook',
     requirements: {
       bread: 2,
       glowberry: 4,

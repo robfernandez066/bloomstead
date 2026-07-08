@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { getItemName } from '../data/Items';
 import type { ItemId } from '../models/ItemTypes';
-import type { OrderDefinition } from '../models/OrderTypes';
+import type { OrderDefinition, OrderSource } from '../models/OrderTypes';
 import type { OrderSystem } from '../systems/OrderSystem';
 import { createItemIcon } from './ItemIcon';
 
@@ -12,6 +12,8 @@ const DISABLED_FILL = 0x9ca28e;
 const READY_STROKE = 0x496f38;
 const TEXT_COLOR = '#2f3b26';
 const DISABLED_TEXT = '#ece7d7';
+const SOURCE_TEXT_COLOR = '#5e7047';
+const DISABLED_SOURCE_TEXT = '#ded8c5';
 const REWARD_TEXT_WIDTH = 96;
 
 interface OrderBoardConfig {
@@ -102,25 +104,46 @@ export class OrderBoardSystem {
       });
     }
 
+    this.renderSource(order.source, x + 8, y + 5, ready ? 1 : 0.78);
+
     this.objects.push(
-      this.scene.add.text(x + 8, y + 5, order.name, {
+      this.scene.add.text(x + 8, y + 16, order.name, {
         color: textColor,
         fontFamily: 'Arial, sans-serif',
-        fontSize: '14px',
+        fontSize: '13px',
         fontStyle: 'bold'
       })
     );
 
-    this.renderRequirements(order, x + 8, y + 31, width - REWARD_TEXT_WIDTH - 18, textColor, ready ? 1 : 0.78);
+    this.renderRequirements(order, x + 8, y + 42, width - REWARD_TEXT_WIDTH - 18, textColor, ready ? 1 : 0.78);
 
     this.objects.push(
-      this.scene.add.text(x + width - REWARD_TEXT_WIDTH, y + 25, `${order.coinReward}c  ${order.xpReward} XP`, {
+      this.scene.add.text(x + width - REWARD_TEXT_WIDTH, y + 34, `${order.coinReward}c  ${order.xpReward} XP`, {
         color: textColor,
         fontFamily: 'Arial, sans-serif',
         fontSize: '12px',
         fontStyle: 'bold'
       })
     );
+  }
+
+  private renderSource(source: OrderSource | undefined, x: number, y: number, alpha: number): void {
+    if (source === undefined) {
+      return;
+    }
+
+    const sourceAlpha = alpha === 1 ? 1 : 0.9;
+    const icon = this.createSourceIcon(source, x + 5, y + 4, sourceAlpha);
+    const label = this.scene.add
+      .text(x + 15, y - 1, source, {
+        color: alpha === 1 ? SOURCE_TEXT_COLOR : DISABLED_TEXT,
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '9px',
+        fontStyle: 'bold'
+      })
+      .setAlpha(sourceAlpha);
+
+    this.objects.push(icon, label);
   }
 
   private renderRequirements(
@@ -154,6 +177,87 @@ export class OrderBoardSystem {
       this.objects.push(icon, text);
       cursorX += entryWidth;
     });
+  }
+
+  private createSourceIcon(
+    source: OrderSource,
+    x: number,
+    y: number,
+    alpha: number
+  ): Phaser.GameObjects.Container {
+    const container = this.scene.add.container(x, y).setAlpha(alpha);
+    const graphics = this.scene.add.graphics();
+
+    container.add(graphics);
+
+    switch (source) {
+      case 'Farm Stand':
+        this.drawFarmStandIcon(graphics);
+        break;
+      case 'Baker':
+        this.drawBakerIcon(graphics);
+        break;
+      case 'Village Market':
+        this.drawMarketIcon(graphics);
+        break;
+      case 'Village Cook':
+        this.drawCookIcon(graphics);
+        break;
+      case 'Lantern Guild':
+        this.drawLanternIcon(graphics);
+        break;
+    }
+
+    return container;
+  }
+
+  private drawFarmStandIcon(graphics: Phaser.GameObjects.Graphics): void {
+    graphics.lineStyle(1.3, 0x5f7f35, 1);
+    graphics.lineBetween(0, 4, 0, -4);
+    graphics.lineBetween(-3, 4, -2, -2);
+    graphics.lineBetween(3, 4, 2, -2);
+    graphics.fillStyle(0xf3c64a, 1);
+    graphics.fillEllipse(0, -5, 3, 5);
+    graphics.fillEllipse(-3, -1, 3, 5);
+    graphics.fillEllipse(3, -1, 3, 5);
+  }
+
+  private drawBakerIcon(graphics: Phaser.GameObjects.Graphics): void {
+    graphics.fillStyle(0xc98035, 1);
+    graphics.fillEllipse(0, 1, 13, 8);
+    graphics.fillStyle(0xe8ad5a, 1);
+    graphics.fillEllipse(0, -1, 10, 5);
+    graphics.lineStyle(1, 0x8f5428, 0.8);
+    graphics.lineBetween(-3, -2, -1, 2);
+    graphics.lineBetween(2, -2, 3, 2);
+  }
+
+  private drawMarketIcon(graphics: Phaser.GameObjects.Graphics): void {
+    graphics.fillStyle(0xb48756, 1);
+    graphics.fillRect(-5, -2, 10, 7);
+    graphics.lineStyle(1, 0x6f5734, 1);
+    graphics.strokeRect(-5, -2, 10, 7);
+    graphics.lineBetween(-5, 1, 5, 1);
+    graphics.lineBetween(0, -2, 0, 5);
+  }
+
+  private drawCookIcon(graphics: Phaser.GameObjects.Graphics): void {
+    graphics.fillStyle(0xf5ead0, 1);
+    graphics.fillEllipse(0, 2, 13, 6);
+    graphics.fillStyle(0x8f7448, 1);
+    graphics.fillEllipse(0, 1, 9, 3);
+    graphics.lineStyle(1, 0x6f5734, 1);
+    graphics.arc(0, -1, 6, 0.15, Math.PI - 0.15);
+  }
+
+  private drawLanternIcon(graphics: Phaser.GameObjects.Graphics): void {
+    graphics.lineStyle(1, 0x6f5734, 1);
+    graphics.strokeRoundedRect(-4, -4, 8, 9, 2);
+    graphics.lineBetween(-2, -5, 2, -5);
+    graphics.fillStyle(0x8c58d8, 1);
+    graphics.fillCircle(0, 1, 3);
+    graphics.fillStyle(0xd8b7ff, 0.9);
+    graphics.fillCircle(-1, 0, 1);
   }
 
   private clearObjects(): void {
