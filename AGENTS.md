@@ -103,7 +103,14 @@ The MVP should not include:
 * Offline progress: crops and production jobs progress offline.
 * Starting coins: 100 coins for new game and Dev Reset.
 * Crop selling: harvested crops can be sold using current crop sell values as a fallback for seed money.
-* Crop sell UI: current readable text rows are functional for MVP; future art/UI polish can replace or augment them with icons.
+* Crop sell UI: current readable text rows with generated icons are functional for MVP and sell crops only.
+* Processed-good visibility: a compact read-only Flour/Bread strip appears near Craft/production once Craft is relevant, the tutorial is completed, or Flour/Bread counts are nonzero.
+  * The strip uses generated Flour/Bread icons plus text labels.
+  * It stays hidden during early tutorial to avoid clutter.
+  * It updates after production collection, order spending, and save/load.
+  * Flour and Bread are not sellable from this strip.
+  * With two active production chips, the strip hides to avoid crowding.
+  * No inventory drawer, storage limits, or new inventory mechanics are part of this MVP fix.
 * Production:
   * Mill recipe: 2 Sunwheat -> 1 Flour, 15 seconds.
   * Bakery recipe: 2 Flour -> 1 Bread, 30 seconds.
@@ -148,6 +155,7 @@ The MVP should not include:
   * Tutorial auto-start, unified tutorial/hint behavior, Craft guidance, save/load, offline production, mobile portrait layouts, and legacy single-Mill production save migration have passed focused QA.
   * Mobile portrait QA passed at 390x844 and 360x740.
   * Sell/inventory rows and compact production chips received a small MVP mobile usability polish pass and passed QA at 360x740 and 390x844.
+  * The processed-goods strip passed mobile QA at 390x844 and 360x740.
   * Very small phones and future added goods should still be watched, but sell rows and production chips are not an active MVP blocker.
   * Landscape is not ideal, but the layout recovers when returning to portrait.
   * Level 3 pacing is acceptable; level 4 pacing is acceptable but slightly fast; level 5 was reached and felt like a natural milestone.

@@ -17,6 +17,12 @@ The MVP includes:
   * Level 5 includes the Village Feast capstone MVP order.
 * Crop selling as a fallback way to regain seed money.
 * Readable crop sell/inventory rows for each MVP crop, with simple generated item icons.
+* A compact read-only processed-goods strip near Craft/production shows Flour and Bread counts with generated icons and text labels.
+  * The strip appears once Craft/production is relevant, the tutorial is completed, or Flour/Bread counts are nonzero.
+  * It stays hidden during the early tutorial to avoid clutter.
+  * It updates after collecting Flour/Bread, after Flour/Bread are spent, and on save/load.
+  * Crop sell rows are unchanged and still sell crops only; Flour and Bread are not sellable from this strip.
+  * With two active production chips, the strip hides to avoid crowding.
 * MVP production buildings:
   * Mill: `2 Sunwheat -> 1 Flour`, 15 seconds.
   * Bakery: `2 Flour -> 1 Bread`, 30 seconds.
@@ -97,6 +103,7 @@ Verified behavior:
 * Older single-Mill saves migrate safely into keyed production state under `mill`, with `bakery` initialized normally.
 * Mobile portrait QA passed at `390x844` and `360x740`.
 * Sell/inventory rows and compact production chips received a small MVP mobile usability polish pass and passed QA at `360x740` and `390x844`.
+* The processed-goods visibility strip for Flour/Bread passed mobile QA at `390x844` and `360x740`.
 * Simple generated icons for Sunwheat, Carrot, Glowberry, Flour, and Bread appear in sell/inventory rows, order requirements, and production recipe inputs/outputs.
 * Sell row text overflow from icon spacing was addressed with tighter spacing and label sizing.
 * Farm plot crop visuals now distinguish Sunwheat, Carrot, and Glowberry.
@@ -113,6 +120,7 @@ Verified behavior:
 Current caveats:
 
 * Sell rows and production chips are acceptable for MVP, but very small phones and future added goods should still be watched.
+* The processed-goods strip is an MVP visibility fix, not a full inventory system; a future inventory drawer remains deferred polish only.
 * Landscape layout is not ideal, but the UI recovers when returning to portrait.
 * Bread-heavy order clusters and Baker's Basket generosity are watch items, not current MVP blockers.
 
@@ -132,6 +140,8 @@ The following polish items are implemented for the MVP:
 ## UI / Art Polish Backlog
 
 The current crop sell/inventory rows are readable, functional, and include simple generated icons. They have passed MVP tap-comfort checks at `390x844` and `360x740`.
+
+The current Flour/Bread processed-goods strip is readable, functional, and read-only. It is intentionally not an inventory drawer and does not add Flour/Bread selling.
 
 In a future UI/art polish pass, replace generated placeholder icons and text rows with final readable art and a more polished row layout:
 
