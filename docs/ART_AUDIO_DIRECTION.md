@@ -60,6 +60,8 @@ Readable crop sell/inventory rows are implemented for MVP. They include simple g
 
 Generated icons are implemented for Sunwheat, Carrot, Glowberry, Flour, and Bread. They appear in sell/inventory rows, order requirements, and production recipe inputs/outputs. Final art assets can replace these generated icons later without changing gameplay.
 
+Order cards now include compact source labels and simple generated source icons for cozy village flavor. Current source groups are Farm Stand, Village Market, Village Cook, Baker, and Lantern Guild. This is flavor/readability only: order requirements, rewards, level gates, rotation, pacing, and save/load behavior remain unchanged. Final order-board art, more polished source icons, villager/customer portraits, and order SFX remain future polish.
+
 ## Reward / Juice Direction
 
 Reward moments should use coin bursts, floating reward text, small pops, light glow/pulse, HUD count-up, order completion bursts, level-up pops, and plot unlock pulses. Effects should make rewards feel good while preserving readability.
@@ -108,6 +110,8 @@ Future polish should improve presentation without changing MVP gameplay scope:
 * Improved plot tile art
 * Final crop sprites or more polished generated crop shapes
 * Final crop and processed-good icons for inventory, selling, production, and orders
+* Final order-board source icons and flavor art
+* Optional villager/customer portraits if they stay readable on mobile
 * Improved Craft button art/icon
 * Stronger Craft pointer/arrow if needed
 * Improved production status chip visuals/icons
@@ -116,6 +120,7 @@ Future polish should improve presentation without changing MVP gameplay scope:
 * Better final timing/easing for Mill/Bakery production start and collect feedback
 * Stronger tutorial completion reward animation and audio polish
 * Real SFX assets wired into the existing sound hooks, including Mill/Bakery start, complete, and collect hooks
+* Order-board SFX for tapping and completing requests
 
 ## Out of Scope For First Art/Audio Pass
 

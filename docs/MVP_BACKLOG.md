@@ -54,6 +54,13 @@ The MVP includes:
   * Partial-ready batch collection feedback uses only the amount actually collected, not the full batch quantity.
 * Harvest-to-inventory feedback when crops are collected.
 * Order completion coin/XP fly-to-HUD reward feedback.
+* Order board flavor/readability:
+  * Existing orders support optional source/flavor metadata.
+  * Order cards display compact source labels and small generated source icons.
+  * Current source groups are `Farm Stand`, `Village Market`, `Village Cook`, `Baker`, and `Lantern Guild`.
+  * This is flavor/readability only; it added no orders, crops, goods, recipes, buildings, rewards, currencies, systems, tutorial steps, save/load behavior, or pacing changes.
+  * Existing order requirements, rewards, level gates, and rotation behavior are unchanged.
+  * Mobile QA passed at `390x844` and `360x740`; checked level 5 three-item orders remained readable.
 * Swipe harvesting aggregate `Gathered X Crop` text to reduce clutter.
 * Accidental replant protection after harvest:
   * After a successful harvest, empty-plot planting is silently suppressed for 400ms.
@@ -185,6 +192,7 @@ The following polish items are implemented for the MVP:
 * Crop sell/inventory rows now use readable crop names and counts, such as `Sunwheat x7` with `Sell +4c`.
 * Simple generated item icons now support Sunwheat, Carrot, Glowberry, Flour, and Bread.
 * Item icons appear in sell/inventory rows, order requirements, and production recipe inputs/outputs.
+* Order cards now include compact source labels and simple generated source icons for Farm Stand, Village Market, Village Cook, Baker, and Lantern Guild requests.
 * Farm plot crop visuals now make Sunwheat, Carrot, and Glowberry visually distinct while preserving existing growth and harvest behavior.
 * Harvested crops show visual feedback moving toward the crop inventory/sell area.
 * Order completion now includes coin and XP fly-to-HUD reward feedback.
@@ -221,6 +229,12 @@ Future production polish:
 * Future production chains may expand from this pattern, but should stay simple and modular.
 
 * Later, add a satisfying coin sound and light haptic feedback when mobile support exists.
+
+Future order board polish:
+
+* Replace generated source icons with more polished order-board art.
+* Consider villager/customer portraits later if they improve flavor without crowding mobile cards.
+* Add subtle order-board SFX for completing or tapping orders after real audio assets exist.
 
 ## Scope Guardrails
 
