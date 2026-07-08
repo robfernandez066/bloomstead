@@ -96,7 +96,63 @@ export class FarmScene extends Phaser.Scene {
     const productionMenuSystem = new ProductionMenuSystem(this, productionSystem);
     const productionStatusSystem = new ProductionStatusSystem(this, productionSystem);
     const processedGoodsStripSystem = new ProcessedGoodsStripSystem(this, gameStateSystem);
+    const postTutorialGoalObjects: Phaser.GameObjects.GameObject[] = [];
     let gridSystem: GridSystem;
+
+    const clearPostTutorialGoal = (): void => {
+      for (const object of postTutorialGoalObjects) {
+        object.destroy();
+      }
+
+      postTutorialGoalObjects.length = 0;
+    };
+
+    const getPostTutorialGoalText = (): string => {
+      const { coins, farmLevel } = gameStateSystem.getState();
+      const nextUpgrade = upgradeSystem.getNextPlotUpgrade();
+
+      if (farmLevel < 3) {
+        return 'Next goal: Complete orders to reach Level 3.';
+      }
+
+      if (productionSystem.canStartRecipe(MILL_FLOUR_RECIPE_ID)) {
+        return 'Next goal: Keep the Mill running for Flour.';
+      }
+
+      if (nextUpgrade !== null && coins < nextUpgrade.coinCost) {
+        return `Next goal: Save ${nextUpgrade.coinCost} coins for more plots.`;
+      }
+
+      return 'Next goal: Complete orders and keep Craft busy.';
+    };
+
+    const refreshPostTutorialGoal = (): void => {
+      clearPostTutorialGoal();
+
+      if (!tutorialSystem.getState().completed || tutorialSystem.getCurrentStep() !== null) {
+        return;
+      }
+
+      const bounds = FARM_LAYOUT.tutorialPanel;
+      const panel = this.add
+        .rectangle(bounds.x, bounds.y, bounds.width, bounds.height, 0xf7edc7)
+        .setOrigin(0, 0)
+        .setStrokeStyle(2, 0x6f5734)
+        .setDepth(30);
+      const label = this.add
+        .text(bounds.x + 10, bounds.y + 8, getPostTutorialGoalText(), {
+          color: '#2f3b26',
+          fontFamily: 'Arial, sans-serif',
+          fontSize: '13px',
+          fontStyle: 'bold',
+          lineSpacing: 2,
+          wordWrap: { width: bounds.width - 20 }
+        })
+        .setDepth(31)
+        .setResolution(2);
+
+      postTutorialGoalObjects.push(panel, label);
+    };
 
     const getUnlockedPlotCount = (): number => {
       return plotStateSystem.getPlots().filter((plot) => plot.unlocked).length;
@@ -117,6 +173,7 @@ export class FarmScene extends Phaser.Scene {
     const refreshTutorialIfAdvanced = (advanced: boolean): void => {
       if (advanced) {
         tutorialPanelSystem.refresh();
+        refreshPostTutorialGoal();
       }
     };
 
@@ -124,6 +181,7 @@ export class FarmScene extends Phaser.Scene {
       tutorialPanelSystem.refresh();
       productionStatusSystem.refresh();
       processedGoodsStripSystem.refresh();
+      refreshPostTutorialGoal();
     };
 
     const maybeShowCraftGuidance = (): void => {
@@ -296,6 +354,7 @@ export class FarmScene extends Phaser.Scene {
       orderSystem.refreshActiveOrdersForCurrentLevel();
       orderBoardSystem.refresh();
       seedSelectorSystem.refresh();
+      refreshPostTutorialGoal();
       audioSystem.playLevelUp();
       feedbackSystem.showLevelUp(level, width / 2, height * 0.28);
       maybeShowCraftGuidance();
@@ -338,6 +397,7 @@ export class FarmScene extends Phaser.Scene {
           orderBoardSystem.refresh();
           upgradePanelSystem.refresh();
           refreshProductionUi();
+          refreshPostTutorialGoal();
           const tutorialAdvanced = tutorialSystem.recordOrderCompleted();
           refreshTutorialIfAdvanced(tutorialAdvanced);
           if (tutorialAdvanced) {
@@ -413,6 +473,7 @@ export class FarmScene extends Phaser.Scene {
       orderBoardSystem.refresh();
       upgradePanelSystem.refresh();
       refreshProductionUi();
+      refreshPostTutorialGoal();
       refreshTutorialIfAdvanced(tutorialAdvanced);
       saveGame();
       maybeShowCraftGuidance();
@@ -547,6 +608,7 @@ export class FarmScene extends Phaser.Scene {
         orderBoardSystem.refresh();
         upgradePanelSystem.refresh();
         refreshProductionUi();
+        refreshPostTutorialGoal();
         refreshTutorialIfAdvanced(tutorialSystem.recordCropSold());
         saveGame();
         audioSystem.playSellCrop();
@@ -579,6 +641,7 @@ export class FarmScene extends Phaser.Scene {
         refreshProductionUi();
         cropSellPanelSystem.refresh();
         orderBoardSystem.refresh();
+        refreshPostTutorialGoal();
         refreshTutorialIfAdvanced(tutorialAdvanced);
         saveGame();
         const inputItemId = Object.keys(result.recipe.input)[0] as ItemId;
@@ -615,6 +678,7 @@ export class FarmScene extends Phaser.Scene {
         refreshProductionUi();
         cropSellPanelSystem.refresh();
         orderBoardSystem.refresh();
+        refreshPostTutorialGoal();
         refreshTutorialIfAdvanced(tutorialAdvanced);
         saveGame();
         const recipeIndex = productionSystem
@@ -926,6 +990,7 @@ export class FarmScene extends Phaser.Scene {
           hudSystem.playCoinsPulse();
           upgradePanelSystem.refresh();
           tutorialPanelSystem.refresh();
+          refreshPostTutorialGoal();
           saveGame();
           audioSystem.playTutorialComplete();
           audioSystem.playCoinGain();
@@ -972,6 +1037,7 @@ export class FarmScene extends Phaser.Scene {
     }
 
     maybeShowCraftGuidance();
+    refreshPostTutorialGoal();
 
     devSaveControlsSystem.render({
       x: FARM_LAYOUT.devControls.x,
