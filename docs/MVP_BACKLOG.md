@@ -117,6 +117,20 @@ Latest smoke QA checkpoint after the ready-crop color, production feedback, batc
 * Mobile smoke QA passed at `390x844` and `360x740`.
 * Build passes with only the existing Vite large chunk warning.
 
+Batch-enabled pacing QA checkpoint:
+
+* Batch production pacing QA passed with no code changes.
+* An efficient automated run reached level 5 in about 5.7 minutes.
+* Level 2 was fast but good for onboarding.
+* Level 3 felt acceptable.
+* Level 4 was brisk but still required crops and production.
+* Level 5 was fast in automation but coherent.
+* Batch production feels like convenience, not a loop skip.
+* Partial-ready production is understandable during normal play.
+* Mobile layout passed at `390x844` and `360x740`.
+* Build passes with only the existing Vite large chunk warning.
+* No tuning changes are recommended yet based only on efficient automated play.
+
 Verified behavior:
 
 * Tutorial guidance auto-starts on new saves and Dev Reset.
@@ -162,6 +176,7 @@ Current caveats:
 * The processed-goods strip is an MVP visibility fix, not a full inventory system; a future inventory drawer remains deferred polish only.
 * Landscape layout is not ideal, but the UI recovers when returning to portrait.
 * Bread-heavy order clusters and Baker's Basket generosity are watch items, not current MVP blockers.
+* Goods shown in ready production chips are not spendable until collected; watch for player confusion, but this is not a current blocker.
 
 ## Implemented MVP UI / Game Feel Polish
 
