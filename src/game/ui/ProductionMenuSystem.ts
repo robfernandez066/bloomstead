@@ -17,6 +17,13 @@ const MUTED_TEXT = '#5f6a4f';
 const ITEM_TEXT_COLOR = '#8f6426';
 const BUTTON_TEXT = '#263522';
 const DEPTH = 130;
+const ENTRY_TOP_OFFSET = 52;
+const ENTRY_HEIGHT = 98;
+const ENTRY_GAP = 8;
+const ENTRY_STEP = ENTRY_HEIGHT + ENTRY_GAP;
+const ACTION_BUTTON_WIDTH = 78;
+const ACTION_BUTTON_HEIGHT = 30;
+const ACTION_BUTTON_INSET = 10;
 
 interface ProductionMenuConfig {
   x: number;
@@ -94,7 +101,7 @@ export class ProductionMenuSystem {
 
     this.objects.push(
       this.scene.add
-        .text(x + 14, y + 12, 'Production', {
+        .text(x + 14, y + 11, 'Production', {
           color: TEXT_COLOR,
           fontFamily: 'Arial, sans-serif',
           fontSize: '18px',
@@ -116,9 +123,9 @@ export class ProductionMenuSystem {
     }
 
     const entryX = this.config.x + 12;
-    const entryY = this.config.y + 52 + index * 100;
+    const entryY = this.config.y + ENTRY_TOP_OFFSET + index * ENTRY_STEP;
     const entryWidth = this.config.width - 24;
-    const entryHeight = 92;
+    const entryHeight = ENTRY_HEIGHT;
     const state = this.productionSystem.getRecipeState(recipe.id);
     const maxCraftable = this.productionSystem.getMaxCraftableQuantity(recipe.id);
     const selectedQuantity = this.getSelectedQuantity(recipe.id);
@@ -160,7 +167,7 @@ export class ProductionMenuSystem {
 
     this.objects.push(
       this.scene.add
-        .text(entryX + 10, entryY + 50, this.formatStatus(recipe), {
+        .text(entryX + 10, entryY + 53, this.formatStatus(recipe), {
           color: TEXT_COLOR,
           fontFamily: 'Arial, sans-serif',
           fontSize: '12px',
@@ -174,7 +181,7 @@ export class ProductionMenuSystem {
     if (timerText !== null) {
       this.objects.push(
         this.scene.add
-          .text(entryX + 10, entryY + 66, timerText, {
+          .text(entryX + 10, entryY + 70, timerText, {
             color: MUTED_TEXT,
             fontFamily: 'Arial, sans-serif',
             fontSize: '12px',
@@ -193,17 +200,17 @@ export class ProductionMenuSystem {
       this.renderQuantityControls(
         recipe,
         entryX + 10,
-        entryY + 68,
+        entryY + 78,
         entryWidth - 110,
         selectedQuantity,
         maxCraftable
       );
     }
 
-    const buttonWidth = 74;
-    const buttonHeight = 28;
-    const buttonX = entryX + entryWidth - buttonWidth - 10;
-    const buttonY = entryY + entryHeight - buttonHeight - 8;
+    const buttonWidth = ACTION_BUTTON_WIDTH;
+    const buttonHeight = ACTION_BUTTON_HEIGHT;
+    const buttonX = entryX + entryWidth - buttonWidth - ACTION_BUTTON_INSET;
+    const buttonY = entryY + entryHeight - buttonHeight - ACTION_BUTTON_INSET;
     const button = this.scene.add
       .rectangle(
         buttonX,
@@ -255,7 +262,7 @@ export class ProductionMenuSystem {
 
   private renderCloseButton(x: number, y: number): void {
     const button = this.scene.add
-      .rectangle(x, y, 28, 28, DISABLED_FILL)
+      .rectangle(x, y, 30, 30, DISABLED_FILL)
       .setOrigin(0, 0)
       .setStrokeStyle(2, PANEL_STROKE)
       .setInteractive({ useHandCursor: true })
@@ -268,7 +275,7 @@ export class ProductionMenuSystem {
     this.objects.push(
       button,
       this.scene.add
-        .text(x + 14, y + 14, 'X', {
+        .text(x + 15, y + 15, 'X', {
           color: DISABLED_TEXT,
           fontFamily: 'Arial, sans-serif',
           fontSize: '14px',
@@ -391,10 +398,10 @@ export class ProductionMenuSystem {
       fontStyle: 'bold'
     }).setDepth(DEPTH + 3);
     const trackX = x + 58;
-    const trackY = y - 1;
-    const trackWidth = Math.max(56, width - 104);
+    const trackY = y;
+    const trackWidth = Math.max(56, width - 108);
     const track = this.scene.add
-      .rectangle(trackX, trackY, trackWidth, 6, DISABLED_FILL, enabled ? 0.72 : 0.45)
+      .rectangle(trackX, trackY, trackWidth, 8, DISABLED_FILL, enabled ? 0.72 : 0.45)
       .setOrigin(0, 0.5)
       .setDepth(DEPTH + 3);
     const progress = maxCraftable <= 0 ? 0 : selectedQuantity / maxCraftable;
@@ -402,9 +409,9 @@ export class ProductionMenuSystem {
       .circle(trackX + trackWidth * Phaser.Math.Clamp(progress, 0, 1), trackY, 6, READY_FILL, enabled ? 1 : 0.65)
       .setStrokeStyle(2, PANEL_STROKE)
       .setDepth(DEPTH + 4);
-    const maxButtonWidth = 38;
+    const maxButtonWidth = 42;
     const maxButton = this.scene.add
-      .rectangle(trackX + trackWidth + 8, y - 13, maxButtonWidth, 26, enabled ? READY_FILL : DISABLED_FILL)
+      .rectangle(trackX + trackWidth + 8, y - 14, maxButtonWidth, 28, enabled ? READY_FILL : DISABLED_FILL)
       .setOrigin(0, 0)
       .setStrokeStyle(2, PANEL_STROKE)
       .setAlpha(enabled ? 1 : 0.78)

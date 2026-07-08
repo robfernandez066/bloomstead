@@ -585,7 +585,7 @@ export class FarmScene extends Phaser.Scene {
         const recipeIndex = productionSystem
           .getAvailableRecipes()
           .findIndex((recipe) => recipe.id === result.recipe.id);
-        const recipeRowY = FARM_LAYOUT.productionMenu.y + 86 + Math.max(0, recipeIndex) * 100;
+        const recipeRowY = FARM_LAYOUT.productionMenu.y + 88 + Math.max(0, recipeIndex) * 106;
 
         feedbackSystem.showProductionStarted(
           { x: FARM_LAYOUT.productionMenu.x + 68, y: recipeRowY },
@@ -620,7 +620,7 @@ export class FarmScene extends Phaser.Scene {
         const recipeIndex = productionSystem
           .getAvailableRecipes()
           .findIndex((recipe) => recipe.id === result.recipe.id);
-        const recipeRowY = FARM_LAYOUT.productionMenu.y + 86 + Math.max(0, recipeIndex) * 100;
+        const recipeRowY = FARM_LAYOUT.productionMenu.y + 88 + Math.max(0, recipeIndex) * 106;
 
         feedbackSystem.showProductionCollected(
           { x: FARM_LAYOUT.productionMenu.x + FARM_LAYOUT.productionMenu.width - 62, y: recipeRowY },
@@ -839,10 +839,10 @@ export class FarmScene extends Phaser.Scene {
     };
 
     const getMillActionButtonBounds = () => ({
-      x: FARM_LAYOUT.productionMenu.x + FARM_LAYOUT.productionMenu.width - 104,
-      y: FARM_LAYOUT.productionMenu.y + 52 + 86 - 30 - 8,
-      width: 82,
-      height: 30
+      x: FARM_LAYOUT.productionMenu.x + FARM_LAYOUT.productionMenu.width - 100,
+      y: FARM_LAYOUT.productionMenu.y + 52 + 98 - 30 - 10,
+      width: 86,
+      height: 32
     });
 
     const getTutorialTargetBounds = (stepId: TutorialStepId) => {

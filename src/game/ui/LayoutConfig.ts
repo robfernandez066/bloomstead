@@ -38,9 +38,9 @@ export const FARM_LAYOUT = {
   },
   productionMenu: {
     x: 18,
-    y: 220,
+    y: 204,
     width: 354,
-    height: 260
+    height: 280
   },
   cropSellPanel: {
     x: 18,
