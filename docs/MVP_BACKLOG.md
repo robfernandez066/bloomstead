@@ -24,13 +24,22 @@ The MVP includes:
   * Crop sell rows are unchanged and still sell crops only; Flour and Bread are not sellable from this strip.
   * With two active production chips, the strip hides to avoid crowding.
 * MVP production buildings:
-  * Mill: `2 Sunwheat -> 1 Flour`, 15 seconds.
-  * Bakery: `2 Flour -> 1 Bread`, 30 seconds.
+  * Mill: `2 Sunwheat -> 1 Flour`, 15 seconds per Flour.
+  * Bakery: `2 Flour -> 1 Bread`, 30 seconds per Bread.
   * Flour and Bread are processed goods, not plantable crops.
   * Production state is keyed by building/system id, currently `mill` and `bakery`.
   * Mill and Bakery can run independently at the same time.
+  * Each building still runs only one active job at a time.
+  * Mill and Bakery support batch production quantities from the `Production` menu.
+  * Batch quantity uses a whole-number slider, `Max` button, and `Start` button.
+  * Batch quantity is capped by available ingredients and a max batch size of 10.
+  * Ingredients are consumed upfront when a batch starts.
+  * Batch production is partial-ready incremental: some output can become claimable while the rest continues producing.
+  * Collecting partial output does not stop the remaining production.
   * Older single-Mill production saves migrate into the keyed production state.
+  * Older production saves without `quantity` / `collectedQuantity` default safely to `quantity: 1` and `collectedQuantity: 0`.
   * Production continues offline.
+  * Save/load and offline production preserve quantity, collected quantity, ready output, and active progress.
   * Finished production loads as ready but does not auto-collect.
   * Farm screen production uses a compact `Craft` button.
   * Full production details live in the `Production` menu.
@@ -38,6 +47,8 @@ The MVP includes:
   * Idle production systems should not take farm-screen space.
   * Tapping a production status chip opens the `Production` menu.
   * Tapping outside the `Production` menu closes it.
+  * Production status wording uses player-facing labels such as `Status: Producing Flour x4`, `Status: Ready Flour x1 | Producing x3`, and `Status: Ready Flour x2`.
+  * Farm chips use compact labels and a cleaned-up timer layout so timers stay inside the chip.
 * Harvest-to-inventory feedback when crops are collected.
 * Order completion coin/XP fly-to-HUD reward feedback.
 * Swipe harvesting aggregate `Gathered X Crop` text to reduce clutter.
@@ -80,7 +91,7 @@ Tutorial and hint guidance should be unified: only one tutorial/hint message sho
 Craft onboarding is integrated into the tutorial flow:
 
 * Open Craft.
-* Start Mill production: `2 Sunwheat -> 1 Flour`.
+* Start Mill production: `2 Sunwheat -> 1 Flour`; tutorial Craft onboarding keeps Mill quantity simple and locked to 1.
 * Wait for Flour.
 * Tap the `Mill Ready` chip.
 * Collect Flour.
@@ -104,8 +115,14 @@ Verified behavior:
 * Empty plots use a brown dirt visual.
 * Craft onboarding is part of the tutorial flow and guides the player through opening Craft, starting the Mill, waiting for Flour, tapping `Mill Ready`, collecting Flour, starting another Mill job, closing the Production menu, and then completing the tutorial.
 * Mill and Bakery production work independently and can run at the same time.
+* Mill and Bakery batch production controls are implemented with a whole-number slider, `Max` button, and capped batch size of 10.
+* Batch jobs consume ingredients upfront and can expose partial-ready output while the rest of the batch continues producing.
+* Partial output collection grants only the ready amount and does not stop remaining production.
+* Save/load and offline production preserve `quantity`, `collectedQuantity`, ready output, and active progress.
 * Offline finished production loads as ready and does not auto-collect.
+* Older production saves without `quantity` / `collectedQuantity` default safely to `quantity: 1` and `collectedQuantity: 0`.
 * Older single-Mill saves migrate safely into keyed production state under `mill`, with `bakery` initialized normally.
+* Tutorial Craft onboarding keeps the required Mill production quantity locked to 1.
 * Mobile portrait QA passed at `390x844` and `360x740`.
 * Sell/inventory rows and compact production chips received a small MVP mobile usability polish pass and passed QA at `360x740` and `390x844`.
 * The processed-goods visibility strip for Flour/Bread passed mobile QA at `390x844` and `360x740`.
@@ -117,6 +134,7 @@ Verified behavior:
 * The item-icon and farm-plot crop visual clarity pass passed mobile QA at `390x844` and `360x740`.
 * Build passes with only the existing Vite large chunk warning.
 * The item-icon and crop-visual pass changed no gameplay behavior.
+* Production batch controls, partial-ready collection, status wording, compact chip timer layout, save/load defaults, and old-save migration build successfully.
 * The level 3-5 MVP order content pass is complete using only existing crops, Flour, and Bread.
 * The level 3-5 order pass added no new crops, processed goods, production buildings, tutorial steps, save/load changes, or UI systems.
 * Level 3 pacing is acceptable.
@@ -162,6 +180,7 @@ Future production polish:
 * Give the Craft button/icon proper art so it reads clearly as production/crafting.
 * Add a stronger visual pointer or arrow for Craft if playtesting shows the highlight is not enough.
 * Production status chips have MVP tap-target polish, but future art passes can still add clearer visuals and icons.
+* Production start/collect juice is deferred polish; batch production currently keeps the existing lightweight text/pop feedback and does not yet add ingredient fly effects or collect-to-inventory motion.
 * Replace placeholder Mill/Bakery/menu visuals with clear production building/UI art.
 * Replace generated Flour and Bread placeholder icons with final icons for inventory, orders, and production output.
 * Replace generated crop plot visuals with final crop sprites or polished generated shapes.

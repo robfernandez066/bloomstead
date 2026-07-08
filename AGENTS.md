@@ -117,14 +117,26 @@ The MVP should not include:
   * With two active production chips, the strip hides to avoid crowding.
   * No inventory drawer, storage limits, or new inventory mechanics are part of this MVP fix.
 * Production:
-  * Mill recipe: 2 Sunwheat -> 1 Flour, 15 seconds.
-  * Bakery recipe: 2 Flour -> 1 Bread, 30 seconds.
+  * Mill recipe: 2 Sunwheat -> 1 Flour, 15 seconds per Flour.
+  * Bakery recipe: 2 Flour -> 1 Bread, 30 seconds per Bread.
   * Flour and Bread are processed goods and are not plantable.
   * Production state is keyed by building/system id, currently `mill` and `bakery`.
   * Mill and Bakery can run independently at the same time.
+  * Each building still runs only one active job at a time.
+  * Mill and Bakery support batch production quantities in the `Production` menu.
+  * Batch quantity is selected with a whole-number slider, `Max` button, and `Start` button.
+  * Batch quantity is capped by available ingredients and a max batch size of 10.
+  * Ingredients are consumed upfront when a batch starts.
+  * Batch production is partial-ready incremental: some output can become claimable while the rest continues producing.
+  * Collecting partial output does not stop remaining production.
+  * Save/load and offline production preserve `quantity`, `collectedQuantity`, ready output, and active progress.
+  * Older production saves without `quantity` / `collectedQuantity` default safely to `quantity: 1` and `collectedQuantity: 0`.
   * Older single-Mill production saves migrate into the keyed production state.
   * Production continues offline.
   * Finished production loads as ready but does not auto-collect.
+  * Tutorial Craft onboarding keeps Mill quantity simple and locked to 1.
+  * Production status wording should stay player-facing, for example `Status: Producing Flour x4`, `Status: Ready Flour x1 | Producing x3`, and `Status: Ready Flour x2`.
+  * Farm production chips use compact labels with timers contained inside the chip.
 * Baker's Flour order: requires 2 Flour, rewards 90 coins and 20 XP, and is gated at farm level 2.
 * Fresh Bread order: requires 1 Bread, rewards 130 coins and 30 XP, and is gated at farm level 3.
 * Level 3-5 advanced MVP orders:
@@ -167,6 +179,8 @@ The MVP should not include:
   * Level 3 pacing is acceptable; level 4 pacing is acceptable but slightly fast; level 5 was reached and felt like a natural milestone.
   * Bread-heavy order clusters and Baker's Basket generosity are watch items, not current MVP blockers.
   * Build passes with only the existing Vite large chunk warning.
+  * Production batch controls passed mobile QA at 390x844 and 360x740.
+  * Production start/collect juice is deferred polish and should not be added unless explicitly requested.
 * Strategy level: 6/10.
 * Randomness: some randomness later, not core MVP.
 
