@@ -8,14 +8,14 @@ import { createItemIcon } from './ItemIcon';
 const BOARD_FILL = 0xf4e6b3;
 const BOARD_STROKE = 0x6f5734;
 const READY_FILL = 0xdff0ad;
-const DISABLED_FILL = 0x9ca28e;
+const DISABLED_FILL = 0xc9ccb2;
 const READY_STROKE = 0x496f38;
 const TEXT_COLOR = '#2f3b26';
-const DISABLED_TEXT = '#ece7d7';
+const DISABLED_TEXT = '#4f5a45';
 const SOURCE_TEXT_COLOR = '#5e7047';
-const DISABLED_SOURCE_TEXT = '#ded8c5';
+const DISABLED_SOURCE_TEXT = '#687058';
 const ITEM_TEXT_COLOR = '#8f6426';
-const DISABLED_ITEM_TEXT_COLOR = '#f8dda0';
+const DISABLED_ITEM_TEXT_COLOR = '#76552a';
 const REWARD_TEXT_WIDTH = 96;
 
 interface OrderBoardConfig {
@@ -95,7 +95,7 @@ export class OrderBoardSystem {
       .rectangle(x, y, width, this.config.orderHeight, fillColor)
       .setOrigin(0, 0)
       .setStrokeStyle(2, ready ? READY_STROKE : BOARD_STROKE)
-      .setAlpha(ready ? 1 : 0.78);
+      .setAlpha(ready ? 1 : 0.92);
 
     this.objects.push(panel);
 
@@ -106,27 +106,31 @@ export class OrderBoardSystem {
       });
     }
 
-    this.renderSource(order.source, x + 8, y + 5, ready ? 1 : 0.78);
+    this.renderSource(order.source, x + 8, y + 5, ready ? 1 : 0.9);
 
-    this.objects.push(
-      this.scene.add.text(x + 8, y + 16, order.name, {
+    const orderName = this.scene.add
+      .text(x + 8, y + 16, order.name, {
         color: textColor,
         fontFamily: 'Arial, sans-serif',
-        fontSize: '13px',
+        fontSize: '14px',
         fontStyle: 'bold'
       })
-    );
+      .setResolution(2);
 
-    this.renderRequirements(order, x + 8, y + 42, width - REWARD_TEXT_WIDTH - 18, textColor, ready ? 1 : 0.78);
+    this.objects.push(orderName);
 
-    this.objects.push(
-      this.scene.add.text(x + width - REWARD_TEXT_WIDTH, y + 34, `${order.coinReward}c  ${order.xpReward} XP`, {
+    this.renderRequirements(order, x + 8, y + 41, width - REWARD_TEXT_WIDTH - 18, textColor, ready ? 1 : 0.9);
+
+    const rewardText = this.scene.add
+      .text(x + width - REWARD_TEXT_WIDTH, y + 34, `${order.coinReward}c  ${order.xpReward} XP`, {
         color: textColor,
         fontFamily: 'Arial, sans-serif',
         fontSize: '12px',
         fontStyle: 'bold'
       })
-    );
+      .setResolution(2);
+
+    this.objects.push(rewardText);
   }
 
   private renderSource(source: OrderSource | undefined, x: number, y: number, alpha: number): void {
@@ -138,11 +142,12 @@ export class OrderBoardSystem {
     const icon = this.createSourceIcon(source, x + 5, y + 4, sourceAlpha);
     const label = this.scene.add
       .text(x + 17, y - 1, `From: ${source}`, {
-        color: alpha === 1 ? SOURCE_TEXT_COLOR : DISABLED_TEXT,
+        color: alpha === 1 ? SOURCE_TEXT_COLOR : DISABLED_SOURCE_TEXT,
         fontFamily: 'Arial, sans-serif',
-        fontSize: '8px',
+        fontSize: '9px',
         fontStyle: 'bold'
       })
+      .setResolution(2)
       .setAlpha(sourceAlpha);
 
     this.objects.push(icon, label);
@@ -165,13 +170,13 @@ export class OrderBoardSystem {
       const quantityText = this.scene.add.text(cursorX + 15, y - 6, `${count}`, {
         color: textColor,
         fontFamily: 'Arial, sans-serif',
-        fontSize: '11px'
-      });
+        fontSize: '12px'
+      }).setResolution(2);
       const itemText = this.scene.add.text(cursorX + 15 + quantityText.width + 3, y - 6, itemName, {
         color: alpha === 1 ? ITEM_TEXT_COLOR : DISABLED_ITEM_TEXT_COLOR,
         fontFamily: 'Arial, sans-serif',
-        fontSize: '11px'
-      });
+        fontSize: '12px'
+      }).setResolution(2);
       const textWidth = quantityText.width + 3 + itemText.width;
       const entryWidth = 17 + Math.min(textWidth, 64) + 5;
 
