@@ -66,6 +66,8 @@ Reward moments should use coin bursts, floating reward text, small pops, light g
 
 Basic tutorial `Complete` reward feedback is implemented for MVP: the one-time 75 coin reward has clear reward text, generated coin fly feedback, and a coin HUD pulse. Stronger coin animation and sound effects remain future polish.
 
+Production start/collect feedback is implemented for MVP. Starting Mill/Bakery production shows a brief ingredient icon fly/pulse toward the production/status area while keeping the existing `Mill Started` / `Bakery Started` text. Collecting Flour/Bread shows the actual collected amount, such as `+1 Flour`, `+3 Flour`, or `+1 Bread`, and moves the output icon toward the processed-goods/status area. Partial-ready batch collection uses only the amount actually collected. Future polish can improve final animation timing, final art assets, and real SFX without changing production behavior.
+
 ## Animation Principles
 
 Animations should be quick, snappy, softly eased, and non-blocking. They should add dopamine without visual spam. Animation should reinforce clarity and never hide the gameplay state.
@@ -111,6 +113,7 @@ Future polish should improve presentation without changing MVP gameplay scope:
 * Improved production status chip visuals/icons
 * Improved Mill/Bakery menu/building placeholders
 * Better processed-good/order onboarding if needed after playtesting
+* Better final timing/easing for Mill/Bakery production start and collect feedback
 * Stronger tutorial completion reward animation and audio polish
 * Real SFX assets wired into the existing sound hooks, including Mill/Bakery start, complete, and collect hooks
 

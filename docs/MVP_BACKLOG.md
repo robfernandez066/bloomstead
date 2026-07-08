@@ -49,6 +49,9 @@ The MVP includes:
   * Tapping outside the `Production` menu closes it.
   * Production status wording uses player-facing labels such as `Status: Producing Flour x4`, `Status: Ready Flour x1 | Producing x3`, and `Status: Ready Flour x2`.
   * Farm chips use compact labels and a cleaned-up timer layout so timers stay inside the chip.
+  * Starting Mill/Bakery production shows a brief ingredient icon fly/pulse toward the production/status area and keeps the existing `Mill Started` / `Bakery Started` text.
+  * Collecting Flour/Bread shows the actual collected amount, such as `+1 Flour`, `+3 Flour`, or `+1 Bread`, with the output icon moving toward the processed-goods/status area.
+  * Partial-ready batch collection feedback uses only the amount actually collected, not the full batch quantity.
 * Harvest-to-inventory feedback when crops are collected.
 * Order completion coin/XP fly-to-HUD reward feedback.
 * Swipe harvesting aggregate `Gathered X Crop` text to reduce clutter.
@@ -135,6 +138,7 @@ Verified behavior:
 * Build passes with only the existing Vite large chunk warning.
 * The item-icon and crop-visual pass changed no gameplay behavior.
 * Production batch controls, partial-ready collection, status wording, compact chip timer layout, save/load defaults, and old-save migration build successfully.
+* Production start/collect feedback passed QA: processed-goods counts updated after collection, no duplicate inventory rewards were found, tutorial Craft onboarding still worked with Mill quantity locked to 1, and mobile QA passed at `390x844` and `360x740`.
 * The level 3-5 MVP order content pass is complete using only existing crops, Flour, and Bread.
 * The level 3-5 order pass added no new crops, processed goods, production buildings, tutorial steps, save/load changes, or UI systems.
 * Level 3 pacing is acceptable.
@@ -158,6 +162,8 @@ The following polish items are implemented for the MVP:
 * Farm plot crop visuals now make Sunwheat, Carrot, and Glowberry visually distinct while preserving existing growth and harvest behavior.
 * Harvested crops show visual feedback moving toward the crop inventory/sell area.
 * Order completion now includes coin and XP fly-to-HUD reward feedback.
+* Production start feedback now uses a brief ingredient icon fly/pulse and `Mill Started` / `Bakery Started` text.
+* Production collect feedback now shows the actual collected amount, such as `+1 Flour`, `+3 Flour`, or `+1 Bread`, and moves the output icon toward the processed-goods/status area.
 * Swipe harvesting now uses aggregate `Gathered X Crop` text instead of many separate `+1 Crop` popups.
 * The tutorial `Complete` button now has basic reward juice for the one-time 75 coin reward, including reward text, generated coin fly feedback, and a coin HUD pulse.
 
@@ -180,7 +186,7 @@ Future production polish:
 * Give the Craft button/icon proper art so it reads clearly as production/crafting.
 * Add a stronger visual pointer or arrow for Craft if playtesting shows the highlight is not enough.
 * Production status chips have MVP tap-target polish, but future art passes can still add clearer visuals and icons.
-* Production start/collect juice is deferred polish; batch production currently keeps the existing lightweight text/pop feedback and does not yet add ingredient fly effects or collect-to-inventory motion.
+* Production start/collect feedback is implemented for MVP; future polish can still improve final animation timing, easing, and art direction.
 * Replace placeholder Mill/Bakery/menu visuals with clear production building/UI art.
 * Replace generated Flour and Bread placeholder icons with final icons for inventory, orders, and production output.
 * Replace generated crop plot visuals with final crop sprites or polished generated shapes.
