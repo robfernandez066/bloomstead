@@ -3,6 +3,7 @@ import type { CropId } from '../models/CropTypes';
 import type { IsometricPoint } from '../models/GridTypes';
 import { getItemName } from '../data/Items';
 import type { ItemId } from '../models/ItemTypes';
+import { createItemIcon } from './ItemIcon';
 
 const FLOAT_TEXT_COLOR = '#fff7cc';
 const FLOAT_TEXT_STROKE = '#3f512e';
@@ -125,8 +126,15 @@ export class FeedbackSystem {
     this.showFloatingText(`Sold ${cropName} +${coins}c`, x, y, 760, 22, '#fff4a8');
   }
 
-  showProductionStarted(x: number, y: number, buildingName: string): void {
-    this.showFloatingText(`${buildingName} Started`, x, y, 720, 20, '#fff4a8');
+  showProductionStarted(
+    source: IsometricPoint,
+    target: IsometricPoint,
+    buildingName: string,
+    inputItemId: ItemId
+  ): void {
+    this.showFloatingText(`${buildingName} Started`, target.x, target.y - 12, 720, 20, '#fff4a8', 142);
+    this.showItemFlyEffect(inputItemId, source, target, 16, 520, 142);
+    this.showPop(source.x, source.y, 0xfff0a8, 141);
   }
 
   showProductionReady(x: number, y: number, itemId: ItemId): void {
@@ -134,9 +142,16 @@ export class FeedbackSystem {
     this.showPop(x, y + 8, POP_FILL);
   }
 
-  showProductionCollected(x: number, y: number, itemName: string, amount: number): void {
-    this.showFloatingText(`+${amount} ${itemName}`, x, y, 800, 24, '#fff4a8');
-    this.showPop(x, y + 8, POP_FILL);
+  showProductionCollected(
+    source: IsometricPoint,
+    target: IsometricPoint,
+    itemId: ItemId,
+    itemName: string,
+    amount: number
+  ): void {
+    this.showFloatingText(`+${amount} ${itemName}`, target.x, target.y - 12, 900, 24, '#fff4a8', 142);
+    this.showItemFlyEffect(itemId, source, target, 18, 600, 142);
+    this.showPop(source.x, source.y, POP_FILL, 141);
   }
 
   showOrderRewards(x: number, y: number, coins: number, xp: number): void {
@@ -336,7 +351,8 @@ export class FeedbackSystem {
     y: number,
     duration: number,
     rise: number,
-    color = FLOAT_TEXT_COLOR
+    color = FLOAT_TEXT_COLOR,
+    depth = 120
   ): void {
     const text = this.scene.add
       .text(x, y, message, {
@@ -349,7 +365,7 @@ export class FeedbackSystem {
         align: 'center'
       })
       .setOrigin(0.5)
-      .setDepth(120);
+      .setDepth(depth);
 
     this.scene.tweens.add({
       targets: text,
@@ -361,8 +377,8 @@ export class FeedbackSystem {
     });
   }
 
-  private showPop(x: number, y: number, fill: number): void {
-    const pop = this.scene.add.circle(x, y, 4, fill, 0.9).setDepth(99);
+  private showPop(x: number, y: number, fill: number, depth = 99): void {
+    const pop = this.scene.add.circle(x, y, 4, fill, 0.9).setDepth(depth);
 
     this.scene.tweens.add({
       targets: pop,
@@ -446,6 +462,28 @@ export class FeedbackSystem {
       delay: config.delay,
       ease: 'Sine.easeInOut',
       onComplete: () => marker.destroy()
+    });
+  }
+
+  private showItemFlyEffect(
+    itemId: ItemId,
+    source: IsometricPoint,
+    target: IsometricPoint,
+    size: number,
+    duration: number,
+    depth: number
+  ): void {
+    const icon = createItemIcon(this.scene, itemId, source.x, source.y, size, { depth });
+
+    this.scene.tweens.add({
+      targets: icon,
+      x: target.x,
+      y: target.y,
+      scale: 0.82,
+      alpha: 0,
+      duration,
+      ease: 'Sine.easeInOut',
+      onComplete: () => icon.destroy()
     });
   }
 }

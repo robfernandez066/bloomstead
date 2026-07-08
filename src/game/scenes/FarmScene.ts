@@ -25,6 +25,7 @@ import { PlotStateSystem } from '../systems/PlotStateSystem';
 import { ProductionSystem } from '../systems/ProductionSystem';
 import { TutorialSystem } from '../systems/TutorialSystem';
 import { UpgradeSystem } from '../systems/UpgradeSystem';
+import type { ItemId } from '../models/ItemTypes';
 import type { TutorialStepId } from '../models/TutorialTypes';
 
 type DragMode = 'none' | 'plant' | 'harvest';
@@ -185,6 +186,68 @@ export class FarmScene extends Phaser.Scene {
         FARM_LAYOUT.farmGrid.x + FARM_LAYOUT.farmGrid.width - 96,
         FARM_LAYOUT.farmGrid.y + 42
       );
+    };
+
+    const getOrderBoardY = (): number => {
+      return upgradeSystem.getNextPlotUpgrade() === null && upgradePanelSystem.isCompletionHidden()
+        ? FARM_LAYOUT.plotUpgradePanel.y
+        : FARM_LAYOUT.orderBoard.y;
+    };
+
+    const renderOrderBoard = (): void => {
+      orderBoardSystem.render({
+        x: FARM_LAYOUT.orderBoard.x,
+        y: getOrderBoardY(),
+        width: FARM_LAYOUT.orderBoard.width,
+        orderHeight: FARM_LAYOUT.orderBoard.orderHeight,
+        gap: FARM_LAYOUT.orderBoard.gap,
+        bottomPadding: FARM_LAYOUT.orderBoard.bottomPadding,
+        onOrderComplete: (order) => {
+          const result = orderSystem.completeOrder(order.id);
+
+          if (result === null) {
+            audioSystem.playDisabledTap();
+            return;
+          }
+
+          audioSystem.playButtonTap();
+          hudSystem.refresh();
+          cropSellPanelSystem.refresh();
+          orderBoardSystem.refresh();
+          upgradePanelSystem.refresh();
+          refreshProductionUi();
+          const tutorialAdvanced = tutorialSystem.recordOrderCompleted();
+          refreshTutorialIfAdvanced(tutorialAdvanced);
+          if (tutorialAdvanced) {
+            upgradePanelSystem.refresh();
+          }
+          saveGame();
+          audioSystem.playOrderComplete();
+          audioSystem.playCoinGain();
+          audioSystem.playXpGain();
+          feedbackSystem.showOrderComplete(width / 2, getOrderBoardY() - 10);
+          feedbackSystem.showOrderRewards(
+            width / 2,
+            getOrderBoardY() + 22,
+            result.order.coinReward,
+            result.order.xpReward
+          );
+          feedbackSystem.showOrderRewardFlyEffects(
+            width / 2,
+            getOrderBoardY() + 42,
+            FARM_LAYOUT.hud.x + 58,
+            FARM_LAYOUT.hud.y + 20,
+            FARM_LAYOUT.hud.x + 48,
+            FARM_LAYOUT.hud.y + 58
+          );
+          hudSystem.playCoinsPulse();
+          hudSystem.playXpPulse();
+
+          if (result.xpResult.leveledUp) {
+            handleLevelUp(result.xpResult.currentLevel);
+          }
+        }
+      });
     };
 
     const flushPendingTapHarvestText = (): void => {
@@ -380,8 +443,8 @@ export class FarmScene extends Phaser.Scene {
       y: FARM_LAYOUT.productionMenu.y,
       width: FARM_LAYOUT.productionMenu.width,
       height: FARM_LAYOUT.productionMenu.height,
-      onStart: (recipeId) => {
-        const result = productionSystem.startRecipe(recipeId);
+      onStart: (recipeId, quantity) => {
+        const result = productionSystem.startRecipe(recipeId, quantity);
 
         if (result === null) {
           audioSystem.playDisabledTap();
@@ -396,10 +459,20 @@ export class FarmScene extends Phaser.Scene {
         orderBoardSystem.refresh();
         refreshTutorialIfAdvanced(tutorialAdvanced);
         saveGame();
+        const inputItemId = Object.keys(result.recipe.input)[0] as ItemId;
+        const recipeIndex = productionSystem
+          .getAvailableRecipes()
+          .findIndex((recipe) => recipe.id === result.recipe.id);
+        const recipeRowY = FARM_LAYOUT.productionMenu.y + 86 + Math.max(0, recipeIndex) * 100;
+
         feedbackSystem.showProductionStarted(
-          width / 2,
-          FARM_LAYOUT.productionStatus.y - 8,
-          result.recipe.buildingName
+          { x: FARM_LAYOUT.productionMenu.x + 68, y: recipeRowY },
+          {
+            x: FARM_LAYOUT.productionStatus.x + 56,
+            y: FARM_LAYOUT.productionStatus.y + FARM_LAYOUT.productionStatus.height / 2
+          },
+          result.recipe.buildingName,
+          inputItemId
         );
 
         if (tutorialAdvanced && tutorialSystem.getCurrentStep()?.id === 'craft-wait-flour') {
@@ -423,9 +496,18 @@ export class FarmScene extends Phaser.Scene {
         orderBoardSystem.refresh();
         refreshTutorialIfAdvanced(tutorialAdvanced);
         saveGame();
+        const recipeIndex = productionSystem
+          .getAvailableRecipes()
+          .findIndex((recipe) => recipe.id === result.recipe.id);
+        const recipeRowY = FARM_LAYOUT.productionMenu.y + 86 + Math.max(0, recipeIndex) * 100;
+
         feedbackSystem.showProductionCollected(
-          width / 2,
-          FARM_LAYOUT.productionStatus.y - 8,
+          { x: FARM_LAYOUT.productionMenu.x + FARM_LAYOUT.productionMenu.width - 62, y: recipeRowY },
+          {
+            x: FARM_LAYOUT.productionStatus.x + FARM_LAYOUT.productionStatus.width - 90,
+            y: FARM_LAYOUT.productionStatus.y + FARM_LAYOUT.productionStatus.height / 2
+          },
+          result.recipe.outputItemId,
           result.outputName,
           result.outputAmount
         );
@@ -447,6 +529,13 @@ export class FarmScene extends Phaser.Scene {
             (stepId === 'craft-start-mill' || stepId === 'craft-start-second-mill')) ||
           (action === 'collect' && stepId === 'craft-collect-flour')
         );
+      },
+      getForcedBatchQuantity: (recipeId) => {
+        if (recipeId !== MILL_FLOUR_RECIPE_ID || tutorialSystem.getState().completed) {
+          return null;
+        }
+
+        return 1;
       }
     });
 
@@ -495,6 +584,7 @@ export class FarmScene extends Phaser.Scene {
       y: FARM_LAYOUT.plotUpgradePanel.y,
       width: FARM_LAYOUT.plotUpgradePanel.width,
       height: FARM_LAYOUT.plotUpgradePanel.height,
+      onCompletionHidden: renderOrderBoard,
       isLocked: () => !tutorialSystem.canPurchasePlotUpgrade(),
       isHighlighted: () => tutorialSystem.getCurrentStep()?.id === 'upgrade-plots',
       onPurchase: () => {
@@ -523,59 +613,7 @@ export class FarmScene extends Phaser.Scene {
       }
     });
 
-    orderBoardSystem.render({
-      x: FARM_LAYOUT.orderBoard.x,
-      y: FARM_LAYOUT.orderBoard.y,
-      width: FARM_LAYOUT.orderBoard.width,
-      orderHeight: FARM_LAYOUT.orderBoard.orderHeight,
-      gap: FARM_LAYOUT.orderBoard.gap,
-      bottomPadding: FARM_LAYOUT.orderBoard.bottomPadding,
-      onOrderComplete: (order) => {
-        const result = orderSystem.completeOrder(order.id);
-
-        if (result === null) {
-          audioSystem.playDisabledTap();
-          return;
-        }
-
-        audioSystem.playButtonTap();
-        hudSystem.refresh();
-        cropSellPanelSystem.refresh();
-        orderBoardSystem.refresh();
-        upgradePanelSystem.refresh();
-        refreshProductionUi();
-        const tutorialAdvanced = tutorialSystem.recordOrderCompleted();
-        refreshTutorialIfAdvanced(tutorialAdvanced);
-        if (tutorialAdvanced) {
-          upgradePanelSystem.refresh();
-        }
-        saveGame();
-        audioSystem.playOrderComplete();
-        audioSystem.playCoinGain();
-        audioSystem.playXpGain();
-        feedbackSystem.showOrderComplete(width / 2, FARM_LAYOUT.orderBoard.y - 10);
-        feedbackSystem.showOrderRewards(
-          width / 2,
-          FARM_LAYOUT.orderBoard.y + 22,
-          result.order.coinReward,
-          result.order.xpReward
-        );
-        feedbackSystem.showOrderRewardFlyEffects(
-          width / 2,
-          FARM_LAYOUT.orderBoard.y + 42,
-          FARM_LAYOUT.hud.x + 58,
-          FARM_LAYOUT.hud.y + 20,
-          FARM_LAYOUT.hud.x + 48,
-          FARM_LAYOUT.hud.y + 58
-        );
-        hudSystem.playCoinsPulse();
-        hudSystem.playXpPulse();
-
-        if (result.xpResult.leveledUp) {
-          handleLevelUp(result.xpResult.currentLevel);
-        }
-      }
-    });
+    renderOrderBoard();
 
     this.input.on('pointerup', () => {
       flushPendingTapHarvestText();
