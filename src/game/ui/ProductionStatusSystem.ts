@@ -124,7 +124,7 @@ export class ProductionStatusSystem {
     const partiallyReady = state.status === 'producing' && claimableQuantity > 0;
     const ready = fullyReady || partiallyReady;
     const highlighted = config.highlightRecipeChip?.(recipe.id) === true;
-    const quantity = state.quantity ?? 1;
+    const quantity = state.quantity;
     const outputName = getItemName(recipe.outputItemId);
     const remainingQuantity = this.productionSystem.getRemainingQuantity(recipe.id) || quantity;
     const producingLabel = `${recipe.buildingName}: ${outputName} x${remainingQuantity}`;

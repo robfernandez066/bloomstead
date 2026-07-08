@@ -325,7 +325,7 @@ export class ProductionMenuSystem {
     const state = this.productionSystem.getRecipeState(recipe.id);
     const outputName = getItemName(recipe.outputItemId);
     const outputCount = this.productionSystem.getItemCount(recipe.outputItemId);
-    const quantity = state.quantity ?? 1;
+    const quantity = state.quantity;
     const claimableQuantity = this.productionSystem.getClaimableQuantity(recipe.id);
     const remainingQuantity = this.productionSystem.getRemainingQuantity(recipe.id);
 

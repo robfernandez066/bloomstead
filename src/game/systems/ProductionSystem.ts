@@ -5,6 +5,7 @@ import type {
   ProductionJobState,
   ProductionRecipeDefinition,
   ProductionRecipeId,
+  SavedProductionJobState,
   SavedProductionState,
   ProductionState
 } from '../models/ProductionTypes';
@@ -16,8 +17,8 @@ const DEFAULT_JOB_STATE: ProductionJobState = {
   recipeId: null,
   startedAt: null,
   durationMs: null,
-  quantity: null,
-  collectedQuantity: null
+  quantity: 1,
+  collectedQuantity: 0
 };
 
 const PRODUCTION_BUILDINGS: ProductionBuildingId[] = ['mill', 'bakery'];
@@ -144,7 +145,7 @@ export class ProductionSystem {
     }
 
     const recipe = PRODUCTION_RECIPES[state.recipeId];
-    const quantity = state.quantity ?? 1;
+    const quantity = state.quantity;
     const claimableQuantity = this.getClaimableQuantity(recipeId);
 
     if (claimableQuantity <= 0) {
@@ -152,7 +153,7 @@ export class ProductionSystem {
     }
 
     const outputAmount = recipe.outputAmount * claimableQuantity;
-    const collectedQuantity = (state.collectedQuantity ?? 0) + claimableQuantity;
+    const collectedQuantity = state.collectedQuantity + claimableQuantity;
 
     this.gameState.addItemToInventory(recipe.outputItemId, outputAmount);
 
@@ -161,8 +162,8 @@ export class ProductionSystem {
       state.recipeId = null;
       state.startedAt = null;
       state.durationMs = null;
-      state.quantity = null;
-      state.collectedQuantity = null;
+      state.quantity = 1;
+      state.collectedQuantity = 0;
     } else {
       state.status = 'producing';
       state.collectedQuantity = collectedQuantity;
@@ -194,8 +195,7 @@ export class ProductionSystem {
 
     if (
       state.recipeId !== recipeId ||
-      state.startedAt === null ||
-      state.quantity === null
+      state.startedAt === null
     ) {
       return 0;
     }
@@ -221,8 +221,7 @@ export class ProductionSystem {
 
     if (
       state.recipeId !== recipeId ||
-      state.startedAt === null ||
-      state.quantity === null
+      state.startedAt === null
     ) {
       return 0;
     }
@@ -231,7 +230,7 @@ export class ProductionSystem {
       state.status === 'ready'
         ? state.quantity
         : this.getCompletedQuantity(recipeId);
-    const collectedQuantity = state.collectedQuantity ?? 0;
+    const collectedQuantity = state.collectedQuantity;
 
     return Math.max(0, completedQuantity - collectedQuantity);
   }
@@ -239,11 +238,11 @@ export class ProductionSystem {
   getRemainingQuantity(recipeId: ProductionRecipeId): number {
     const state = this.getRecipeState(recipeId);
 
-    if (state.recipeId !== recipeId || state.quantity === null) {
+    if (state.recipeId !== recipeId) {
       return 0;
     }
 
-    return Math.max(0, state.quantity - (state.collectedQuantity ?? 0));
+    return Math.max(0, state.quantity - state.collectedQuantity);
   }
 
   refreshProductionState(): ProductionRecipeDefinition[] {
@@ -296,7 +295,7 @@ export class ProductionSystem {
 
   private normalizeJobState(
     buildingId: ProductionBuildingId,
-    initialState?: ProductionJobState
+    initialState?: SavedProductionJobState
   ): ProductionJobState {
     if (
       initialState === undefined ||
@@ -366,8 +365,7 @@ export class ProductionSystem {
 
     if (
       state.recipeId !== recipeId ||
-      state.startedAt === null ||
-      state.quantity === null
+      state.startedAt === null
     ) {
       return 0;
     }
@@ -381,7 +379,7 @@ export class ProductionSystem {
     );
   }
 
-  private isLegacyJobState(state: SavedProductionState): state is ProductionJobState {
+  private isLegacyJobState(state: SavedProductionState): state is SavedProductionJobState {
     return 'status' in state;
   }
 }

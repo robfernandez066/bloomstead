@@ -19,8 +19,21 @@ export interface ProductionJobState {
   recipeId: ProductionRecipeId | null;
   startedAt: number | null;
   durationMs: number | null;
+  quantity: number;
+  collectedQuantity: number;
 }
 
 export type ProductionState = Record<ProductionBuildingId, ProductionJobState>;
 
-export type SavedProductionState = ProductionState | ProductionJobState;
+export type SavedProductionJobState = Omit<
+  ProductionJobState,
+  'quantity' | 'collectedQuantity'
+> & {
+  quantity?: number | null;
+  collectedQuantity?: number | null;
+};
+
+export type SavedProductionState =
+  | ProductionState
+  | SavedProductionJobState
+  | Partial<Record<ProductionBuildingId, SavedProductionJobState>>;
