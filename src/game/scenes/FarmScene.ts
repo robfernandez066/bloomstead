@@ -489,7 +489,7 @@ export class FarmScene extends Phaser.Scene {
           return;
         }
 
-        audioSystem.playButtonTap();
+        audioSystem.playProductionStart();
         const tutorialAdvanced =
           recipeId === MILL_FLOUR_RECIPE_ID && tutorialSystem.recordMillStarted();
         refreshProductionUi();
@@ -525,8 +525,7 @@ export class FarmScene extends Phaser.Scene {
           return;
         }
 
-        audioSystem.playButtonTap();
-        audioSystem.playHarvest();
+        audioSystem.playProductionCollect();
         const tutorialAdvanced =
           recipeId === MILL_FLOUR_RECIPE_ID && tutorialSystem.recordFlourCollected();
         refreshProductionUi();

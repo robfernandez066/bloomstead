@@ -13,5 +13,7 @@ export type SoundEventId =
   | 'orderComplete'
   | 'levelUp'
   | 'plotUnlock'
+  | 'productionStart'
+  | 'productionCollect'
   | 'disabledTap'
   | 'tutorialComplete';
