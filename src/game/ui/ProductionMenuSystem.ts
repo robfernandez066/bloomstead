@@ -13,6 +13,7 @@ const READY_FILL = 0xdff0ad;
 const DISABLED_FILL = 0x9ca28e;
 const TEXT_COLOR = '#2f3b26';
 const DISABLED_TEXT = '#ece7d7';
+const MUTED_TEXT = '#5f6a4f';
 const BUTTON_TEXT = '#263522';
 const DEPTH = 130;
 
@@ -21,10 +22,11 @@ interface ProductionMenuConfig {
   y: number;
   width: number;
   height: number;
-  onStart: (recipeId: ProductionRecipeId) => void;
+  onStart: (recipeId: ProductionRecipeId, quantity: number) => void;
   onCollect: (recipeId: ProductionRecipeId) => void;
   onClose: () => void;
   shouldHighlightAction?: (recipeId: ProductionRecipeId, action: 'start' | 'collect') => boolean;
+  getForcedBatchQuantity?: (recipeId: ProductionRecipeId) => number | null;
 }
 
 export class ProductionMenuSystem {
@@ -32,6 +34,7 @@ export class ProductionMenuSystem {
   private readonly productionSystem: ProductionSystem;
   private config?: ProductionMenuConfig;
   private open = false;
+  private readonly selectedQuantities = new Map<ProductionRecipeId, number>();
   private readonly objects: Phaser.GameObjects.GameObject[] = [];
 
   constructor(scene: Phaser.Scene, productionSystem: ProductionSystem) {
@@ -112,14 +115,24 @@ export class ProductionMenuSystem {
     }
 
     const entryX = this.config.x + 12;
-    const entryY = this.config.y + 52 + index * 94;
+    const entryY = this.config.y + 52 + index * 100;
     const entryWidth = this.config.width - 24;
-    const entryHeight = 86;
+    const entryHeight = 92;
     const state = this.productionSystem.getRecipeState(recipe.id);
-    const canStart = this.productionSystem.canStartRecipe(recipe.id);
-    const buttonLabel = state.status === 'ready' ? 'Collect' : 'Start';
-    const buttonEnabled = state.status === 'ready' || canStart;
-    const buttonAction = state.status === 'ready' ? 'collect' : 'start';
+    const maxCraftable = this.productionSystem.getMaxCraftableQuantity(recipe.id);
+    const selectedQuantity = this.getSelectedQuantity(recipe.id);
+    const canStart = this.productionSystem.canStartRecipe(recipe.id, selectedQuantity);
+    const claimableQuantity = this.productionSystem.getClaimableQuantity(recipe.id);
+    const canCollect = claimableQuantity > 0;
+    const buttonLabel = canCollect
+      ? claimableQuantity > 1
+        ? `Collect x${claimableQuantity}`
+        : 'Collect'
+      : selectedQuantity > 1
+        ? `Start x${selectedQuantity}`
+        : 'Start';
+    const buttonEnabled = canCollect || canStart;
+    const buttonAction = canCollect ? 'collect' : 'start';
     const highlighted =
       buttonEnabled && this.config.shouldHighlightAction?.(recipe.id, buttonAction) === true;
 
@@ -142,11 +155,11 @@ export class ProductionMenuSystem {
         .setDepth(DEPTH + 3)
     );
 
-    this.renderRecipeLine(recipe, entryX + 10, entryY + 40);
+    this.renderRecipeLine(recipe, entryX + 10, entryY + 34);
 
     this.objects.push(
       this.scene.add
-        .text(entryX + 10, entryY + 52, this.formatStatus(recipe), {
+        .text(entryX + 10, entryY + 50, this.formatStatus(recipe), {
           color: TEXT_COLOR,
           fontFamily: 'Arial, sans-serif',
           fontSize: '12px',
@@ -155,12 +168,39 @@ export class ProductionMenuSystem {
         .setDepth(DEPTH + 3)
     );
 
-    if (state.status === 'producing') {
+    const timerText = this.formatTimer(recipe);
+
+    if (timerText !== null) {
+      this.objects.push(
+        this.scene.add
+          .text(entryX + 10, entryY + 66, timerText, {
+            color: MUTED_TEXT,
+            fontFamily: 'Arial, sans-serif',
+            fontSize: '12px',
+            fontStyle: 'bold',
+            wordWrap: { width: entryWidth - 100 }
+          })
+          .setDepth(DEPTH + 3)
+      );
+    }
+
+    if (state.status === 'producing' && !canCollect) {
       return;
     }
 
-    const buttonWidth = 82;
-    const buttonHeight = 30;
+    if (state.status === 'idle') {
+      this.renderQuantityControls(
+        recipe,
+        entryX + 10,
+        entryY + 68,
+        entryWidth - 110,
+        selectedQuantity,
+        maxCraftable
+      );
+    }
+
+    const buttonWidth = 74;
+    const buttonHeight = 28;
     const buttonX = entryX + entryWidth - buttonWidth - 10;
     const buttonY = entryY + entryHeight - buttonHeight - 8;
     const button = this.scene.add
@@ -190,10 +230,10 @@ export class ProductionMenuSystem {
     if (buttonEnabled) {
       button.setInteractive({ useHandCursor: true });
       button.on('pointerdown', () => {
-        if (state.status === 'ready') {
+        if (canCollect) {
           this.config?.onCollect(recipe.id);
         } else {
-          this.config?.onStart(recipe.id);
+          this.config?.onStart(recipe.id, selectedQuantity);
         }
       });
     }
@@ -285,16 +325,153 @@ export class ProductionMenuSystem {
     const state = this.productionSystem.getRecipeState(recipe.id);
     const outputName = getItemName(recipe.outputItemId);
     const outputCount = this.productionSystem.getItemCount(recipe.outputItemId);
+    const quantity = state.quantity ?? 1;
+    const claimableQuantity = this.productionSystem.getClaimableQuantity(recipe.id);
+    const remainingQuantity = this.productionSystem.getRemainingQuantity(recipe.id);
 
     if (state.status === 'ready') {
-      return `Status: ready | ${outputName} x${outputCount}`;
+      return `Status: Ready ${outputName} x${claimableQuantity || quantity}`;
     }
 
     if (state.status === 'producing') {
-      return `Status: producing | ${Math.ceil(this.productionSystem.getRemainingMs(recipe.id) / 1000)}s left | ${outputName} x${outputCount}`;
+      const stillProducingQuantity = Math.max(0, remainingQuantity - claimableQuantity);
+
+      if (claimableQuantity > 0 && stillProducingQuantity > 0) {
+        return `Status: Ready ${outputName} x${claimableQuantity} | Producing x${stillProducingQuantity}`;
+      }
+
+      if (claimableQuantity > 0) {
+        return `Status: Ready ${outputName} x${claimableQuantity}`;
+      }
+
+      return `Status: Producing ${outputName} x${remainingQuantity || quantity}`;
     }
 
     return `Status: idle | ${outputName} x${outputCount}`;
+  }
+
+  private formatTimer(recipe: ProductionRecipeDefinition): string | null {
+    const state = this.productionSystem.getRecipeState(recipe.id);
+
+    if (state.status !== 'producing') {
+      return null;
+    }
+
+    const nextSeconds = Math.ceil(this.productionSystem.getNextClaimRemainingMs(recipe.id) / 1000);
+
+    if (nextSeconds <= 0) {
+      return null;
+    }
+
+    return `${nextSeconds}s`;
+  }
+
+  private renderQuantityControls(
+    recipe: ProductionRecipeDefinition,
+    x: number,
+    y: number,
+    width: number,
+    selectedQuantity: number,
+    maxCraftable: number
+  ): void {
+    const forcedQuantity = this.config?.getForcedBatchQuantity?.(recipe.id) ?? null;
+    const locked = forcedQuantity !== null;
+    const enabled = maxCraftable > 0 && !locked;
+    const label = this.scene.add.text(x, y - 8, `Qty x${selectedQuantity}`, {
+      color: enabled || locked ? TEXT_COLOR : MUTED_TEXT,
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '12px',
+      fontStyle: 'bold'
+    }).setDepth(DEPTH + 3);
+    const trackX = x + 58;
+    const trackY = y - 1;
+    const trackWidth = Math.max(56, width - 104);
+    const track = this.scene.add
+      .rectangle(trackX, trackY, trackWidth, 6, DISABLED_FILL, enabled ? 0.72 : 0.45)
+      .setOrigin(0, 0.5)
+      .setDepth(DEPTH + 3);
+    const progress = maxCraftable <= 0 ? 0 : selectedQuantity / maxCraftable;
+    const knob = this.scene.add
+      .circle(trackX + trackWidth * Phaser.Math.Clamp(progress, 0, 1), trackY, 6, READY_FILL, enabled ? 1 : 0.65)
+      .setStrokeStyle(2, PANEL_STROKE)
+      .setDepth(DEPTH + 4);
+    const maxButtonWidth = 38;
+    const maxButton = this.scene.add
+      .rectangle(trackX + trackWidth + 8, y - 13, maxButtonWidth, 26, enabled ? READY_FILL : DISABLED_FILL)
+      .setOrigin(0, 0)
+      .setStrokeStyle(2, PANEL_STROKE)
+      .setAlpha(enabled ? 1 : 0.78)
+      .setDepth(DEPTH + 3);
+    const maxText = this.scene.add.text(trackX + trackWidth + 8 + maxButtonWidth / 2, y, 'Max', {
+      color: enabled ? BUTTON_TEXT : DISABLED_TEXT,
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '11px',
+      fontStyle: 'bold'
+    }).setOrigin(0.5).setDepth(DEPTH + 4);
+
+    if (enabled) {
+      const setQuantityFromPointer = (pointer: Phaser.Input.Pointer): void => {
+        const relativeX = Phaser.Math.Clamp(pointer.x - trackX, 0, trackWidth);
+        const quantity = Math.round((relativeX / trackWidth) * maxCraftable);
+
+        this.setSelectedQuantity(recipe.id, quantity);
+      };
+
+      track.setInteractive({ useHandCursor: true });
+      knob.setInteractive({ useHandCursor: true });
+      maxButton.setInteractive({ useHandCursor: true });
+      track.on('pointerdown', setQuantityFromPointer);
+      knob.on('pointerdown', setQuantityFromPointer);
+      track.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+        if (pointer.isDown) {
+          setQuantityFromPointer(pointer);
+        }
+      });
+      knob.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+        if (pointer.isDown) {
+          setQuantityFromPointer(pointer);
+        }
+      });
+      maxButton.on('pointerdown', () => {
+        this.setSelectedQuantity(recipe.id, maxCraftable);
+      });
+    }
+
+    this.objects.push(label, track, knob, maxButton, maxText);
+  }
+
+  private getSelectedQuantity(recipeId: ProductionRecipeId): number {
+    const maxCraftable = this.productionSystem.getMaxCraftableQuantity(recipeId);
+    const forcedQuantity = this.config?.getForcedBatchQuantity?.(recipeId) ?? null;
+
+    if (maxCraftable <= 0) {
+      this.selectedQuantities.delete(recipeId);
+      return 0;
+    }
+
+    if (forcedQuantity !== null) {
+      return Math.min(maxCraftable, forcedQuantity);
+    }
+
+    const existingQuantity = this.selectedQuantities.get(recipeId);
+    const defaultQuantity = 1;
+    const quantity = Math.max(
+      0,
+      Math.min(maxCraftable, existingQuantity ?? defaultQuantity)
+    );
+
+    this.selectedQuantities.set(recipeId, quantity);
+    return quantity;
+  }
+
+  private setSelectedQuantity(recipeId: ProductionRecipeId, quantity: number): void {
+    const maxCraftable = this.productionSystem.getMaxCraftableQuantity(recipeId);
+
+    this.selectedQuantities.set(
+      recipeId,
+      Math.max(0, Math.min(maxCraftable, Math.round(quantity)))
+    );
+    this.refresh();
   }
 
   private clearObjects(): void {

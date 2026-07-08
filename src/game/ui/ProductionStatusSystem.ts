@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { getItemName } from '../data/Items';
 import type { ProductionRecipeDefinition } from '../models/ProductionTypes';
 import type { ProductionRecipeId } from '../models/ProductionTypes';
 import type { ProductionSystem } from '../systems/ProductionSystem';
@@ -14,6 +15,7 @@ const TEXT_COLOR = '#2f3b26';
 const CHIP_WIDTH = 108;
 const CHIP_HEIGHT = 34;
 const CHIP_GAP = 6;
+const TIMER_WIDTH = 24;
 
 interface ProductionStatusConfig {
   buttonX: number;
@@ -117,8 +119,16 @@ export class ProductionStatusSystem {
     config: ProductionStatusConfig
   ): void {
     const state = this.productionSystem.getRecipeState(recipe.id);
-    const ready = state.status === 'ready';
+    const claimableQuantity = this.productionSystem.getClaimableQuantity(recipe.id);
+    const fullyReady = state.status === 'ready';
+    const partiallyReady = state.status === 'producing' && claimableQuantity > 0;
+    const ready = fullyReady || partiallyReady;
     const highlighted = config.highlightRecipeChip?.(recipe.id) === true;
+    const quantity = state.quantity ?? 1;
+    const outputName = getItemName(recipe.outputItemId);
+    const remainingQuantity = this.productionSystem.getRemainingQuantity(recipe.id) || quantity;
+    const producingLabel = `${recipe.buildingName}: ${outputName} x${remainingQuantity}`;
+    const readyLabel = `${recipe.buildingName}: Ready x${claimableQuantity}`;
     const chipX = config.statusX + index * (CHIP_WIDTH + CHIP_GAP);
     const chipY = config.statusY + Math.max(0, (config.statusHeight - CHIP_HEIGHT) / 2);
     const chipWidth = Math.min(CHIP_WIDTH, config.statusX + config.statusWidth - chipX);
@@ -156,33 +166,74 @@ export class ProductionStatusSystem {
 
     this.objects.push(chip);
 
-    if (ready) {
+    if (fullyReady) {
       this.objects.push(
-        this.scene.add.text(chipX + 9, chipY + 9, `${recipe.buildingName} Ready`, {
+        this.scene.add.text(chipX + 8, chipY + 4, `${recipe.buildingName} Ready`, {
           color: TEXT_COLOR,
           fontFamily: 'Arial, sans-serif',
-          fontSize: '11px',
+          fontSize: '10px',
+          fontStyle: 'bold'
+        }),
+        this.scene.add.text(chipX + 8, chipY + 17, `${outputName} x${claimableQuantity || quantity}`, {
+          color: TEXT_COLOR,
+          fontFamily: 'Arial, sans-serif',
+          fontSize: '10px',
           fontStyle: 'bold'
         })
       );
       return;
     }
 
-    const remainingSeconds = Math.ceil(this.productionSystem.getRemainingMs(recipe.id) / 1000);
+    const remainingSeconds = Math.ceil(this.productionSystem.getNextClaimRemainingMs(recipe.id) / 1000);
     const durationMs = state.durationMs ?? 1;
     const remainingMs = this.productionSystem.getRemainingMs(recipe.id);
+
+    if (partiallyReady) {
+      this.objects.push(
+        this.scene.add.text(chipX + 8, chipY + 4, readyLabel, {
+          color: TEXT_COLOR,
+          fontFamily: 'Arial, sans-serif',
+          fontSize: '10px',
+          fontStyle: 'bold'
+        }),
+        this.scene.add.text(chipX + 8, chipY + 17, `${outputName} x${claimableQuantity}`, {
+          color: TEXT_COLOR,
+          fontFamily: 'Arial, sans-serif',
+          fontSize: '10px',
+          fontStyle: 'bold'
+        }),
+        this.scene.add
+          .text(chipX + chipWidth - 8, chipY + 17, `${remainingSeconds}s`, {
+            color: TEXT_COLOR,
+            fontFamily: 'Arial, sans-serif',
+            fontSize: '10px',
+            fontStyle: 'bold'
+          })
+          .setOrigin(1, 0)
+      );
+      return;
+    }
+
     const progress = Phaser.Math.Clamp(1 - remainingMs / durationMs, 0, 1);
     const barX = chipX + 9;
     const barY = chipY + 24;
-    const barWidth = chipWidth - 18;
+    const barWidth = chipWidth - 18 - TIMER_WIDTH;
 
     this.objects.push(
-      this.scene.add.text(chipX + 9, chipY + 6, `${recipe.buildingName} ${remainingSeconds}s`, {
+      this.scene.add.text(chipX + 8, chipY + 4, producingLabel, {
         color: TEXT_COLOR,
         fontFamily: 'Arial, sans-serif',
-        fontSize: '11px',
+        fontSize: '10px',
         fontStyle: 'bold'
       }),
+      this.scene.add
+        .text(chipX + chipWidth - 8, chipY + 15, `${remainingSeconds}s`, {
+          color: TEXT_COLOR,
+          fontFamily: 'Arial, sans-serif',
+          fontSize: '10px',
+          fontStyle: 'bold'
+        })
+        .setOrigin(1, 0),
       this.scene.add
         .rectangle(barX, barY, barWidth, 7, BAR_BACK)
         .setOrigin(0, 0),

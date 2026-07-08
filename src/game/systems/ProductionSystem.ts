@@ -15,13 +15,18 @@ const DEFAULT_JOB_STATE: ProductionJobState = {
   status: 'idle',
   recipeId: null,
   startedAt: null,
-  durationMs: null
+  durationMs: null,
+  quantity: null,
+  collectedQuantity: null
 };
 
 const PRODUCTION_BUILDINGS: ProductionBuildingId[] = ['mill', 'bakery'];
+const MAX_BATCH_QUANTITY = 10;
 
 export interface ProductionStartResult {
   recipe: ProductionRecipeDefinition;
+  quantity: number;
+  durationMs: number;
 }
 
 export interface ProductionCollectResult {
@@ -68,58 +73,105 @@ export class ProductionSystem {
     return this.gameState.getItemCount(itemId);
   }
 
-  canStartRecipe(recipeId: ProductionRecipeId): boolean {
+  getMaxCraftableQuantity(recipeId: ProductionRecipeId): number {
+    const recipe = PRODUCTION_RECIPES[recipeId];
+
+    const maxFromIngredients = Object.entries(recipe.input).reduce(
+      (currentMax, [itemId, count]) => {
+        if (count === undefined || count <= 0) {
+          return currentMax;
+        }
+
+        return Math.min(
+          currentMax,
+          Math.floor(this.gameState.getItemCount(itemId as ItemId) / count)
+        );
+      },
+      Number.POSITIVE_INFINITY
+    );
+
+    if (!Number.isFinite(maxFromIngredients)) {
+      return 0;
+    }
+
+    return Math.max(0, Math.min(MAX_BATCH_QUANTITY, Math.floor(maxFromIngredients)));
+  }
+
+  canStartRecipe(recipeId: ProductionRecipeId, quantity = 1): boolean {
     const recipe = PRODUCTION_RECIPES[recipeId];
     const state = this.state[recipe.buildingId];
 
-    if (state.status !== 'idle') {
+    if (state.status !== 'idle' || !Number.isInteger(quantity) || quantity <= 0) {
       return false;
     }
 
-    return this.gameState.hasItemInventory(recipe.input);
+    return quantity <= this.getMaxCraftableQuantity(recipeId);
   }
 
-  startRecipe(recipeId: ProductionRecipeId): ProductionStartResult | null {
+  startRecipe(recipeId: ProductionRecipeId, quantity = 1): ProductionStartResult | null {
     const recipe = PRODUCTION_RECIPES[recipeId];
+    const batchQuantity = Math.floor(quantity);
 
-    if (!this.canStartRecipe(recipe.id)) {
+    if (!this.canStartRecipe(recipe.id, batchQuantity)) {
       return null;
     }
 
-    if (!this.gameState.removeItemInventory(recipe.input)) {
+    const batchInput = this.createBatchInput(recipe, batchQuantity);
+
+    if (!this.gameState.removeItemInventory(batchInput)) {
       return null;
     }
 
     const state = this.state[recipe.buildingId];
+    const durationMs = recipe.durationMs * batchQuantity;
 
     state.status = 'producing';
     state.recipeId = recipe.id;
     state.startedAt = Date.now();
-    state.durationMs = recipe.durationMs;
+    state.durationMs = durationMs;
+    state.quantity = batchQuantity;
+    state.collectedQuantity = 0;
 
-    return { recipe };
+    return { recipe, quantity: batchQuantity, durationMs };
   }
 
   collectReadyOutput(recipeId: ProductionRecipeId): ProductionCollectResult | null {
     this.refreshProductionState();
     const state = this.getRecipeState(recipeId);
 
-    if (state.status !== 'ready' || state.recipeId !== recipeId) {
+    if (state.recipeId !== recipeId) {
       return null;
     }
 
     const recipe = PRODUCTION_RECIPES[state.recipeId];
+    const quantity = state.quantity ?? 1;
+    const claimableQuantity = this.getClaimableQuantity(recipeId);
 
-    this.gameState.addItemToInventory(recipe.outputItemId, recipe.outputAmount);
-    state.status = 'idle';
-    state.recipeId = null;
-    state.startedAt = null;
-    state.durationMs = null;
+    if (claimableQuantity <= 0) {
+      return null;
+    }
+
+    const outputAmount = recipe.outputAmount * claimableQuantity;
+    const collectedQuantity = (state.collectedQuantity ?? 0) + claimableQuantity;
+
+    this.gameState.addItemToInventory(recipe.outputItemId, outputAmount);
+
+    if (collectedQuantity >= quantity) {
+      state.status = 'idle';
+      state.recipeId = null;
+      state.startedAt = null;
+      state.durationMs = null;
+      state.quantity = null;
+      state.collectedQuantity = null;
+    } else {
+      state.status = 'producing';
+      state.collectedQuantity = collectedQuantity;
+    }
 
     return {
       recipe,
       outputName: getItemName(recipe.outputItemId),
-      outputAmount: recipe.outputAmount
+      outputAmount
     };
   }
 
@@ -135,6 +187,63 @@ export class ProductionSystem {
     }
 
     return Math.max(0, state.durationMs - (Date.now() - state.startedAt));
+  }
+
+  getNextClaimRemainingMs(recipeId: ProductionRecipeId): number {
+    const state = this.getRecipeState(recipeId);
+
+    if (
+      state.recipeId !== recipeId ||
+      state.startedAt === null ||
+      state.quantity === null
+    ) {
+      return 0;
+    }
+
+    if (state.status === 'ready') {
+      return 0;
+    }
+
+    const recipe = PRODUCTION_RECIPES[recipeId];
+    const completedQuantity = this.getCompletedQuantity(recipeId);
+
+    if (completedQuantity >= state.quantity) {
+      return 0;
+    }
+
+    const nextUnitReadyAt = state.startedAt + recipe.durationMs * (completedQuantity + 1);
+
+    return Math.max(0, nextUnitReadyAt - Date.now());
+  }
+
+  getClaimableQuantity(recipeId: ProductionRecipeId): number {
+    const state = this.getRecipeState(recipeId);
+
+    if (
+      state.recipeId !== recipeId ||
+      state.startedAt === null ||
+      state.quantity === null
+    ) {
+      return 0;
+    }
+
+    const completedQuantity =
+      state.status === 'ready'
+        ? state.quantity
+        : this.getCompletedQuantity(recipeId);
+    const collectedQuantity = state.collectedQuantity ?? 0;
+
+    return Math.max(0, completedQuantity - collectedQuantity);
+  }
+
+  getRemainingQuantity(recipeId: ProductionRecipeId): number {
+    const state = this.getRecipeState(recipeId);
+
+    if (state.recipeId !== recipeId || state.quantity === null) {
+      return 0;
+    }
+
+    return Math.max(0, state.quantity - (state.collectedQuantity ?? 0));
   }
 
   refreshProductionState(): ProductionRecipeDefinition[] {
@@ -210,15 +319,66 @@ export class ProductionSystem {
       return { ...DEFAULT_JOB_STATE };
     }
 
+    const quantity =
+      typeof initialState.quantity === 'number' && initialState.quantity > 0
+        ? Math.floor(initialState.quantity)
+        : 1;
+    const collectedQuantity =
+      typeof initialState.collectedQuantity === 'number' && initialState.collectedQuantity > 0
+        ? Math.min(quantity, Math.floor(initialState.collectedQuantity))
+        : 0;
+
+    if (collectedQuantity >= quantity) {
+      return { ...DEFAULT_JOB_STATE };
+    }
+
     return {
       status: initialState.status,
       recipeId: initialState.recipeId,
       startedAt: typeof initialState.startedAt === 'number' ? initialState.startedAt : Date.now(),
+      quantity,
+      collectedQuantity,
       durationMs:
         typeof initialState.durationMs === 'number'
           ? initialState.durationMs
-          : PRODUCTION_RECIPES[initialState.recipeId].durationMs
+          : PRODUCTION_RECIPES[initialState.recipeId].durationMs * quantity
     };
+  }
+
+  private createBatchInput(
+    recipe: ProductionRecipeDefinition,
+    quantity: number
+  ): Partial<Record<ItemId, number>> {
+    return Object.entries(recipe.input).reduce<Partial<Record<ItemId, number>>>(
+      (requirements, [itemId, count]) => {
+        if (count !== undefined) {
+          requirements[itemId as ItemId] = count * quantity;
+        }
+
+        return requirements;
+      },
+      {}
+    );
+  }
+
+  private getCompletedQuantity(recipeId: ProductionRecipeId): number {
+    const state = this.getRecipeState(recipeId);
+
+    if (
+      state.recipeId !== recipeId ||
+      state.startedAt === null ||
+      state.quantity === null
+    ) {
+      return 0;
+    }
+
+    const recipe = PRODUCTION_RECIPES[recipeId];
+    const elapsedMs = Math.max(0, Date.now() - state.startedAt);
+
+    return Math.max(
+      0,
+      Math.min(state.quantity, Math.floor(elapsedMs / recipe.durationMs))
+    );
   }
 
   private isLegacyJobState(state: SavedProductionState): state is ProductionJobState {
