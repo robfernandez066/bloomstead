@@ -14,6 +14,7 @@ const DISABLED_FILL = 0x9ca28e;
 const TEXT_COLOR = '#2f3b26';
 const DISABLED_TEXT = '#ece7d7';
 const MUTED_TEXT = '#5f6a4f';
+const ITEM_TEXT_COLOR = '#8f6426';
 const BUTTON_TEXT = '#263522';
 const DEPTH = 130;
 
@@ -310,15 +311,21 @@ export class ProductionMenuSystem {
 
   private renderRecipeItem(itemId: ItemId, count: number, x: number, y: number): number {
     const icon = createItemIcon(this.scene, itemId, x + 7, y - 1, 15, { depth: DEPTH + 3 });
-    const label = this.scene.add.text(x + 17, y - 8, `${count} ${getItemName(itemId)}`, {
+    const quantityLabel = this.scene.add.text(x + 17, y - 8, `${count}`, {
       color: TEXT_COLOR,
       fontFamily: 'Arial, sans-serif',
       fontSize: '13px',
       fontStyle: 'bold'
     }).setDepth(DEPTH + 3);
+    const itemLabel = this.scene.add.text(x + 17 + quantityLabel.width + 4, y - 8, getItemName(itemId), {
+      color: ITEM_TEXT_COLOR,
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '13px',
+      fontStyle: 'bold'
+    }).setDepth(DEPTH + 3);
 
-    this.objects.push(icon, label);
-    return x + 20 + label.width + 8;
+    this.objects.push(icon, quantityLabel, itemLabel);
+    return x + 20 + quantityLabel.width + 4 + itemLabel.width + 8;
   }
 
   private formatStatus(recipe: ProductionRecipeDefinition): string {

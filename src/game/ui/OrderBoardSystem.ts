@@ -14,6 +14,8 @@ const TEXT_COLOR = '#2f3b26';
 const DISABLED_TEXT = '#ece7d7';
 const SOURCE_TEXT_COLOR = '#5e7047';
 const DISABLED_SOURCE_TEXT = '#ded8c5';
+const ITEM_TEXT_COLOR = '#8f6426';
+const DISABLED_ITEM_TEXT_COLOR = '#f8dda0';
 const REWARD_TEXT_WIDTH = 96;
 
 interface OrderBoardConfig {
@@ -135,10 +137,10 @@ export class OrderBoardSystem {
     const sourceAlpha = alpha === 1 ? 1 : 0.9;
     const icon = this.createSourceIcon(source, x + 5, y + 4, sourceAlpha);
     const label = this.scene.add
-      .text(x + 15, y - 1, source, {
+      .text(x + 17, y - 1, `From: ${source}`, {
         color: alpha === 1 ? SOURCE_TEXT_COLOR : DISABLED_TEXT,
         fontFamily: 'Arial, sans-serif',
-        fontSize: '9px',
+        fontSize: '8px',
         fontStyle: 'bold'
       })
       .setAlpha(sourceAlpha);
@@ -158,23 +160,30 @@ export class OrderBoardSystem {
 
     Object.entries(order.requirements).forEach(([itemId, count]) => {
       const typedItemId = itemId as ItemId;
-      const label = `${count} ${getItemName(typedItemId)}`;
+      const itemName = getItemName(typedItemId);
       const icon = createItemIcon(this.scene, typedItemId, cursorX + 6, y + 2, 13, { alpha });
-      const text = this.scene.add.text(cursorX + 15, y - 6, label, {
+      const quantityText = this.scene.add.text(cursorX + 15, y - 6, `${count}`, {
         color: textColor,
         fontFamily: 'Arial, sans-serif',
         fontSize: '11px'
       });
-      const entryWidth = 17 + Math.min(text.width, 60) + 5;
+      const itemText = this.scene.add.text(cursorX + 15 + quantityText.width + 3, y - 6, itemName, {
+        color: alpha === 1 ? ITEM_TEXT_COLOR : DISABLED_ITEM_TEXT_COLOR,
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '11px'
+      });
+      const textWidth = quantityText.width + 3 + itemText.width;
+      const entryWidth = 17 + Math.min(textWidth, 64) + 5;
 
       icon.setAlpha(alpha);
-      text.setAlpha(alpha);
+      quantityText.setAlpha(alpha);
+      itemText.setAlpha(alpha);
 
       if (cursorX + entryWidth > x + maxWidth) {
-        text.setText(`${count} ${getItemName(typedItemId).slice(0, 4)}.`);
+        itemText.setText(`${itemName.slice(0, 4)}.`);
       }
 
-      this.objects.push(icon, text);
+      this.objects.push(icon, quantityText, itemText);
       cursorX += entryWidth;
     });
   }
