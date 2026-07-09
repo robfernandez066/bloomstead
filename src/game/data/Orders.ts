@@ -136,5 +136,51 @@ export const MVP_ORDERS: OrderDefinition[] = [
     coinReward: 420,
     xpReward: 85,
     minFarmLevel: 5
+  },
+  {
+    id: 'carrot-crate',
+    name: 'Carrot Crate',
+    source: 'Village Market',
+    requirements: {
+      carrot: 5
+    },
+    coinReward: 88,
+    xpReward: 18,
+    minFarmLevel: 2
+  },
+  {
+    id: 'millers-samples',
+    name: "Miller's Samples",
+    source: 'Baker',
+    requirements: {
+      sunwheat: 2,
+      flour: 1
+    },
+    coinReward: 82,
+    xpReward: 17,
+    minFarmLevel: 2
+  },
+  {
+    id: 'lantern-jam-basket',
+    name: 'Lantern Jam Basket',
+    source: 'Lantern Guild',
+    requirements: {
+      glowberry: 3
+    },
+    coinReward: 150,
+    xpReward: 32,
+    minFarmLevel: 3
+  },
+  {
+    id: 'glowberry-muffin-box',
+    name: 'Glowberry Muffin Box',
+    source: 'Baker',
+    requirements: {
+      flour: 2,
+      glowberry: 2
+    },
+    coinReward: 195,
+    xpReward: 40,
+    minFarmLevel: 3
   }
 ];

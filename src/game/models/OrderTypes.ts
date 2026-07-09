@@ -12,7 +12,11 @@ export type OrderId =
   | 'harvest-lunchbox'
   | 'bakers-basket'
   | 'lanternberry-crate'
-  | 'village-feast';
+  | 'village-feast'
+  | 'carrot-crate'
+  | 'millers-samples'
+  | 'lantern-jam-basket'
+  | 'glowberry-muffin-box';
 
 export type OrderRequirements = Partial<Record<ItemId, number>>;
 
