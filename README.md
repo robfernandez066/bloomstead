@@ -29,7 +29,7 @@ npm.cmd run build
 Preview the production build with Vite:
 
 ```bash
-npx vite preview --host 127.0.0.1 --port 4173
+npm.cmd run preview -- --host 127.0.0.1 --port 4173
 ```
 
 For phone testing on the same network, run the dev server with a LAN host:
