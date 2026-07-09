@@ -240,20 +240,6 @@ export class FarmScene extends Phaser.Scene {
       );
     };
 
-    const syncTutorialWithSellState = (): boolean => {
-      const stepId = tutorialSystem.getCurrentStep()?.id;
-
-      if (
-        stepId !== 'sell-crop' ||
-        upgradeSystem.getPurchasedPlotUpgradeCount() < 1 ||
-        gameStateSystem.getState().coins <= 0
-      ) {
-        return false;
-      }
-
-      return tutorialSystem.recordCropSold();
-    };
-
     const syncTutorialWithProductionState = (): boolean => {
       let advanced = false;
       let stepId = tutorialSystem.getCurrentStep()?.id;
@@ -336,7 +322,6 @@ export class FarmScene extends Phaser.Scene {
         advancedThisPass = syncTutorialWithCurrentPlotState() || advancedThisPass;
         advancedThisPass = syncTutorialWithOrderState() || advancedThisPass;
         advancedThisPass = syncTutorialWithUpgradeState() || advancedThisPass;
-        advancedThisPass = syncTutorialWithSellState() || advancedThisPass;
         advancedThisPass = syncTutorialWithProductionState() || advancedThisPass;
         advanced = advancedThisPass || advanced;
 
