@@ -12,6 +12,7 @@ interface MuteToggleConfig {
   y: number;
   width: number;
   height: number;
+  gap?: number;
   onToggle: () => void;
 }
 
@@ -19,8 +20,10 @@ export class MuteToggleSystem {
   private readonly scene: Phaser.Scene;
   private readonly audioSystem: AudioSystem;
   private config?: MuteToggleConfig;
-  private button?: Phaser.GameObjects.Rectangle;
-  private label?: Phaser.GameObjects.Text;
+  private musicButton?: Phaser.GameObjects.Rectangle;
+  private musicLabel?: Phaser.GameObjects.Text;
+  private soundButton?: Phaser.GameObjects.Rectangle;
+  private soundLabel?: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene, audioSystem: AudioSystem) {
     this.scene = scene;
@@ -29,22 +32,49 @@ export class MuteToggleSystem {
 
   render(config: MuteToggleConfig): void {
     this.config = config;
+    const gap = config.gap ?? 4;
 
-    this.button = this.scene.add
+    this.musicButton = this.scene.add
       .rectangle(config.x, config.y, config.width, config.height, BUTTON_FILL)
       .setOrigin(0, 0)
       .setStrokeStyle(2, BUTTON_STROKE)
       .setInteractive({ useHandCursor: true });
 
-    this.button.on('pointerdown', () => {
+    this.musicButton.on('pointerdown', () => {
       this.audioSystem.playButtonTap();
-      this.audioSystem.toggleMuted();
+      this.audioSystem.toggleMusic();
       this.refresh();
       config.onToggle();
     });
 
-    this.label = this.scene.add
+    this.musicLabel = this.scene.add
       .text(config.x + config.width / 2, config.y + config.height / 2, '', {
+        color: TEXT_COLOR,
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '11px',
+        fontStyle: 'bold'
+      })
+      .setOrigin(0.5);
+
+    this.soundButton = this.scene.add
+      .rectangle(config.x, config.y + config.height + gap, config.width, config.height, BUTTON_FILL)
+      .setOrigin(0, 0)
+      .setStrokeStyle(2, BUTTON_STROKE)
+      .setInteractive({ useHandCursor: true });
+
+    this.soundButton.on('pointerdown', () => {
+      const sfxOn = this.audioSystem.toggleSfx();
+
+      if (sfxOn) {
+        this.audioSystem.playButtonTap();
+      }
+
+      this.refresh();
+      config.onToggle();
+    });
+
+    this.soundLabel = this.scene.add
+      .text(config.x + config.width / 2, config.y + config.height + gap + config.height / 2, '', {
         color: TEXT_COLOR,
         fontFamily: 'Arial, sans-serif',
         fontSize: '11px',
@@ -60,11 +90,17 @@ export class MuteToggleSystem {
       return;
     }
 
-    const muted = this.audioSystem.isMuted();
+    const musicOn = this.audioSystem.isMusicOn();
+    const sfxOn = this.audioSystem.isSfxOn();
 
-    this.button?.setFillStyle(muted ? MUTED_FILL : BUTTON_FILL);
-    this.button?.setAlpha(muted ? 0.78 : 1);
-    this.label?.setText(muted ? 'SFX Off' : 'SFX On');
-    this.label?.setColor(muted ? MUTED_TEXT : TEXT_COLOR);
+    this.musicButton?.setFillStyle(musicOn ? BUTTON_FILL : MUTED_FILL);
+    this.musicButton?.setAlpha(musicOn ? 1 : 0.45);
+    this.musicLabel?.setText('Music');
+    this.musicLabel?.setColor(musicOn ? TEXT_COLOR : MUTED_TEXT);
+
+    this.soundButton?.setFillStyle(sfxOn ? BUTTON_FILL : MUTED_FILL);
+    this.soundButton?.setAlpha(sfxOn ? 1 : 0.45);
+    this.soundLabel?.setText('Sound');
+    this.soundLabel?.setColor(sfxOn ? TEXT_COLOR : MUTED_TEXT);
   }
 }

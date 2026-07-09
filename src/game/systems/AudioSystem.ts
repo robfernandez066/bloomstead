@@ -1,42 +1,27 @@
 import Phaser from 'phaser';
+import {
+  AUDIO_KEYS,
+  COIN_RATE_MAX,
+  COIN_RATE_MIN,
+  HARVEST_CHAIN_RATE_MAX,
+  HARVEST_CHAIN_RATE_STEP,
+  HARVEST_CHAIN_WINDOW_MS,
+  MUSIC_VOLUME,
+  SOUND_KEYS,
+  SOUND_VOLUME
+} from '../data/AudioConfig';
 import type { AudioState, SoundEventId } from '../models/AudioTypes';
 
-const DEFAULT_AUDIO_STATE: AudioState = {
-  muted: false
-};
+interface ResolvedAudioState {
+  muted: boolean;
+  sfxOn: boolean;
+  musicOn: boolean;
+}
 
-const SOUND_KEYS: Record<SoundEventId, string> = {
-  buttonTap: 'sfx.buttonTap',
-  plantSeed: 'sfx.plantSeed',
-  cropReady: 'sfx.cropReady',
-  harvest: 'sfx.harvest',
-  sellCrop: 'sfx.sellCrop',
-  coinGain: 'sfx.coinGain',
-  xpGain: 'sfx.xpGain',
-  orderComplete: 'sfx.orderComplete',
-  levelUp: 'sfx.levelUp',
-  plotUnlock: 'sfx.plotUnlock',
-  productionStart: 'sfx.productionStart',
-  productionCollect: 'sfx.productionCollect',
-  disabledTap: 'sfx.disabledTap',
-  tutorialComplete: 'sfx.tutorialComplete'
-};
-
-const SOUND_VOLUME: Partial<Record<SoundEventId, number>> = {
-  buttonTap: 0.35,
-  plantSeed: 0.45,
-  cropReady: 0.45,
-  harvest: 0.45,
-  sellCrop: 0.45,
-  coinGain: 0.45,
-  xpGain: 0.4,
-  orderComplete: 0.55,
-  levelUp: 0.6,
-  plotUnlock: 0.55,
-  productionStart: 0.42,
-  productionCollect: 0.5,
-  disabledTap: 0.28,
-  tutorialComplete: 0.6
+const DEFAULT_AUDIO_STATE: ResolvedAudioState = {
+  muted: false,
+  sfxOn: true,
+  musicOn: true
 };
 
 interface ToneStep {
@@ -97,37 +82,131 @@ const GENERATED_TONES: Partial<Record<SoundEventId, ToneStep[]>> = {
 
 export class AudioSystem {
   private readonly scene: Phaser.Scene;
-  private readonly state: AudioState;
+  private readonly state: ResolvedAudioState;
   private readonly lastPlayedAt = new Map<SoundEventId, number>();
   private audioContext?: AudioContext;
+  private music?: Phaser.Sound.BaseSound;
+  private musicUnlockQueued = false;
+  private lastHarvestAt = 0;
+  private harvestRate = 1;
 
   constructor(scene: Phaser.Scene, initialState?: AudioState) {
     this.scene = scene;
+    const sfxOn = initialState?.sfxOn ?? (initialState?.muted === undefined ? true : !initialState.muted);
+
     this.state = {
       ...DEFAULT_AUDIO_STATE,
-      ...initialState
+      ...initialState,
+      muted: !sfxOn,
+      sfxOn,
+      musicOn: initialState?.musicOn ?? DEFAULT_AUDIO_STATE.musicOn
     };
   }
 
   getState(): AudioState {
-    return this.state;
+    return {
+      muted: !this.state.sfxOn,
+      sfxOn: this.state.sfxOn,
+      musicOn: this.state.musicOn
+    };
   }
 
   isMuted(): boolean {
-    return this.state.muted;
+    return !this.state.sfxOn;
+  }
+
+  isSfxOn(): boolean {
+    return this.state.sfxOn;
+  }
+
+  isMusicOn(): boolean {
+    return this.state.musicOn;
   }
 
   setMuted(muted: boolean): void {
-    this.state.muted = muted;
+    this.setSfxOn(!muted);
   }
 
   toggleMuted(): boolean {
-    this.state.muted = !this.state.muted;
-    return this.state.muted;
+    this.toggleSfx();
+    return this.isMuted();
   }
 
-  play(eventId: SoundEventId): void {
-    if (this.state.muted) {
+  setSfxOn(sfxOn: boolean): void {
+    this.state.sfxOn = sfxOn;
+    this.state.muted = !sfxOn;
+  }
+
+  toggleSfx(): boolean {
+    this.setSfxOn(!this.state.sfxOn);
+    return this.state.sfxOn;
+  }
+
+  setMusicOn(musicOn: boolean): void {
+    this.state.musicOn = musicOn;
+
+    if (musicOn) {
+      this.startMusic();
+    } else {
+      this.stopMusic();
+    }
+  }
+
+  toggleMusic(): boolean {
+    this.setMusicOn(!this.state.musicOn);
+    return this.state.musicOn;
+  }
+
+  startMusic(): void {
+    if (!this.state.musicOn) {
+      return;
+    }
+
+    if (!this.scene.cache.audio.exists(AUDIO_KEYS.music)) {
+      return;
+    }
+
+    try {
+      if (this.scene.sound.locked) {
+        if (!this.musicUnlockQueued) {
+          this.musicUnlockQueued = true;
+          this.scene.sound.once(Phaser.Sound.Events.UNLOCKED, () => {
+            this.musicUnlockQueued = false;
+            this.startMusic();
+          });
+        }
+
+        return;
+      }
+
+      if (this.music === undefined) {
+        this.music = this.scene.sound.add(AUDIO_KEYS.music, {
+          loop: true,
+          volume: MUSIC_VOLUME
+        });
+      }
+
+      if (!this.music.isPlaying) {
+        this.music.play({
+          loop: true,
+          volume: MUSIC_VOLUME
+        });
+      }
+    } catch {
+      // Audio should never break gameplay if browser policy or assets disagree.
+    }
+  }
+
+  stopMusic(): void {
+    try {
+      this.music?.stop();
+    } catch {
+      // Optional audio should fail silently.
+    }
+  }
+
+  play(eventId: SoundEventId, rate = 1): void {
+    if (!this.state.sfxOn) {
       return;
     }
 
@@ -137,7 +216,8 @@ export class AudioSystem {
     try {
       if (this.scene.cache.audio.exists(key)) {
         this.scene.sound.play(key, {
-          volume: SOUND_VOLUME[eventId] ?? 0.45
+          volume: SOUND_VOLUME[eventId] ?? 0.45,
+          rate
         });
         assetPlayed = true;
       }
@@ -146,7 +226,7 @@ export class AudioSystem {
     }
 
     if (!assetPlayed) {
-      this.playGeneratedTone(eventId);
+      this.playGeneratedTone(eventId, rate);
     }
   }
 
@@ -163,7 +243,13 @@ export class AudioSystem {
   }
 
   playHarvest(): void {
-    this.playThrottled('harvest', 85);
+    const now = Date.now();
+
+    this.harvestRate = now - this.lastHarvestAt <= HARVEST_CHAIN_WINDOW_MS
+      ? Math.min(HARVEST_CHAIN_RATE_MAX, this.harvestRate + HARVEST_CHAIN_RATE_STEP)
+      : 1;
+    this.lastHarvestAt = now;
+    this.play('harvest', this.harvestRate);
   }
 
   playSellCrop(): void {
@@ -171,7 +257,7 @@ export class AudioSystem {
   }
 
   playCoinGain(): void {
-    this.play('coinGain');
+    this.play('coinGain', Phaser.Math.FloatBetween(COIN_RATE_MIN, COIN_RATE_MAX));
   }
 
   playXpGain(): void {
@@ -218,7 +304,7 @@ export class AudioSystem {
     this.play(eventId);
   }
 
-  private playGeneratedTone(eventId: SoundEventId): void {
+  private playGeneratedTone(eventId: SoundEventId, rate = 1): void {
     const toneSteps = GENERATED_TONES[eventId];
 
     if (toneSteps === undefined) {
@@ -234,9 +320,9 @@ export class AudioSystem {
     try {
       void audioContext.resume();
       const now = audioContext.currentTime;
-      const pitchMultiplier = eventId === 'harvest'
+      const pitchMultiplier = rate * (eventId === 'harvest'
         ? Phaser.Math.FloatBetween(0.96, 1.07)
-        : 1;
+        : 1);
 
       toneSteps.forEach((step) => {
         const startAt = now + (step.delayMs ?? 0) / 1000;

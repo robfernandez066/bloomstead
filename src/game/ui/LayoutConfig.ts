@@ -51,7 +51,7 @@ export const FARM_LAYOUT = {
   },
   muteToggle: {
     x: 304,
-    y: 94,
+    y: 70,
     width: 56,
     height: 22
   },

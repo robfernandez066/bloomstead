@@ -1025,10 +1025,12 @@ export class FarmScene extends Phaser.Scene {
       y: FARM_LAYOUT.muteToggle.y,
       width: FARM_LAYOUT.muteToggle.width,
       height: FARM_LAYOUT.muteToggle.height,
+      gap: 4,
       onToggle: () => {
         saveGame();
       }
     });
+    audioSystem.startMusic();
 
     if (syncTutorialWithSavedGameState()) {
       tutorialPanelSystem.refresh();

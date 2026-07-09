@@ -213,14 +213,14 @@ The following polish items are implemented for the MVP:
 * Order completion now includes coin and XP fly-to-HUD reward feedback.
 * Production start feedback now uses a brief ingredient icon fly/pulse and `Mill Started` / `Bakery Started` text.
 * Production collect feedback now shows the actual collected amount, such as `+1 Flour`, `+3 Flour`, or `+1 Bread`, and moves the output icon toward the processed-goods/status area.
-* Generated WebAudio fallback SFX are implemented for MVP feedback without external audio assets:
-  * Existing asset playback remains supported for future real SFX files.
-  * `AudioContext` is created lazily during playback, browser blocking fails silently, and the existing saved `SFX On/Off` mute state is preserved.
-  * Generated tones cover button tap, planting, crop ready, harvest, order complete, plot unlock, production start, production collect, tutorial complete, level up, and disabled tap.
-  * Harvest SFX are tuned to feel more responsive during rapid harvest while keeping spam protection.
-  * Order complete is brighter, plot unlock uses a warmer unlock/sparkle sound, production collect is fuller and plays once per collect action, and level up is more celebratory.
-  * Coin, XP, and sell generated tones remain intentionally silent to avoid spam.
-  * Manual audio review found generated SFX acceptable for MVP; real SFX assets remain future polish for a meaningful quality upgrade.
+* Selected staged audio assets are integrated for MVP SFX and music, with generated WebAudio tones kept as safe fallbacks:
+  * Real staged assets cover button tap, planting, harvest, coin/reward pickup, fanfare/reward moments, level-up moments, and one looping music track.
+  * Asset playback remains safe: generated fallback tones cover missing hooks, browser blocking fails silently, and audio is created lazily from player interaction.
+  * The saved audio state now supports separate Music and Sound toggles.
+  * Harvest SFX still use spam protection with pitch/rate variation during rapid harvest.
+  * Production collect plays once per collect action, including batch and partial-ready collects.
+  * XP and sell tones remain intentionally quiet or silent to avoid spam.
+  * Final authored/mixed SFX and music remain future polish.
   * Build passes with only the existing Vite large chunk warning.
 * Swipe harvesting now uses aggregate `Gathered X Crop` text instead of many separate `+1 Crop` popups.
 * The tutorial `Complete` button now has basic reward juice for the one-time 75 coin reward, including reward text, generated coin fly feedback, and a coin HUD pulse.
@@ -249,11 +249,11 @@ Future production polish:
 * Replace generated Flour and Bread placeholder icons with final icons for inventory, orders, and production output.
 * Replace generated crop plot visuals with final crop sprites or polished generated shapes.
 * Improve processed-good and order onboarding later if Flour/Bread order goals are not obvious enough.
-* Replace generated MVP SFX with real production-quality audio assets later.
+* Replace staged MVP audio with real production-quality SFX/music assets later.
 * Improve final audio mixing/timing and add advanced settings only if needed after playtesting.
 * Future production chains may expand from this pattern, but should stay simple and modular.
 
-* Later, add music, satisfying coin sounds, and light haptic feedback when mobile support exists.
+* Later, add final music, more satisfying coin sounds, and light haptic feedback when mobile support exists.
 
 Future order board polish:
 
