@@ -76,7 +76,7 @@ Animations should be quick, snappy, softly eased, and non-blocking. They should 
 
 ## Sound Effects Direction
 
-Selected staged audio assets are integrated for MVP feedback, with generated WebAudio tones kept as safe fallbacks when an asset is missing or blocked. The audio system creates/resumes `AudioContext` lazily during playback, respects the saved Sound toggle before attempting SFX, and fails silently if a browser blocks audio.
+Selected staged audio assets are integrated for MVP feedback, with generated WebAudio tones kept as safe fallbacks when an asset is missing or blocked. The audio system creates/resumes `AudioContext` lazily during playback, respects the saved Sound volume before attempting SFX, and fails silently if a browser blocks audio.
 
 Current SFX coverage:
 
@@ -92,13 +92,13 @@ Current SFX coverage:
 * Production start
 * Production collect
 
-The MVP audio pass now uses real staged assets for button taps, planting, harvesting, coin-style rewards, fanfare/reward moments, and level-up moments. Generated fallback tones still cover missing hooks such as crop ready and disabled taps. Harvest keeps spam protection with pitch/rate variation during rapid harvesting, production collect plays once per collect action including batch and partial-ready collects, and repeated XP/sell tones remain intentionally quiet or silent to avoid spam.
+The MVP audio pass now uses real staged assets for button taps, planting, harvesting, coin-style rewards, fanfare/reward moments, and level-up moments. Generated fallback tones still cover missing hooks such as crop ready and disabled taps. Harvest uses the first second of the current leaves/harvest asset with spam protection during rapid harvesting, production collect plays once per collect action including batch and partial-ready collects, and repeated XP/sell tones remain intentionally quiet or silent to avoid spam.
 
 Style should stay soft, bright, and cozy: small wooden taps, chimes, coin jingles, and gentle magical sparkles. Avoid harsh arcade sounds. The current selected assets are acceptable MVP placeholders; final authored/mixed SFX remain future polish.
 
 ## Music Direction
 
-Music should be a cozy magical farm loop with light plucked strings, soft bells, woodwinds, and gentle pads. The MVP now includes a single staged looping farm music track with a saved Music toggle. Final music composition and mixing remain future polish.
+Music should be a cozy magical farm loop with light plucked strings, soft bells, woodwinds, and gentle pads. The MVP now includes a single staged looping farm music track with a saved Music volume slider that defaults low. Final music composition and mixing remain future polish.
 
 ## Future Art/SFX Polish Pass
 
@@ -118,7 +118,7 @@ Future polish should improve presentation without changing MVP gameplay scope:
 * Stronger tutorial completion reward animation and audio polish
 * Replace staged placeholder audio with final authored SFX for production, order, harvest, level-up, tutorial, and UI hooks
 * Replace staged placeholder music with final loopable composition if playtesting supports it
-* Better final audio mixing/timing, advanced settings, and optional haptics after MVP
+* Better final audio mixing/timing and optional haptics after MVP
 
 ## Out of Scope For First Art/Audio Pass
 

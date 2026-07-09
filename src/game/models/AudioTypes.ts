@@ -2,6 +2,8 @@ export interface AudioState {
   muted?: boolean;
   sfxOn?: boolean;
   musicOn?: boolean;
+  sfxVolume?: number;
+  musicVolume?: number;
 }
 
 export type SoundEventId =

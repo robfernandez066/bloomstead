@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 import { SaveSystem } from '../save/SaveSystem';
 import { CropSellPanelSystem } from '../ui/CropSellPanelSystem';
-import { DevSaveControlsSystem } from '../ui/DevSaveControlsSystem';
 import { FeedbackSystem } from '../ui/FeedbackSystem';
 import { HudSystem } from '../ui/HudSystem';
 import { FARM_LAYOUT } from '../ui/LayoutConfig';
@@ -91,7 +90,6 @@ export class FarmScene extends Phaser.Scene {
     const orderBoardSystem = new OrderBoardSystem(this, orderSystem);
     const upgradePanelSystem = new UpgradePanelSystem(this, upgradeSystem);
     const tutorialPanelSystem = new TutorialPanelSystem(this, tutorialSystem);
-    const devSaveControlsSystem = new DevSaveControlsSystem(this);
     const muteToggleSystem = new MuteToggleSystem(this, audioSystem);
     const productionMenuSystem = new ProductionMenuSystem(this, productionSystem);
     const productionStatusSystem = new ProductionStatusSystem(this, productionSystem);
@@ -404,7 +402,9 @@ export class FarmScene extends Phaser.Scene {
             upgradePanelSystem.refresh();
           }
           saveGame();
-          audioSystem.playOrderComplete();
+          if (!result.xpResult.leveledUp) {
+            audioSystem.playOrderComplete();
+          }
           audioSystem.playCoinGain();
           audioSystem.playXpGain();
           feedbackSystem.showOrderComplete(width / 2, getOrderBoardY() - 10);
@@ -1025,9 +1025,12 @@ export class FarmScene extends Phaser.Scene {
       y: FARM_LAYOUT.muteToggle.y,
       width: FARM_LAYOUT.muteToggle.width,
       height: FARM_LAYOUT.muteToggle.height,
-      gap: 4,
       onToggle: () => {
         saveGame();
+      },
+      onResetSave: () => {
+        saveSystem.clear();
+        this.scene.restart();
       }
     });
     audioSystem.startMusic();
@@ -1040,17 +1043,6 @@ export class FarmScene extends Phaser.Scene {
 
     maybeShowCraftGuidance();
     refreshPostTutorialGoal();
-
-    devSaveControlsSystem.render({
-      x: FARM_LAYOUT.devControls.x,
-      y: FARM_LAYOUT.devControls.y,
-      width: FARM_LAYOUT.devControls.width,
-      height: FARM_LAYOUT.devControls.height,
-      onResetSave: () => {
-        saveSystem.clear();
-        this.scene.restart();
-      }
-    });
 
     if (saveLoadResult !== null && saveLoadResult.cropsFinishedWhileAway > 0) {
       feedbackSystem.showOfflineSummary(

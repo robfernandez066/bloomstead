@@ -50,10 +50,10 @@ export const FARM_LAYOUT = {
     gap: 6
   },
   muteToggle: {
-    x: 304,
-    y: 70,
-    width: 56,
-    height: 22
+    x: 292,
+    y: 92,
+    width: 68,
+    height: 24
   },
   plotUpgradePanel: {
     x: 18,

@@ -1,12 +1,10 @@
 import Phaser from 'phaser';
 import {
   AUDIO_KEYS,
-  COIN_RATE_MAX,
-  COIN_RATE_MIN,
-  HARVEST_CHAIN_RATE_MAX,
-  HARVEST_CHAIN_RATE_STEP,
-  HARVEST_CHAIN_WINDOW_MS,
-  MUSIC_VOLUME,
+  DEFAULT_MUSIC_VOLUME,
+  DEFAULT_SFX_VOLUME,
+  HARVEST_CLIP_MS,
+  HARVEST_SOUND_COOLDOWN_MS,
   SOUND_KEYS,
   SOUND_VOLUME
 } from '../data/AudioConfig';
@@ -16,12 +14,16 @@ interface ResolvedAudioState {
   muted: boolean;
   sfxOn: boolean;
   musicOn: boolean;
+  sfxVolume: number;
+  musicVolume: number;
 }
 
 const DEFAULT_AUDIO_STATE: ResolvedAudioState = {
   muted: false,
   sfxOn: true,
-  musicOn: true
+  musicOn: true,
+  sfxVolume: DEFAULT_SFX_VOLUME,
+  musicVolume: DEFAULT_MUSIC_VOLUME
 };
 
 interface ToneStep {
@@ -35,6 +37,12 @@ interface ToneStep {
 type WebAudioWindow = Window & {
   webkitAudioContext?: typeof AudioContext;
 };
+
+type VolumeAdjustableSound = Phaser.Sound.BaseSound & {
+  setVolume: (value: number) => Phaser.Sound.BaseSound;
+};
+
+let activeMusic: Phaser.Sound.BaseSound | undefined;
 
 const GENERATED_TONES: Partial<Record<SoundEventId, ToneStep[]>> = {
   buttonTap: [{ frequency: 520, durationMs: 42, gain: 0.025, type: 'triangle' }],
@@ -87,19 +95,22 @@ export class AudioSystem {
   private audioContext?: AudioContext;
   private music?: Phaser.Sound.BaseSound;
   private musicUnlockQueued = false;
-  private lastHarvestAt = 0;
-  private harvestRate = 1;
 
   constructor(scene: Phaser.Scene, initialState?: AudioState) {
     this.scene = scene;
     const sfxOn = initialState?.sfxOn ?? (initialState?.muted === undefined ? true : !initialState.muted);
+    const musicOn = initialState?.musicOn ?? true;
+    const sfxVolume = initialState?.sfxVolume ?? (sfxOn ? DEFAULT_AUDIO_STATE.sfxVolume : 0);
+    const musicVolume = initialState?.musicVolume ?? (musicOn ? DEFAULT_AUDIO_STATE.musicVolume : 0);
 
     this.state = {
       ...DEFAULT_AUDIO_STATE,
       ...initialState,
-      muted: !sfxOn,
-      sfxOn,
-      musicOn: initialState?.musicOn ?? DEFAULT_AUDIO_STATE.musicOn
+      sfxVolume: this.clampVolume(sfxVolume),
+      musicVolume: this.clampVolume(musicVolume),
+      muted: this.clampVolume(sfxVolume) <= 0,
+      sfxOn: this.clampVolume(sfxVolume) > 0,
+      musicOn: this.clampVolume(musicVolume) > 0
     };
   }
 
@@ -107,7 +118,9 @@ export class AudioSystem {
     return {
       muted: !this.state.sfxOn,
       sfxOn: this.state.sfxOn,
-      musicOn: this.state.musicOn
+      musicOn: this.state.musicOn,
+      sfxVolume: this.state.sfxVolume,
+      musicVolume: this.state.musicVolume
     };
   }
 
@@ -123,6 +136,14 @@ export class AudioSystem {
     return this.state.musicOn;
   }
 
+  getSfxVolume(): number {
+    return this.state.sfxVolume;
+  }
+
+  getMusicVolume(): number {
+    return this.state.musicVolume;
+  }
+
   setMuted(muted: boolean): void {
     this.setSfxOn(!muted);
   }
@@ -133,8 +154,7 @@ export class AudioSystem {
   }
 
   setSfxOn(sfxOn: boolean): void {
-    this.state.sfxOn = sfxOn;
-    this.state.muted = !sfxOn;
+    this.setSfxVolume(sfxOn ? DEFAULT_SFX_VOLUME : 0);
   }
 
   toggleSfx(): boolean {
@@ -143,18 +163,29 @@ export class AudioSystem {
   }
 
   setMusicOn(musicOn: boolean): void {
-    this.state.musicOn = musicOn;
-
-    if (musicOn) {
-      this.startMusic();
-    } else {
-      this.stopMusic();
-    }
+    this.setMusicVolume(musicOn ? DEFAULT_MUSIC_VOLUME : 0);
   }
 
   toggleMusic(): boolean {
     this.setMusicOn(!this.state.musicOn);
     return this.state.musicOn;
+  }
+
+  setSfxVolume(volume: number): void {
+    this.state.sfxVolume = this.clampVolume(volume);
+    this.state.sfxOn = this.state.sfxVolume > 0;
+    this.state.muted = !this.state.sfxOn;
+  }
+
+  setMusicVolume(volume: number): void {
+    this.state.musicVolume = this.clampVolume(volume);
+    this.state.musicOn = this.state.musicVolume > 0;
+
+    this.applyMusicVolume();
+
+    if (this.state.musicOn && !this.isMusicPlaying()) {
+      this.startMusic();
+    }
   }
 
   startMusic(): void {
@@ -180,18 +211,22 @@ export class AudioSystem {
       }
 
       if (this.music === undefined) {
-        this.music = this.scene.sound.add(AUDIO_KEYS.music, {
+        this.music = activeMusic ?? this.scene.sound.add(AUDIO_KEYS.music, {
           loop: true,
-          volume: MUSIC_VOLUME
+          volume: this.state.musicVolume
         });
+        activeMusic = this.music;
       }
 
-      if (!this.music.isPlaying) {
-        this.music.play({
-          loop: true,
-          volume: MUSIC_VOLUME
-        });
+      if (this.music.isPlaying) {
+        this.applyMusicVolume();
+        return;
       }
+
+      this.music.play({
+        loop: true,
+        volume: this.state.musicVolume
+      });
     } catch {
       // Audio should never break gameplay if browser policy or assets disagree.
     }
@@ -200,13 +235,35 @@ export class AudioSystem {
   stopMusic(): void {
     try {
       this.music?.stop();
+      activeMusic?.stop();
     } catch {
       // Optional audio should fail silently.
     }
   }
 
-  play(eventId: SoundEventId, rate = 1): void {
-    if (!this.state.sfxOn) {
+  private isMusicPlaying(): boolean {
+    return this.music?.isPlaying === true || activeMusic?.isPlaying === true;
+  }
+
+  private applyMusicVolume(): void {
+    try {
+      this.setSoundVolume(this.music);
+      this.setSoundVolume(activeMusic);
+    } catch {
+      // Optional audio should fail silently.
+    }
+  }
+
+  private setSoundVolume(sound: Phaser.Sound.BaseSound | undefined): void {
+    if (sound === undefined || !('setVolume' in sound) || typeof sound.setVolume !== 'function') {
+      return;
+    }
+
+    (sound as VolumeAdjustableSound).setVolume(this.state.musicVolume);
+  }
+
+  play(eventId: SoundEventId): void {
+    if (!this.state.sfxOn || this.state.sfxVolume <= 0) {
       return;
     }
 
@@ -216,8 +273,7 @@ export class AudioSystem {
     try {
       if (this.scene.cache.audio.exists(key)) {
         this.scene.sound.play(key, {
-          volume: SOUND_VOLUME[eventId] ?? 0.45,
-          rate
+          volume: (SOUND_VOLUME[eventId] ?? 0.45) * this.state.sfxVolume
         });
         assetPlayed = true;
       }
@@ -226,7 +282,7 @@ export class AudioSystem {
     }
 
     if (!assetPlayed) {
-      this.playGeneratedTone(eventId, rate);
+      this.playGeneratedTone(eventId);
     }
   }
 
@@ -235,7 +291,7 @@ export class AudioSystem {
   }
 
   playPlantSeed(): void {
-    this.playThrottled('plantSeed', 90);
+    this.playThrottled('plantSeed', 120);
   }
 
   playCropReady(): void {
@@ -243,13 +299,7 @@ export class AudioSystem {
   }
 
   playHarvest(): void {
-    const now = Date.now();
-
-    this.harvestRate = now - this.lastHarvestAt <= HARVEST_CHAIN_WINDOW_MS
-      ? Math.min(HARVEST_CHAIN_RATE_MAX, this.harvestRate + HARVEST_CHAIN_RATE_STEP)
-      : 1;
-    this.lastHarvestAt = now;
-    this.play('harvest', this.harvestRate);
+    this.playHarvestClip();
   }
 
   playSellCrop(): void {
@@ -257,7 +307,7 @@ export class AudioSystem {
   }
 
   playCoinGain(): void {
-    this.play('coinGain', Phaser.Math.FloatBetween(COIN_RATE_MIN, COIN_RATE_MAX));
+    this.play('coinGain');
   }
 
   playXpGain(): void {
@@ -304,7 +354,48 @@ export class AudioSystem {
     this.play(eventId);
   }
 
-  private playGeneratedTone(eventId: SoundEventId, rate = 1): void {
+  private playHarvestClip(): void {
+    if (!this.state.sfxOn || this.state.sfxVolume <= 0) {
+      return;
+    }
+
+    const now = this.scene.time.now;
+    const lastPlayedAt = this.lastPlayedAt.get('harvest') ?? -Infinity;
+
+    if (now - lastPlayedAt < HARVEST_SOUND_COOLDOWN_MS) {
+      return;
+    }
+
+    this.lastPlayedAt.set('harvest', now);
+
+    try {
+      if (this.scene.cache.audio.exists(AUDIO_KEYS.harvest)) {
+        const sound = this.scene.sound.add(AUDIO_KEYS.harvest, {
+          volume: (SOUND_VOLUME.harvest ?? 0.45) * this.state.sfxVolume
+        });
+
+        sound.play();
+        this.scene.time.delayedCall(HARVEST_CLIP_MS, () => {
+          try {
+            if (sound.isPlaying) {
+              sound.stop();
+            }
+
+            sound.destroy();
+          } catch {
+            // Optional audio should fail silently.
+          }
+        });
+        return;
+      }
+    } catch {
+      // Fall back to generated audio below.
+    }
+
+    this.playGeneratedTone('harvest');
+  }
+
+  private playGeneratedTone(eventId: SoundEventId): void {
     const toneSteps = GENERATED_TONES[eventId];
 
     if (toneSteps === undefined) {
@@ -320,19 +411,16 @@ export class AudioSystem {
     try {
       void audioContext.resume();
       const now = audioContext.currentTime;
-      const pitchMultiplier = rate * (eventId === 'harvest'
-        ? Phaser.Math.FloatBetween(0.96, 1.07)
-        : 1);
 
       toneSteps.forEach((step) => {
         const startAt = now + (step.delayMs ?? 0) / 1000;
         const stopAt = startAt + step.durationMs / 1000;
         const oscillator = audioContext.createOscillator();
         const gain = audioContext.createGain();
-        const peakGain = step.gain ?? 0.025;
+        const peakGain = (step.gain ?? 0.025) * this.state.sfxVolume;
 
         oscillator.type = step.type ?? 'sine';
-        oscillator.frequency.setValueAtTime(step.frequency * pitchMultiplier, startAt);
+        oscillator.frequency.setValueAtTime(step.frequency, startAt);
         gain.gain.setValueAtTime(0.0001, startAt);
         gain.gain.exponentialRampToValueAtTime(peakGain, startAt + 0.012);
         gain.gain.exponentialRampToValueAtTime(0.0001, stopAt);
@@ -369,5 +457,9 @@ export class AudioSystem {
     } catch {
       return null;
     }
+  }
+
+  private clampVolume(volume: number): number {
+    return Phaser.Math.Clamp(Number.isFinite(volume) ? volume : 0, 0, 1);
   }
 }

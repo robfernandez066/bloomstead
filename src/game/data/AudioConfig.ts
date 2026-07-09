@@ -21,7 +21,7 @@ export const AUDIO_ASSETS = [
   },
   {
     key: AUDIO_KEYS.harvest,
-    url: new URL('../../../assets/audio/harvest.ogg', import.meta.url).href
+    url: new URL('../../../assets/audio/harvest.mp3', import.meta.url).href
   },
   {
     key: AUDIO_KEYS.coin,
@@ -41,12 +41,11 @@ export const AUDIO_ASSETS = [
   }
 ] as const;
 
-export const MUSIC_VOLUME = 0.35;
-export const HARVEST_CHAIN_WINDOW_MS = 800;
-export const HARVEST_CHAIN_RATE_STEP = 0.06;
-export const HARVEST_CHAIN_RATE_MAX = 1.5;
-export const COIN_RATE_MIN = 0.95;
-export const COIN_RATE_MAX = 1.1;
+export const DEFAULT_MUSIC_VOLUME = 0.2;
+export const DEFAULT_SFX_VOLUME = 0.72;
+export const MUSIC_VOLUME = DEFAULT_MUSIC_VOLUME;
+export const HARVEST_CLIP_MS = 1000;
+export const HARVEST_SOUND_COOLDOWN_MS = 180;
 
 export const SOUND_KEYS: Record<SoundEventId, string> = {
   buttonTap: AUDIO_KEYS.tap,
@@ -66,12 +65,12 @@ export const SOUND_KEYS: Record<SoundEventId, string> = {
 };
 
 export const SOUND_VOLUME: Partial<Record<SoundEventId, number>> = {
-  buttonTap: 0.28,
-  plantSeed: 0.38,
+  buttonTap: 0.22,
+  plantSeed: 0.3,
   cropReady: 0.24,
-  harvest: 0.42,
+  harvest: 0.44,
   sellCrop: 0.26,
-  coinGain: 0.38,
+  coinGain: 0.32,
   xpGain: 0.22,
   orderComplete: 0.5,
   levelUp: 0.58,

@@ -124,7 +124,7 @@ Release-candidate handoff checkpoint:
 * Completed tutorial saves load without restarting tutorial prompts or duplicating the 75 coin tutorial reward.
 * Crop growth, ready crop state, inventory, coins, active/ready production, production collection, order availability, order completion, and plot upgrade state persist across reloads.
 * Mobile viewport checks passed at `390x844` and `360x740`.
-* Generated WebAudio SFX and the saved `SFX On/Off` toggle are acceptable for MVP playtesting.
+* Staged audio assets, generated WebAudio fallbacks, and saved Music/Sound volume controls are acceptable for MVP playtesting.
 * Before sharing a build with playtesters, run the checklist in `docs/MVP_PLAYTEST_CHECKLIST.md`.
 
 Latest smoke QA checkpoint after the ready-crop color, production feedback, batch production, and upgrade panel completion API fixes:
@@ -216,8 +216,10 @@ The following polish items are implemented for the MVP:
 * Selected staged audio assets are integrated for MVP SFX and music, with generated WebAudio tones kept as safe fallbacks:
   * Real staged assets cover button tap, planting, harvest, coin/reward pickup, fanfare/reward moments, level-up moments, and one looping music track.
   * Asset playback remains safe: generated fallback tones cover missing hooks, browser blocking fails silently, and audio is created lazily from player interaction.
-  * The saved audio state now supports separate Music and Sound toggles.
-  * Harvest SFX still use spam protection with pitch/rate variation during rapid harvest.
+  * The saved audio state now supports separate Music and Sound volume sliders in a compact Settings menu.
+  * Music defaults lower for first launch, and either slider at 0 mutes that channel.
+  * Harvest SFX use the first second of the current leaves/harvest asset plus spam protection during rapid harvest.
+  * Order/tutorial completion uses a short positive hit jingle, level-up uses a longer steel jingle, and level-up takes priority when an order completion also levels the player.
   * Production collect plays once per collect action, including batch and partial-ready collects.
   * XP and sell tones remain intentionally quiet or silent to avoid spam.
   * Final authored/mixed SFX and music remain future polish.
@@ -250,7 +252,7 @@ Future production polish:
 * Replace generated crop plot visuals with final crop sprites or polished generated shapes.
 * Improve processed-good and order onboarding later if Flour/Bread order goals are not obvious enough.
 * Replace staged MVP audio with real production-quality SFX/music assets later.
-* Improve final audio mixing/timing and add advanced settings only if needed after playtesting.
+* Improve final audio mixing/timing only if needed after playtesting.
 * Future production chains may expand from this pattern, but should stay simple and modular.
 
 * Later, add final music, more satisfying coin sounds, and light haptic feedback when mobile support exists.
