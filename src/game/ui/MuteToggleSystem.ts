@@ -28,6 +28,8 @@ export class MuteToggleSystem {
   private button?: Phaser.GameObjects.Rectangle;
   private label?: Phaser.GameObjects.Text;
   private panelOpen = false;
+  private confirmingReset = false;
+  private resetInProgress = false;
   private readonly panelObjects: Phaser.GameObjects.GameObject[] = [];
 
   constructor(scene: Phaser.Scene, audioSystem: AudioSystem) {
@@ -72,6 +74,7 @@ export class MuteToggleSystem {
 
   private closePanel(): void {
     this.panelOpen = false;
+    this.confirmingReset = false;
     this.clearPanelObjects();
   }
 
@@ -116,6 +119,12 @@ export class MuteToggleSystem {
 
     this.panelObjects.push(overlay, panel, title);
     this.renderCloseButton(panelX + panelWidth - 42, panelY + 10);
+
+    if (this.confirmingReset) {
+      this.renderResetConfirmation(panelX, panelY, panelWidth);
+      return;
+    }
+
     this.renderVolumeSlider('Music', this.audioSystem.getMusicVolume(), panelX + 18, panelY + 58, (volume) => {
       this.audioSystem.setMusicVolume(volume);
     });
@@ -225,7 +234,8 @@ export class MuteToggleSystem {
 
     button.on('pointerdown', () => {
       this.audioSystem.playButtonTap();
-      this.config?.onResetSave();
+      this.confirmingReset = true;
+      this.renderPanel();
     });
 
     const text = this.scene.add
@@ -233,6 +243,72 @@ export class MuteToggleSystem {
         color: DANGER_TEXT,
         fontFamily: 'Arial, sans-serif',
         fontSize: '13px',
+        fontStyle: 'bold'
+      })
+      .setOrigin(0.5)
+      .setDepth(DEPTH + 3);
+
+    this.panelObjects.push(button, text);
+  }
+
+  private renderResetConfirmation(panelX: number, panelY: number, panelWidth: number): void {
+    const warning = this.scene.add
+      .text(panelX + 18, panelY + 64, 'Reset all progress?', {
+        color: TEXT_COLOR,
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '17px',
+        fontStyle: 'bold'
+      })
+      .setDepth(DEPTH + 2);
+    const details = this.scene.add
+      .text(panelX + 18, panelY + 92, 'Your farm, inventory, and upgrades will be lost.', {
+        color: MUTED_TEXT,
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '13px',
+        wordWrap: { width: panelWidth - 36 }
+      })
+      .setDepth(DEPTH + 2);
+
+    this.panelObjects.push(warning, details);
+    this.renderConfirmationButton(panelX + 18, panelY + 134, 124, 'Yes', DANGER_FILL, DANGER_TEXT, () => {
+      if (this.resetInProgress) {
+        return;
+      }
+
+      this.resetInProgress = true;
+      this.audioSystem.playButtonTap();
+      this.config?.onResetSave();
+    });
+    this.renderConfirmationButton(panelX + panelWidth - 142, panelY + 134, 124, 'No', BUTTON_FILL, TEXT_COLOR, () => {
+      this.audioSystem.playButtonTap();
+      this.confirmingReset = false;
+      this.renderPanel();
+    });
+  }
+
+  private renderConfirmationButton(
+    x: number,
+    y: number,
+    width: number,
+    label: string,
+    fillColor: number,
+    textColor: string,
+    onClick: () => void
+  ): void {
+    const button = this.scene.add
+      .rectangle(x, y, width, 32, fillColor)
+      .setOrigin(0, 0)
+      .setStrokeStyle(2, BUTTON_STROKE)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(DEPTH + 2);
+
+    button.on('pointerdown', onClick);
+
+    const text = this.scene.add
+      .text(x + width / 2, y + 16, label, {
+        color: textColor,
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '14px',
         fontStyle: 'bold'
       })
       .setOrigin(0.5)
