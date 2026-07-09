@@ -4,3 +4,5 @@ dist/
 tools/audio-staging/
 
 *.local
+
+tools/
