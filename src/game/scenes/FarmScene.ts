@@ -13,6 +13,7 @@ import { SeedSelectorSystem } from '../ui/SeedSelectorSystem';
 import { TutorialPanelSystem } from '../ui/TutorialPanelSystem';
 import { UpgradePanelSystem } from '../ui/UpgradePanelSystem';
 import { AudioSystem } from '../systems/AudioSystem';
+import { getLevelUnlockSummary } from '../data/LevelProgression';
 import { MILL_FLOUR_RECIPE_ID } from '../data/ProductionRecipes';
 import { CropSellingSystem } from '../systems/CropSellingSystem';
 import { GameStateSystem } from '../systems/GameStateSystem';
@@ -106,22 +107,25 @@ export class FarmScene extends Phaser.Scene {
     };
 
     const getPostTutorialGoalText = (): string => {
-      const { coins, farmLevel } = gameStateSystem.getState();
-      const nextUpgrade = upgradeSystem.getNextPlotUpgrade();
+      const { farmLevel } = gameStateSystem.getState();
 
-      if (farmLevel < 3) {
-        return 'Next goal: Complete orders to reach Level 3.';
+      if (farmLevel < 2) {
+        return 'Next unlock: Level 2 - Carrot and Mill.';
       }
 
-      if (productionSystem.canStartRecipe(MILL_FLOUR_RECIPE_ID)) {
-        return 'Next goal: Keep the Mill running for Flour.';
+      if (farmLevel === 2) {
+        return 'Next unlock: Level 3 - Glowberry and Bakery.';
       }
 
-      if (nextUpgrade !== null && coins < nextUpgrade.coinCost) {
-        return `Next goal: Save ${nextUpgrade.coinCost} coins for more plots.`;
+      if (farmLevel === 3) {
+        return 'Next unlock: Level 4 - More advanced orders.';
       }
 
-      return 'Next goal: Complete orders and keep Craft busy.';
+      if (farmLevel === 4) {
+        return 'Next unlock: Level 5 - Village Feast order.';
+      }
+
+      return 'Next goal: Optimize crops, Craft, and village orders.';
     };
 
     const refreshPostTutorialGoal = (): void => {
@@ -333,13 +337,19 @@ export class FarmScene extends Phaser.Scene {
       return advanced;
     };
 
-    const handleLevelUp = (level: number): void => {
+    const handleLevelUp = (previousLevel: number, currentLevel: number): void => {
       orderSystem.refreshActiveOrdersForCurrentLevel();
       orderBoardSystem.refresh();
       seedSelectorSystem.refresh();
+      refreshProductionUi();
       refreshPostTutorialGoal();
       audioSystem.playLevelUp();
-      feedbackSystem.showLevelUp(level, width / 2, height * 0.28);
+      feedbackSystem.showLevelUp(
+        currentLevel,
+        getLevelUnlockSummary(previousLevel, currentLevel),
+        width / 2,
+        height * 0.28
+      );
       maybeShowCraftGuidance();
     };
 
@@ -411,7 +421,7 @@ export class FarmScene extends Phaser.Scene {
           hudSystem.playXpPulse();
 
           if (result.xpResult.leveledUp) {
-            handleLevelUp(result.xpResult.currentLevel);
+            handleLevelUp(result.xpResult.previousLevel, result.xpResult.currentLevel);
           }
         }
       });
@@ -482,7 +492,7 @@ export class FarmScene extends Phaser.Scene {
       }
 
       if (harvestResult.xpResult.leveledUp) {
-        handleLevelUp(harvestResult.xpResult.currentLevel);
+        handleLevelUp(harvestResult.xpResult.previousLevel, harvestResult.xpResult.currentLevel);
       }
     };
 

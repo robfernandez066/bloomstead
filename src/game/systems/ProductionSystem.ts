@@ -58,6 +58,10 @@ export class ProductionSystem {
     return this.state[PRODUCTION_RECIPES[recipeId].buildingId];
   }
 
+  isRecipeUnlocked(recipeId: ProductionRecipeId): boolean {
+    return this.gameState.getState().farmLevel >= PRODUCTION_RECIPES[recipeId].unlockLevel;
+  }
+
   getActiveRecipes(): ProductionRecipeDefinition[] {
     return this.getAvailableRecipes().filter((recipe) => {
       return this.getRecipeState(recipe.id).status !== 'idle';
@@ -102,7 +106,12 @@ export class ProductionSystem {
     const recipe = PRODUCTION_RECIPES[recipeId];
     const state = this.state[recipe.buildingId];
 
-    if (state.status !== 'idle' || !Number.isInteger(quantity) || quantity <= 0) {
+    if (
+      !this.isRecipeUnlocked(recipeId) ||
+      state.status !== 'idle' ||
+      !Number.isInteger(quantity) ||
+      quantity <= 0
+    ) {
       return false;
     }
 

@@ -127,6 +127,7 @@ export class ProductionMenuSystem {
     const entryWidth = this.config.width - 24;
     const entryHeight = ENTRY_HEIGHT;
     const state = this.productionSystem.getRecipeState(recipe.id);
+    const unlocked = this.productionSystem.isRecipeUnlocked(recipe.id);
     const maxCraftable = this.productionSystem.getMaxCraftableQuantity(recipe.id);
     const selectedQuantity = this.getSelectedQuantity(recipe.id);
     const canStart = this.productionSystem.canStartRecipe(recipe.id, selectedQuantity);
@@ -163,7 +164,25 @@ export class ProductionMenuSystem {
         .setDepth(DEPTH + 3)
     );
 
+    if (!unlocked) {
+      this.objects.push(
+        this.scene.add
+          .text(entryX + entryWidth - 10, entryY + 10, `Unlocks at Level ${recipe.unlockLevel}`, {
+            color: MUTED_TEXT,
+            fontFamily: 'Arial, sans-serif',
+            fontSize: '12px',
+            fontStyle: 'bold'
+          })
+          .setOrigin(1, 0)
+          .setDepth(DEPTH + 3)
+      );
+    }
+
     this.renderRecipeLine(recipe, entryX + 10, entryY + 34);
+
+    if (!unlocked && state.status === 'idle') {
+      return;
+    }
 
     this.objects.push(
       this.scene.add

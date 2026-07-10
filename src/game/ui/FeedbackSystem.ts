@@ -19,6 +19,7 @@ const CROP_FEEDBACK_FILL: Record<CropId, number> = {
 
 export class FeedbackSystem {
   private readonly scene: Phaser.Scene;
+  private activeLevelUpFeedback?: Phaser.GameObjects.Container;
   private harvestFlyWindowStartMs = 0;
   private harvestFlyEffectsInWindow = 0;
   private aggregateHarvestText?: Phaser.GameObjects.Text;
@@ -247,9 +248,11 @@ export class FeedbackSystem {
     }
   }
 
-  showLevelUp(level: number, x: number, y: number): void {
-    const text = this.scene.add
-      .text(x, y, `Level ${level}!`, {
+  showLevelUp(level: number, unlockSummary: string[], x: number, y: number): void {
+    this.activeLevelUpFeedback?.destroy();
+
+    const levelText = this.scene.add
+      .text(0, 0, `Level ${level}!`, {
         color: '#fff4a8',
         fontFamily: 'Arial, sans-serif',
         fontSize: '34px',
@@ -257,19 +260,41 @@ export class FeedbackSystem {
         stroke: '#3f512e',
         strokeThickness: 5
       })
-      .setOrigin(0.5)
-      .setDepth(120);
+      .setOrigin(0.5);
+    const unlockText = this.scene.add
+      .text(0, 34, unlockSummary.join('\n'), {
+        color: '#ffffff',
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '17px',
+        fontStyle: 'bold',
+        stroke: '#3f512e',
+        strokeThickness: 4,
+        align: 'center',
+        lineSpacing: 4,
+        wordWrap: { width: 320 }
+      })
+      .setOrigin(0.5, 0);
+    const feedback = this.scene.add
+      .container(x, y, [levelText, unlockText])
+      .setDepth(120)
+      .setScale(0.72);
 
-    text.setScale(0.72);
+    this.activeLevelUpFeedback = feedback;
 
     this.scene.tweens.add({
-      targets: text,
-      y: y - 36,
+      targets: feedback,
+      y: y - 26,
       scale: 1.12,
       alpha: 0,
-      duration: 1200,
+      duration: 1800,
       ease: 'Sine.easeOut',
-      onComplete: () => text.destroy()
+      onComplete: () => {
+        feedback.destroy();
+
+        if (this.activeLevelUpFeedback === feedback) {
+          this.activeLevelUpFeedback = undefined;
+        }
+      }
     });
   }
 

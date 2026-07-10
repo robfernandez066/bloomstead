@@ -8,6 +8,7 @@ export const PRODUCTION_RECIPES: Record<ProductionRecipeId, ProductionRecipeDefi
     id: 'mill-flour',
     buildingId: 'mill',
     buildingName: 'Mill',
+    unlockLevel: 2,
     input: {
       sunwheat: 2
     },
@@ -19,6 +20,7 @@ export const PRODUCTION_RECIPES: Record<ProductionRecipeId, ProductionRecipeDefi
     id: 'bakery-bread',
     buildingId: 'bakery',
     buildingName: 'Bakery',
+    unlockLevel: 3,
     input: {
       flour: 2
     },

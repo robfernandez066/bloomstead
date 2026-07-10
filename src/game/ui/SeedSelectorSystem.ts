@@ -52,6 +52,7 @@ export class SeedSelectorSystem {
       button.setFillStyle(unlocked ? fillColor : LOCKED_FILL);
       button.setAlpha(unlocked ? 1 : 0.72);
       label.setColor(unlocked ? UNLOCKED_TEXT : LOCKED_TEXT);
+      label.setText(unlocked ? crop.name : `${crop.name}\nLevel ${crop.unlockLevel}`);
 
       if (unlocked) {
         button.setInteractive({ useHandCursor: true });
@@ -85,14 +86,19 @@ export class SeedSelectorSystem {
     });
 
     const label = this.scene.add
-      .text(x + config.buttonWidth / 2, config.y + config.buttonHeight / 2, crop.name, {
-        color: unlocked ? UNLOCKED_TEXT : LOCKED_TEXT,
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '15px',
-        fontStyle: 'bold',
-        align: 'center',
-        wordWrap: { width: config.buttonWidth - 12 }
-      })
+      .text(
+        x + config.buttonWidth / 2,
+        config.y + config.buttonHeight / 2,
+        unlocked ? crop.name : `${crop.name}\nLevel ${crop.unlockLevel}`,
+        {
+          color: unlocked ? UNLOCKED_TEXT : LOCKED_TEXT,
+          fontFamily: 'Arial, sans-serif',
+          fontSize: '15px',
+          fontStyle: 'bold',
+          align: 'center',
+          wordWrap: { width: config.buttonWidth - 12 }
+        }
+      )
       .setOrigin(0.5);
 
     this.seedButtons.push({ crop, button, label });

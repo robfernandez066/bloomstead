@@ -8,6 +8,7 @@ export interface ProductionRecipeDefinition {
   id: ProductionRecipeId;
   buildingId: ProductionBuildingId;
   buildingName: string;
+  unlockLevel: number;
   input: Partial<Record<ItemId, number>>;
   outputItemId: ItemId;
   outputAmount: number;
