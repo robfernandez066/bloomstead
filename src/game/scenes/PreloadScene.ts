@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { AUDIO_ASSETS } from '../data/AudioConfig';
+import { BLOCKING_AUDIO_ASSETS } from '../data/AudioConfig';
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -59,7 +59,7 @@ export class PreloadScene extends Phaser.Scene {
       percentageText.setText(`${Math.round(clampedProgress * 100)}%`);
     });
 
-    for (const asset of AUDIO_ASSETS) {
+    for (const asset of BLOCKING_AUDIO_ASSETS) {
       this.load.audio(asset.key, asset.url);
     }
   }

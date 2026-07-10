@@ -10,18 +10,20 @@ export const AUDIO_KEYS = {
   levelup: 'sfx.levelup'
 } as const;
 
-export const AUDIO_ASSETS = [
-  {
-    key: AUDIO_KEYS.music,
-    url: new URL('../../../assets/audio/music.mp3', import.meta.url).href
-  },
+const MUSIC_AUDIO_ASSET = {
+  key: AUDIO_KEYS.music,
+  url: new URL('../../../assets/audio/music.mp3', import.meta.url).href
+} as const;
+
+const HARVEST_AUDIO_ASSET = {
+  key: AUDIO_KEYS.harvest,
+  url: new URL('../../../assets/audio/harvest.mp3', import.meta.url).href
+} as const;
+
+export const BLOCKING_AUDIO_ASSETS = [
   {
     key: AUDIO_KEYS.plant,
     url: new URL('../../../assets/audio/plant.ogg', import.meta.url).href
-  },
-  {
-    key: AUDIO_KEYS.harvest,
-    url: new URL('../../../assets/audio/harvest.mp3', import.meta.url).href
   },
   {
     key: AUDIO_KEYS.coin,
@@ -40,6 +42,8 @@ export const AUDIO_ASSETS = [
     url: new URL('../../../assets/audio/levelup.ogg', import.meta.url).href
   }
 ] as const;
+
+export const DEFERRED_AUDIO_ASSETS = [MUSIC_AUDIO_ASSET, HARVEST_AUDIO_ASSET] as const;
 
 export const DEFAULT_MUSIC_VOLUME = 0.2;
 export const DEFAULT_SFX_VOLUME = 0.72;

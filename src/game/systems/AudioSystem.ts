@@ -95,6 +95,14 @@ export class AudioSystem {
   private audioContext?: AudioContext;
   private music?: Phaser.Sound.BaseSound;
   private musicUnlockQueued = false;
+  private readonly handleMusicUnlocked = (): void => {
+    this.musicUnlockQueued = false;
+    this.startMusic();
+  };
+  private readonly handleSceneShutdown = (): void => {
+    this.scene.sound.off(Phaser.Sound.Events.UNLOCKED, this.handleMusicUnlocked);
+    this.musicUnlockQueued = false;
+  };
 
   constructor(scene: Phaser.Scene, initialState?: AudioState) {
     this.scene = scene;
@@ -112,6 +120,15 @@ export class AudioSystem {
       sfxOn: this.clampVolume(sfxVolume) > 0,
       musicOn: this.clampVolume(musicVolume) > 0
     };
+
+    this.music = activeMusic;
+    this.applyMusicVolume();
+
+    if (!this.state.musicOn) {
+      this.stopMusic();
+    }
+
+    this.scene.events.once(Phaser.Scenes.Events.SHUTDOWN, this.handleSceneShutdown);
   }
 
   getState(): AudioState {
@@ -201,10 +218,7 @@ export class AudioSystem {
       if (this.scene.sound.locked) {
         if (!this.musicUnlockQueued) {
           this.musicUnlockQueued = true;
-          this.scene.sound.once(Phaser.Sound.Events.UNLOCKED, () => {
-            this.musicUnlockQueued = false;
-            this.startMusic();
-          });
+          this.scene.sound.once(Phaser.Sound.Events.UNLOCKED, this.handleMusicUnlocked);
         }
 
         return;

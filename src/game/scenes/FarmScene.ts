@@ -14,6 +14,7 @@ import { SeedSelectorSystem } from '../ui/SeedSelectorSystem';
 import { TutorialPanelSystem } from '../ui/TutorialPanelSystem';
 import { UpgradePanelSystem } from '../ui/UpgradePanelSystem';
 import { AudioSystem } from '../systems/AudioSystem';
+import { AUDIO_KEYS, DEFERRED_AUDIO_ASSETS } from '../data/AudioConfig';
 import { getLevelUnlockSummary } from '../data/LevelProgression';
 import { MILL_FLOUR_RECIPE_ID } from '../data/ProductionRecipes';
 import { CropSellingSystem } from '../systems/CropSellingSystem';
@@ -1056,7 +1057,7 @@ export class FarmScene extends Phaser.Scene {
         this.scene.restart();
       }
     });
-    audioSystem.startMusic();
+    this.startDeferredAudioLoad(audioSystem);
 
     if (syncTutorialWithSavedGameState()) {
       tutorialPanelSystem.refresh();
@@ -1075,5 +1076,37 @@ export class FarmScene extends Phaser.Scene {
       );
       saveGame();
     }
+  }
+
+  private startDeferredAudioLoad(audioSystem: AudioSystem): void {
+    audioSystem.startMusic();
+
+    const assetsToLoad = DEFERRED_AUDIO_ASSETS.filter(
+      (asset) => !this.cache.audio.exists(asset.key)
+    );
+
+    if (assetsToLoad.length === 0) {
+      return;
+    }
+
+    const handleFileComplete = (key: string): void => {
+      if (key === AUDIO_KEYS.music) {
+        audioSystem.startMusic();
+      }
+    };
+    const cleanup = (): void => {
+      this.load.off(Phaser.Loader.Events.FILE_COMPLETE, handleFileComplete);
+      this.events.off(Phaser.Scenes.Events.SHUTDOWN, cleanup);
+    };
+
+    this.load.on(Phaser.Loader.Events.FILE_COMPLETE, handleFileComplete);
+    this.load.once(Phaser.Loader.Events.COMPLETE, cleanup);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, cleanup);
+
+    for (const asset of assetsToLoad) {
+      this.load.audio(asset.key, asset.url);
+    }
+
+    this.load.start();
   }
 }
