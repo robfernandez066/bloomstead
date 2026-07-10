@@ -26,18 +26,20 @@ Ready crops should look clearly harvestable without relying only on a circle mar
 
 ## Production Building Direction
 
-The MVP now includes the Mill and Bakery as the first production buildings. Their current UI is functional placeholder art.
+The MVP now includes the Mill and Bakery as fixed physical farm landmarks. Their current visuals are functional Phaser-drawn prototype art.
 
 The current production UI pattern is:
 
-* Farm screen has a compact `Craft` button.
-* Full production details live in the `Production` menu.
-* Farm screen shows compact production status chips only when a job is producing or ready.
-* Idle production systems should not take farm-screen space.
-* Tapping a production chip opens the `Production` menu.
-* Tapping outside the `Production` menu closes it.
+* Mill and Bakery remain visible on the farm screen as physical landmarks.
+* Before their metadata-defined unlock levels, Mill and Bakery appear in locked restoration/construction states. Mill unlocks at Level 2 and Bakery at Level 3.
+* Tapping an unlocked building opens its focused `Production` window. Locked idle buildings do not open `Production`.
+* Existing below-level non-idle legacy jobs remain accessible for collection.
+* Active production status chips and ready-product bubbles route to the corresponding building's focused `Production` window.
+* Mill and Bakery can operate independently.
+* Tapping outside the `Production` window closes it.
+* The global `Craft` launcher is absent.
 
-Use this pattern for future production systems such as Press, Brewery, etc. Future Mill and Bakery art should read as cozy small farm buildings or workbenches, not industrial factory machinery. They should support simple chains without implying a large crafting system:
+Future Mill and Bakery art should read as cozy small farm buildings or workbenches, not industrial factory machinery. They should support simple chains without implying a large production system:
 
 * Mill: `2 Sunwheat -> 1 Flour`
 * Bakery: `2 Flour -> 1 Bread`
@@ -50,7 +52,7 @@ UI should use rounded cream panels, soft borders, readable mobile text, large ta
 
 Onboarding guidance should feel unified and lightweight. The tutorial starts automatically on new saves and Dev Reset; the old Start button is no longer part of the intended experience. Only one tutorial or hint message should be visible at a time.
 
-Craft guidance uses the existing tutorial/onboarding panel instead of a separate floating popup. When Craft becomes relevant, the player should see `Use Craft to turn Sunwheat into Flour.` and the Craft button should receive a clear but non-intrusive highlight. Opening Craft dismisses that guidance. Future polish may add a stronger arrow or pointer if the highlight is not enough.
+Mill production guidance uses the existing tutorial/onboarding panel instead of a separate floating popup. When production becomes relevant, the tutorial points to the Mill landmark with the message `The restored Mill can refine your Sunwheat into Flour.` Tapping the Mill opens its focused `Production` window, and the tutorial later highlights the Mill's ready-product indicator. There is no global `Craft` launcher or arrow target.
 
 Readable crop sell/inventory rows are implemented for MVP. They include simple generated icons and should stay clear and mobile-tappable, using crop names, counts, and sell values:
 
@@ -60,7 +62,7 @@ Readable crop sell/inventory rows are implemented for MVP. They include simple g
 
 Generated icons are implemented for Sunwheat, Carrot, Glowberry, Flour, and Bread. They appear in sell/inventory rows, order requirements, and production recipe inputs/outputs. Final art assets can replace these generated icons later without changing gameplay.
 
-Order cards now include compact `From: X` source labels and simple generated source icons for cozy village flavor. Current source groups are Farm Stand, Village Market, Village Cook, Baker, and Lantern Guild. Source labels should stay visually secondary to order names. Order requirement item/material names use a warm accent color while quantities remain in the normal readable text color; Production menu recipe material names use the same accent treatment. This is flavor/readability only: order requirements, rewards, level gates, rotation, pacing, tutorial behavior, production behavior, and save/load behavior remain unchanged. Final order-board art, more polished source icons, villager/customer portraits, and order SFX remain future polish.
+Order cards now include compact `From: X` source labels and simple generated source icons for cozy village flavor. Current source groups are Farm Stand, Village Market, Village Cook, Baker, and Lantern Guild. Source labels should stay visually secondary to order names. Order requirement item/material names use a warm accent color while quantities remain in the normal readable text color; focused Production window recipe material names use the same accent treatment. This is flavor/readability only: order requirements, rewards, level gates, rotation, pacing, tutorial behavior, production behavior, and save/load behavior remain unchanged. Final order-board art, more polished source icons, villager/customer portraits, and order SFX remain future polish.
 
 ## Reward / Juice Direction
 
@@ -109,10 +111,11 @@ Future polish should improve presentation without changing MVP gameplay scope:
 * Final crop and processed-good icons for inventory, selling, production, and orders
 * Final order-board source icons and flavor art
 * Optional villager/customer portraits if they stay readable on mobile
-* Improved Craft button art/icon
-* Stronger Craft pointer/arrow if needed
+* Improved Mill/Bakery landmark art
+* Better physical-building readability, including locked restoration/construction states and unlock presentation
 * Improved production status chip visuals/icons
-* Improved Mill/Bakery menu/building placeholders
+* Production feedback aligned with the actual Mill/Bakery landmarks where appropriate
+* Final Flour/Bread icons and building-specific `Production` window UI polish
 * Better processed-good/order onboarding if needed after playtesting
 * Better final timing/easing for Mill/Bakery production start and collect feedback
 * Stronger tutorial completion reward animation and audio polish

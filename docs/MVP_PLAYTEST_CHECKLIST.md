@@ -23,11 +23,13 @@ Use this checklist before sharing Bloomstead with a small playtest group. Test o
 
 ## Production Flow
 
-* Open `Craft` from the tutorial guidance.
+* Before Level 2, confirm the Mill and Bakery appear as locked restoration/construction landmarks and that tapping either locked idle building does not open `Production`.
+* When the tutorial points to production, tap the physical Mill landmark to open its focused `Production` window; do not look for a global `Craft` launcher.
 * Start the guided Mill job; tutorial Mill quantity should stay simple/locked at `x1`.
-* Confirm the Mill production chip appears while producing or ready.
-* Tap `Mill Ready`, collect Flour, and confirm the Flour count updates.
-* Start another Mill job, tap outside the Production menu, and complete the tutorial.
+* Confirm the Mill production status chip appears while producing and routes back to the Mill's focused `Production` window.
+* When Flour is ready, tap the Mill's ready-product indicator, collect Flour, and confirm the Flour count updates.
+* Start another Mill job, tap outside the Production window, and complete the tutorial.
+* At Level 3, confirm the Bakery landmark unlocks and can operate independently from the Mill; tapping the Bakery opens its focused `Production` window.
 * Confirm the one-time 75 coin tutorial reward is visible and only granted once.
 
 ## Save / Reload Checks
@@ -37,14 +39,15 @@ Use this checklist before sharing Bloomstead with a small playtest group. Test o
 * Reload after harvesting; inventory and XP should persist.
 * Reload during active Mill production; timer/progress should persist.
 * Reload with ready Mill production; it should remain ready and should not auto-collect.
+* If testing a below-level non-idle legacy production save, confirm the corresponding landmark/status/ready route remains accessible for collection.
 * Reload after tutorial completion; tutorial should not reappear and the reward should not duplicate.
 * Reload with an order partially or fully fulfillable; order board and inventory should match the saved state.
 
 ## Mobile UI Checks
 
-* At `390x844`, confirm HUD, sell rows, farm plots, Craft button, production chips, goods strip, upgrade panel, order board, tutorial panel, and seed selector do not overlap.
-* At `360x740`, confirm sell rows, order cards, Production menu controls, and production chips remain readable and tappable.
-* Confirm tapping outside the Production menu closes it without triggering farm actions behind it.
+* At `390x844`, confirm HUD, sell rows, farm plots, Mill/Bakery landmarks, production chips, goods strip, upgrade panel, order board, tutorial panel, and seed selector do not overlap.
+* At `360x740`, confirm sell rows, order cards, focused Production window controls, and production chips remain readable and tappable.
+* Confirm tapping outside the Production window closes it without triggering farm actions behind it.
 * Confirm generated item icons and order source labels remain readable.
 
 ## Audio / Feedback Checks

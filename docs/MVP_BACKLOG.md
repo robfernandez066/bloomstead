@@ -17,8 +17,8 @@ The MVP includes:
   * Level 5 includes the Village Feast capstone MVP order.
 * Crop selling as a fallback way to regain seed money.
 * Readable crop sell/inventory rows for each MVP crop, with simple generated item icons.
-* A compact read-only processed-goods strip near Craft/production shows Flour and Bread counts with generated icons and text labels.
-  * The strip appears once Craft/production is relevant, the tutorial is completed, or Flour/Bread counts are nonzero.
+* A compact read-only processed-goods strip near production shows Flour and Bread counts with generated icons and text labels.
+  * The strip appears once production is relevant, the tutorial is completed, or Flour/Bread counts are nonzero.
   * It stays hidden during the early tutorial to avoid clutter.
   * It updates after collecting Flour/Bread, after Flour/Bread are spent, and on save/load.
   * Crop sell rows are unchanged and still sell crops only; Flour and Bread are not sellable from this strip.
@@ -41,12 +41,14 @@ The MVP includes:
   * Production continues offline.
   * Save/load and offline production preserve quantity, collected quantity, ready output, and active progress.
   * Finished production loads as ready but does not auto-collect.
-  * Farm screen production uses a compact `Craft` button.
-  * Full production details live in the `Production` menu.
-  * Farm screen production status uses compact chips only while a job is producing or ready.
-  * Idle production systems should not take farm-screen space.
-  * Tapping a production status chip opens the `Production` menu.
-  * Tapping outside the `Production` menu closes it.
+  * Mill and Bakery are fixed physical farm landmarks on the farm screen.
+  * Before their metadata-defined unlock levels, the landmarks appear in locked restoration/construction states. Mill unlocks at Level 2 and Bakery unlocks at Level 3.
+  * Tapping an unlocked Mill or Bakery opens its focused `Production` window. Locked idle buildings do not open `Production`.
+  * Existing below-level non-idle legacy jobs remain accessible for collection, even while their building landmark is still shown in its locked state.
+  * Active production status chips and ready-product bubbles route to the corresponding building's focused `Production` window.
+  * Full production details live in the focused `Production` window, and Mill and Bakery can operate independently.
+  * Tapping outside the `Production` window closes it.
+  * The global `Craft` launcher is absent.
   * Production status wording uses player-facing labels such as `Status: Producing Flour x4`, `Status: Ready Flour x1 | Producing x3`, and `Status: Ready Flour x2`.
   * Farm chips use compact labels and a cleaned-up timer layout so timers stay inside the chip.
   * Starting Mill/Bakery production shows a brief ingredient icon fly/pulse toward the production/status area and keeps the existing `Mill Started` / `Bakery Started` text.
@@ -61,7 +63,7 @@ The MVP includes:
   * Source labels remain visually secondary to order names.
   * Current source groups are `Farm Stand`, `Village Market`, `Village Cook`, `Baker`, and `Lantern Guild`.
   * Order requirement item/material names use a warm accent color, while requirement quantities remain in the normal readable text color.
-  * Production menu recipe material names use the same accent treatment.
+  * Focused Production window recipe material names use the same accent treatment.
   * This is flavor/readability only; it added no orders, crops, goods, recipes, buildings, rewards, currencies, systems, tutorial steps, save/load behavior, or pacing changes.
   * Existing order requirements, rewards, level gates, and rotation behavior are unchanged.
   * Mobile QA passed at `390x844` and `360x740`; checked level 5 three-item orders remained readable.
@@ -74,7 +76,7 @@ The MVP includes:
 * Save/load, active order persistence, and offline crop growth.
 * Tutorial flow that starts automatically on new saves and Dev Reset, with target-specific pulsing highlights and a sell-crop step after the first plot upgrade.
 * One-time 75 coin tutorial completion reward with improved visible reward feedback.
-* Craft onboarding is part of the tutorial flow and guides the player through making Flour in the Mill.
+* Mill production onboarding is part of the tutorial flow and guides the player through making Flour in the Mill.
 
 Current MVP processed-good and advanced orders:
 
@@ -90,9 +92,9 @@ Current MVP processed-good and advanced orders:
 
 The tutorial starts automatically on new saves and Dev Reset. The old tutorial `Start` button has been removed.
 
-Tutorial guidance now uses pulsing highlights on the actual target the player should tap instead of generic line/circle indicators. Plot steps pulse the starter crop bed, the first order step pulses the `Sunwheat Sack` order card, production steps pulse Craft/Mill controls, and the final step pulses the tutorial completion panel.
+Tutorial guidance now uses pulsing highlights on the actual target the player should tap instead of generic line/circle indicators. Plot steps pulse the starter crop bed, the first order step pulses the `Sunwheat Sack` order card, production steps pulse the Mill landmark, its ready indicator, and the focused Production controls, and the final step pulses the tutorial completion panel.
 
-The tutorial teaches the core loop in this order: plant the full starter Sunwheat field, wait for crop, harvest all starter Sunwheat, complete the first order, buy the first plot upgrade, sell a crop, use Craft to make Flour, start another Mill job, close the Production menu, then complete the tutorial.
+The tutorial teaches the core loop in this order: plant the full starter Sunwheat field, wait for crop, harvest all starter Sunwheat, complete the first order, buy the first plot upgrade, sell a crop, tap the Mill landmark to make Flour, start another Mill job, close the Production window, then complete the tutorial.
 
 Plot upgrades are locked until the tutorial reaches the upgrade step. The upgrade action is labeled `Purchase More Plots`, shows the price, and uses a `Yes / No` confirmation before spending coins.
 
@@ -102,15 +104,15 @@ The final tutorial completion reward is 75 coins, has clearer visible reward fee
 
 Tutorial and hint guidance should be unified: only one tutorial/hint message should be visible at a time.
 
-Craft onboarding is integrated into the tutorial flow:
+Mill production onboarding is integrated into the tutorial flow:
 
-* Open Craft.
-* Start Mill production: `2 Sunwheat -> 1 Flour`; tutorial Craft onboarding keeps Mill quantity simple and locked to 1.
+* Tap the Mill landmark to open its focused `Production` window.
+* Start Mill production: `2 Sunwheat -> 1 Flour`; tutorial Mill onboarding keeps the quantity simple and locked to 1.
 * Wait for Flour.
-* Tap the `Mill Ready` chip.
+* Tap the Mill's ready-product indicator.
 * Collect Flour.
 * Start another Mill production job.
-* Tap outside the Production menu to close it.
+* Tap outside the Production window to close it.
 * Complete the tutorial.
 
 ## MVP Stabilization Notes
@@ -162,7 +164,7 @@ Verified behavior:
 * Plot upgrades are locked until the tutorial reaches the upgrade step.
 * The plot upgrade action is `Purchase More Plots` and uses a `Yes / No` confirmation.
 * Empty plots use a brown dirt visual.
-* Craft onboarding is part of the tutorial flow and guides the player through opening Craft, starting the Mill, waiting for Flour, tapping `Mill Ready`, collecting Flour, starting another Mill job, closing the Production menu, and then completing the tutorial.
+* Mill production onboarding is part of the tutorial flow and guides the player through tapping the Mill landmark, starting the Mill, waiting for Flour, tapping its ready-product indicator, collecting Flour, starting another Mill job, closing the Production window, and then completing the tutorial.
 * Mill and Bakery production work independently and can run at the same time.
 * Mill and Bakery batch production controls are implemented with a whole-number slider, `Max` button, and capped batch size of 10.
 * Batch jobs consume ingredients upfront and can expose partial-ready output while the rest of the batch continues producing.
@@ -171,7 +173,7 @@ Verified behavior:
 * Offline finished production loads as ready and does not auto-collect.
 * Older production saves without `quantity` / `collectedQuantity` default safely to `quantity: 1` and `collectedQuantity: 0`.
 * Older single-Mill saves migrate safely into keyed production state under `mill`, with `bakery` initialized normally.
-* Tutorial Craft onboarding keeps the required Mill production quantity locked to 1.
+* Tutorial Mill onboarding keeps the required production quantity locked to 1.
 * Mobile portrait QA passed at `390x844` and `360x740`.
 * Sell/inventory rows and compact production chips received a small MVP mobile usability polish pass and passed QA at `360x740` and `390x844`.
 * The processed-goods visibility strip for Flour/Bread passed mobile QA at `390x844` and `360x740`.
@@ -184,7 +186,7 @@ Verified behavior:
 * Build passes with only the existing Vite large chunk warning.
 * The item-icon and crop-visual pass changed no gameplay behavior.
 * Production batch controls, partial-ready collection, status wording, compact chip timer layout, save/load defaults, and old-save migration build successfully.
-* Production start/collect feedback passed QA: processed-goods counts updated after collection, no duplicate inventory rewards were found, tutorial Craft onboarding still worked with Mill quantity locked to 1, and mobile QA passed at `390x844` and `360x740`.
+* Production start/collect feedback passed QA: processed-goods counts updated after collection, no duplicate inventory rewards were found, tutorial Mill onboarding still worked with Mill quantity locked to 1, and mobile QA passed at `390x844` and `360x740`.
 * The level 3-5 MVP order content pass is complete using only existing crops, Flour, and Bread.
 * The level 3-5 order pass added no new crops, processed goods, production buildings, tutorial steps, save/load changes, or UI systems.
 * Level 3 pacing is acceptable.
@@ -207,7 +209,7 @@ The following polish items are implemented for the MVP:
 * Simple generated item icons now support Sunwheat, Carrot, Glowberry, Flour, and Bread.
 * Item icons appear in sell/inventory rows, order requirements, and production recipe inputs/outputs.
 * Order cards now include compact `From: X` source labels and simple generated source icons for Farm Stand, Village Market, Village Cook, Baker, and Lantern Guild requests.
-* Order requirement item/material names and Production menu recipe material names now use a warm accent color, while quantities remain in the normal readable text color.
+* Order requirement item/material names and focused Production window recipe material names now use a warm accent color, while quantities remain in the normal readable text color.
 * Farm plot crop visuals now make Sunwheat, Carrot, and Glowberry visually distinct while preserving existing growth and harvest behavior.
 * Harvested crops show visual feedback moving toward the crop inventory/sell area.
 * Order completion now includes coin and XP fly-to-HUD reward feedback.
@@ -241,13 +243,11 @@ In a future UI/art polish pass, replace generated placeholder icons and text row
 
 Future production polish:
 
-* The old full-width Mill farm-screen panel was replaced by the compact Craft button, Production menu, and status chip pattern.
-* Use this Production menu/status chip pattern for future systems such as Bakery, Press, Brewery, etc.
-* Give the Craft button/icon proper art so it reads clearly as production/crafting.
-* Add a stronger visual pointer or arrow for Craft if playtesting shows the highlight is not enough.
+* Production entry uses the fixed physical Mill and Bakery landmarks; the global `Craft` launcher is absent.
+* Improve Mill/Bakery landmark art and physical-building readability, including clear locked restoration/construction states and unlock presentation.
 * Production status chips have MVP tap-target polish, but future art passes can still add clearer visuals and icons.
-* Production start/collect feedback is implemented for MVP; future polish can still improve final animation timing, easing, and art direction.
-* Replace placeholder Mill/Bakery/menu visuals with clear production building/UI art.
+* Production start/collect feedback is implemented for MVP; future polish can align that feedback with the actual Mill/Bakery landmarks where appropriate and improve final animation timing, easing, and art direction.
+* Current Mill and Bakery visuals are functional Phaser-drawn prototype art; future polish can improve the landmarks and building-specific `Production` window UI.
 * Replace generated Flour and Bread placeholder icons with final icons for inventory, orders, and production output.
 * Replace generated crop plot visuals with final crop sprites or polished generated shapes.
 * Improve processed-good and order onboarding later if Flour/Bread order goals are not obvious enough.
