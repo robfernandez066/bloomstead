@@ -42,6 +42,7 @@ export class ProductionMenuSystem {
   private readonly productionSystem: ProductionSystem;
   private config?: ProductionMenuConfig;
   private open = false;
+  private focusedRecipeId?: ProductionRecipeId;
   private readonly selectedQuantities = new Map<ProductionRecipeId, number>();
   private readonly objects: Phaser.GameObjects.GameObject[] = [];
 
@@ -58,25 +59,39 @@ export class ProductionMenuSystem {
     return this.open;
   }
 
-  openMenu(): void {
+  openMenu(recipeId: ProductionRecipeId): void {
+    if (!this.productionSystem.isRecipeAccessible(recipeId)) {
+      return;
+    }
+
+    this.focusedRecipeId = recipeId;
     this.open = true;
     this.refresh();
   }
 
   closeMenu(): void {
     this.open = false;
+    this.focusedRecipeId = undefined;
     this.clearObjects();
     this.config?.onClose();
   }
 
   refresh(): void {
-    if (this.config === undefined || !this.open) {
+    if (this.config === undefined || !this.open || this.focusedRecipeId === undefined) {
       return;
     }
 
     this.clearObjects();
 
     const { x, y, width, height } = this.config;
+    const recipe = this.productionSystem
+      .getAvailableRecipes()
+      .find((candidate) => candidate.id === this.focusedRecipeId);
+
+    if (recipe === undefined) {
+      this.closeMenu();
+      return;
+    }
 
     const overlay = this.scene.add
       .rectangle(0, 0, this.scene.scale.width, this.scene.scale.height, OVERLAY_FILL, 0.18)
@@ -101,7 +116,7 @@ export class ProductionMenuSystem {
 
     this.objects.push(
       this.scene.add
-        .text(x + 14, y + 11, 'Production', {
+        .text(x + 14, y + 11, `${recipe.buildingName} Production`, {
           color: TEXT_COLOR,
           fontFamily: 'Arial, sans-serif',
           fontSize: '18px',
@@ -112,9 +127,7 @@ export class ProductionMenuSystem {
 
     this.renderCloseButton(x + width - 42, y + 10);
 
-    this.productionSystem.getAvailableRecipes().forEach((recipe, index) => {
-      this.renderRecipeEntry(recipe, index);
-    });
+    this.renderRecipeEntry(recipe, 0);
   }
 
   private renderRecipeEntry(recipe: ProductionRecipeDefinition, index: number): void {
@@ -509,6 +522,7 @@ export class ProductionMenuSystem {
 
   private clearObjects(): void {
     for (const object of this.objects) {
+      this.scene.tweens.killTweensOf(object);
       object.destroy();
     }
 

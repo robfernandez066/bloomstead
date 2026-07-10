@@ -11,6 +11,18 @@ const POP_FILL = 0xffe27a;
 const HARVEST_FLY_WINDOW_MS = 320;
 const MAX_HARVEST_FLY_EFFECTS_PER_WINDOW = 4;
 const HARVEST_AGGREGATE_FADE_DELAY_MS = 620;
+const LEVEL_UP_OVERLAY_DEPTH = 200;
+const LEVEL_UP_PANEL_DEPTH = LEVEL_UP_OVERLAY_DEPTH + 1;
+const LEVEL_UP_PANEL_FILL = 0xf7edc7;
+const LEVEL_UP_PANEL_STROKE = 0x496d3e;
+const LEVEL_UP_HEADER_FILL = 0x294f32;
+const LEVEL_UP_SHADOW_FILL = 0x1c2e22;
+const LEVEL_UP_PANEL_MARGIN = 18;
+const LEVEL_UP_HEADER_HEIGHT = 42;
+const LEVEL_UP_LABEL_TOP_PADDING = 7;
+const LEVEL_UP_LABEL_TO_SUMMARY_GAP = 8;
+const LEVEL_UP_SUMMARY_TO_BUTTON_GAP = 16;
+const LEVEL_UP_BOTTOM_PADDING = 16;
 const CROP_FEEDBACK_FILL: Record<CropId, number> = {
   sunwheat: 0xffd65f,
   carrot: 0xf28a3b,
@@ -20,6 +32,7 @@ const CROP_FEEDBACK_FILL: Record<CropId, number> = {
 export class FeedbackSystem {
   private readonly scene: Phaser.Scene;
   private activeLevelUpFeedback?: Phaser.GameObjects.Container;
+  private activeLevelUpOverlay?: Phaser.GameObjects.Rectangle;
   private harvestFlyWindowStartMs = 0;
   private harvestFlyEffectsInWindow = 0;
   private aggregateHarvestText?: Phaser.GameObjects.Text;
@@ -248,54 +261,146 @@ export class FeedbackSystem {
     }
   }
 
-  showLevelUp(level: number, unlockSummary: string[], x: number, y: number): void {
-    this.activeLevelUpFeedback?.destroy();
+  showLevelUp(
+    level: number,
+    unlockSummary: string[],
+    x: number,
+    y: number,
+    onAcknowledge: () => void
+  ): void {
+    this.clearLevelUpFeedback();
 
-    const levelText = this.scene.add
-      .text(0, 0, `Level ${level}!`, {
-        color: '#fff4a8',
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '34px',
-        fontStyle: 'bold',
-        stroke: '#3f512e',
-        strokeThickness: 5
-      })
-      .setOrigin(0.5);
+    const panelWidth = Math.min(354, this.scene.scale.width - 36);
+    const panelX = x - panelWidth / 2;
+    const unlockMessage = unlockSummary.length > 0
+      ? unlockSummary.join('\n')
+      : 'New farm opportunities are ready.';
     const unlockText = this.scene.add
-      .text(0, 34, unlockSummary.join('\n'), {
-        color: '#ffffff',
+      .text(x, 0, unlockMessage, {
+        color: '#2f3b26',
         fontFamily: 'Arial, sans-serif',
-        fontSize: '17px',
+        fontSize: '16px',
         fontStyle: 'bold',
-        stroke: '#3f512e',
-        strokeThickness: 4,
         align: 'center',
-        lineSpacing: 4,
-        wordWrap: { width: 320 }
+        lineSpacing: 5,
+        wordWrap: { width: panelWidth - 36 }
       })
       .setOrigin(0.5, 0);
-    const feedback = this.scene.add
-      .container(x, y, [levelText, unlockText])
-      .setDepth(120)
-      .setScale(0.72);
+    const summaryLabel = this.scene.add
+      .text(x, 0, 'UNLOCKED', {
+        color: '#496d3e',
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '12px',
+        fontStyle: 'bold',
+        letterSpacing: 1
+      })
+      .setOrigin(0.5, 0);
+    const continueWidth = 112;
+    const continueHeight = 36;
+    const panelHeight =
+      LEVEL_UP_HEADER_HEIGHT +
+      LEVEL_UP_LABEL_TOP_PADDING +
+      summaryLabel.height +
+      LEVEL_UP_LABEL_TO_SUMMARY_GAP +
+      unlockText.height +
+      LEVEL_UP_SUMMARY_TO_BUTTON_GAP +
+      continueHeight +
+      LEVEL_UP_BOTTOM_PADDING;
+    const panelY = Phaser.Math.Clamp(
+      y - panelHeight / 2,
+      LEVEL_UP_PANEL_MARGIN,
+      this.scene.scale.height - panelHeight - LEVEL_UP_PANEL_MARGIN
+    );
+    const summaryLabelY = panelY + LEVEL_UP_HEADER_HEIGHT + LEVEL_UP_LABEL_TOP_PADDING;
+    const summaryY = summaryLabelY + summaryLabel.height + LEVEL_UP_LABEL_TO_SUMMARY_GAP;
+    const continueX = x - continueWidth / 2;
+    const continueY = summaryY + unlockText.height + LEVEL_UP_SUMMARY_TO_BUTTON_GAP;
 
+    unlockText.setPosition(x, summaryY);
+    summaryLabel.setPosition(x, summaryLabelY);
+
+    const overlay = this.scene.add
+      .rectangle(0, 0, this.scene.scale.width, this.scene.scale.height, 0x17251b, 0.48)
+      .setOrigin(0, 0)
+      .setInteractive()
+      .setDepth(LEVEL_UP_OVERLAY_DEPTH);
+    const shadow = this.scene.add
+      .rectangle(panelX + 4, panelY + 5, panelWidth, panelHeight, LEVEL_UP_SHADOW_FILL, 0.36)
+      .setOrigin(0, 0);
+    const panel = this.scene.add
+      .rectangle(panelX, panelY, panelWidth, panelHeight, LEVEL_UP_PANEL_FILL)
+      .setOrigin(0, 0)
+      .setStrokeStyle(4, LEVEL_UP_PANEL_STROKE);
+    const header = this.scene.add
+      .rectangle(panelX, panelY, panelWidth, LEVEL_UP_HEADER_HEIGHT, LEVEL_UP_HEADER_FILL)
+      .setOrigin(0, 0);
+    const levelText = this.scene.add
+      .text(x, panelY + 10, `Level ${level}!`, {
+        color: '#fff4a8',
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '27px',
+        fontStyle: 'bold',
+        stroke: '#193021',
+        strokeThickness: 3
+      })
+      .setOrigin(0.5, 0);
+    const continueButton = this.scene.add
+      .rectangle(continueX, continueY, continueWidth, continueHeight, LEVEL_UP_PANEL_STROKE)
+      .setOrigin(0, 0)
+      .setStrokeStyle(2, LEVEL_UP_HEADER_FILL)
+      .setInteractive({ useHandCursor: true });
+    const continueText = this.scene.add
+      .text(x, continueY + continueHeight / 2, 'Continue', {
+        color: '#fff4d0',
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '16px',
+        fontStyle: 'bold'
+      })
+      .setOrigin(0.5);
+    const feedback = this.scene.add
+      .container(0, 0, [
+        shadow,
+        panel,
+        header,
+        levelText,
+        summaryLabel,
+        unlockText,
+        continueButton,
+        continueText
+      ])
+      .setDepth(LEVEL_UP_PANEL_DEPTH);
+
+    const dismiss = (): void => {
+      if (this.activeLevelUpFeedback !== feedback) {
+        return;
+      }
+
+      this.clearLevelUpFeedback();
+      onAcknowledge();
+    };
+
+    overlay.on('pointerdown', () => undefined);
+    continueButton.on('pointerdown', dismiss);
+    this.activeLevelUpOverlay = overlay;
     this.activeLevelUpFeedback = feedback;
 
     this.scene.tweens.add({
       targets: feedback,
-      y: y - 26,
-      scale: 1.12,
-      alpha: 0,
-      duration: 1800,
-      ease: 'Sine.easeOut',
-      onComplete: () => {
-        feedback.destroy();
-
-        if (this.activeLevelUpFeedback === feedback) {
-          this.activeLevelUpFeedback = undefined;
-        }
-      }
+      scale: { from: 0.94, to: 1 },
+      duration: 180,
+      ease: 'Back.Out'
     });
+  }
+
+  private clearLevelUpFeedback(): void {
+    if (this.activeLevelUpFeedback !== undefined) {
+      this.scene.tweens.killTweensOf(this.activeLevelUpFeedback);
+      this.activeLevelUpFeedback.destroy();
+      this.activeLevelUpFeedback = undefined;
+    }
+
+    this.activeLevelUpOverlay?.destroy();
+    this.activeLevelUpOverlay = undefined;
   }
 
   showOrderComplete(x: number, y: number): void {

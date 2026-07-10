@@ -7,6 +7,7 @@ import { FARM_LAYOUT } from '../ui/LayoutConfig';
 import { MuteToggleSystem } from '../ui/MuteToggleSystem';
 import { OrderBoardSystem } from '../ui/OrderBoardSystem';
 import { ProcessedGoodsStripSystem } from '../ui/ProcessedGoodsStripSystem';
+import { ProductionLandmarkSystem } from '../ui/ProductionLandmarkSystem';
 import { ProductionMenuSystem } from '../ui/ProductionMenuSystem';
 import { ProductionStatusSystem } from '../ui/ProductionStatusSystem';
 import { SeedSelectorSystem } from '../ui/SeedSelectorSystem';
@@ -26,6 +27,7 @@ import { ProductionSystem } from '../systems/ProductionSystem';
 import { TutorialSystem } from '../systems/TutorialSystem';
 import { UpgradeSystem } from '../systems/UpgradeSystem';
 import type { ItemId } from '../models/ItemTypes';
+import type { ProductionRecipeId } from '../models/ProductionTypes';
 import type { TutorialStepId } from '../models/TutorialTypes';
 
 type DragMode = 'none' | 'plant' | 'harvest';
@@ -94,6 +96,7 @@ export class FarmScene extends Phaser.Scene {
     const muteToggleSystem = new MuteToggleSystem(this, audioSystem);
     const productionMenuSystem = new ProductionMenuSystem(this, productionSystem);
     const productionStatusSystem = new ProductionStatusSystem(this, productionSystem);
+    const productionLandmarkSystem = new ProductionLandmarkSystem(this, productionSystem);
     const processedGoodsStripSystem = new ProcessedGoodsStripSystem(this, gameStateSystem);
     const postTutorialGoalObjects: Phaser.GameObjects.GameObject[] = [];
     let gridSystem: GridSystem;
@@ -125,7 +128,7 @@ export class FarmScene extends Phaser.Scene {
         return 'Next unlock: Level 5 - Village Feast order.';
       }
 
-      return 'Next goal: Optimize crops, Craft, and village orders.';
+      return 'Next goal: Optimize crops, production, and village orders.';
     };
 
     const refreshPostTutorialGoal = (): void => {
@@ -170,6 +173,7 @@ export class FarmScene extends Phaser.Scene {
       productionStatusSystem.refresh();
       processedGoodsStripSystem.refresh();
       productionMenuSystem.refresh();
+      productionLandmarkSystem.refresh();
     };
 
     const refreshTutorialIfAdvanced = (advanced: boolean): void => {
@@ -183,7 +187,26 @@ export class FarmScene extends Phaser.Scene {
       tutorialPanelSystem.refresh();
       productionStatusSystem.refresh();
       processedGoodsStripSystem.refresh();
+      productionLandmarkSystem.refresh();
       refreshPostTutorialGoal();
+    };
+
+    const openProductionForRecipe = (recipeId: ProductionRecipeId): void => {
+      if (!productionSystem.isRecipeAccessible(recipeId)) {
+        audioSystem.playDisabledTap();
+        return;
+      }
+
+      audioSystem.playButtonTap();
+      productionMenuSystem.openMenu(recipeId);
+
+      if (
+        recipeId === MILL_FLOUR_RECIPE_ID &&
+        tutorialSystem.recordCraftOpened()
+      ) {
+        refreshOnboardingUi();
+        saveGame();
+      }
     };
 
     const maybeShowCraftGuidance = (): void => {
@@ -348,7 +371,12 @@ export class FarmScene extends Phaser.Scene {
         currentLevel,
         getLevelUnlockSummary(previousLevel, currentLevel),
         width / 2,
-        height * 0.28
+        height * 0.28,
+        () => {
+          productionLandmarkSystem.refresh();
+          tutorialPanelSystem.refresh();
+          refreshPostTutorialGoal();
+        }
       );
       maybeShowCraftGuidance();
     };
@@ -576,6 +604,16 @@ export class FarmScene extends Phaser.Scene {
 
     gridSystem.render();
 
+    productionLandmarkSystem.render({
+      landmarks: FARM_LAYOUT.productionLandmarks,
+      onOpen: openProductionForRecipe,
+      onLockedTap: () => audioSystem.playDisabledTap(),
+      shouldHighlightLandmark: (recipeId) =>
+        recipeId === MILL_FLOUR_RECIPE_ID && tutorialSystem.shouldHighlightCraftButton(),
+      shouldHighlightReady: (recipeId) =>
+        recipeId === MILL_FLOUR_RECIPE_ID && tutorialSystem.shouldHighlightMillReady()
+    });
+
     hudSystem.render(
       FARM_LAYOUT.hud.x,
       FARM_LAYOUT.hud.y,
@@ -640,10 +678,7 @@ export class FarmScene extends Phaser.Scene {
         refreshTutorialIfAdvanced(tutorialAdvanced);
         saveGame();
         const inputItemId = Object.keys(result.recipe.input)[0] as ItemId;
-        const recipeIndex = productionSystem
-          .getAvailableRecipes()
-          .findIndex((recipe) => recipe.id === result.recipe.id);
-        const recipeRowY = FARM_LAYOUT.productionMenu.y + 88 + Math.max(0, recipeIndex) * 106;
+        const recipeRowY = FARM_LAYOUT.productionMenu.y + 88;
 
         feedbackSystem.showProductionStarted(
           { x: FARM_LAYOUT.productionMenu.x + 68, y: recipeRowY },
@@ -676,10 +711,7 @@ export class FarmScene extends Phaser.Scene {
         refreshPostTutorialGoal();
         refreshTutorialIfAdvanced(tutorialAdvanced);
         saveGame();
-        const recipeIndex = productionSystem
-          .getAvailableRecipes()
-          .findIndex((recipe) => recipe.id === result.recipe.id);
-        const recipeRowY = FARM_LAYOUT.productionMenu.y + 88 + Math.max(0, recipeIndex) * 106;
+        const recipeRowY = FARM_LAYOUT.productionMenu.y + 88;
 
         feedbackSystem.showProductionCollected(
           { x: FARM_LAYOUT.productionMenu.x + FARM_LAYOUT.productionMenu.width - 62, y: recipeRowY },
@@ -720,25 +752,13 @@ export class FarmScene extends Phaser.Scene {
     });
 
     productionStatusSystem.render({
-      buttonX: FARM_LAYOUT.productionButton.x,
-      buttonY: FARM_LAYOUT.productionButton.y,
-      buttonWidth: FARM_LAYOUT.productionButton.width,
-      buttonHeight: FARM_LAYOUT.productionButton.height,
       statusX: FARM_LAYOUT.productionStatus.x,
       statusY: FARM_LAYOUT.productionStatus.y,
       statusWidth: FARM_LAYOUT.productionStatus.width,
       statusHeight: FARM_LAYOUT.productionStatus.height,
-      highlightButton: () => tutorialSystem.shouldHighlightCraftButton(),
       highlightRecipeChip: (recipeId) =>
         recipeId === MILL_FLOUR_RECIPE_ID && tutorialSystem.shouldHighlightMillReady(),
-      onOpen: () => {
-        audioSystem.playButtonTap();
-        productionMenuSystem.openMenu();
-        if (tutorialSystem.recordCraftOpened()) {
-          refreshOnboardingUi();
-          saveGame();
-        }
-      }
+      onOpen: openProductionForRecipe
     });
 
     processedGoodsStripSystem.render({
@@ -837,9 +857,10 @@ export class FarmScene extends Phaser.Scene {
 
           for (const recipe of productionReadyRecipes) {
             audioSystem.playCropReady();
+            const landmarkBounds = productionLandmarkSystem.getLandmarkBounds(recipe.id);
             feedbackSystem.showProductionReady(
-              width / 2,
-              FARM_LAYOUT.productionStatus.y - 8,
+              landmarkBounds.centerX,
+              landmarkBounds.y - 2,
               recipe.outputItemId
             );
 
@@ -930,27 +951,18 @@ export class FarmScene extends Phaser.Scene {
             height: FARM_LAYOUT.cropSellPanel.buttonHeight
           };
         case 'craft-open':
-          return FARM_LAYOUT.productionButton;
+          return productionLandmarkSystem.getLandmarkBounds(MILL_FLOUR_RECIPE_ID);
         case 'craft-start-mill':
         case 'craft-collect-flour':
         case 'craft-start-second-mill':
           return productionMenuSystem.isOpen()
             ? getMillActionButtonBounds()
-            : FARM_LAYOUT.productionButton;
+            : productionLandmarkSystem.getLandmarkBounds(MILL_FLOUR_RECIPE_ID);
         case 'craft-open-ready':
-          return {
-            x: FARM_LAYOUT.productionStatus.x,
-            y: FARM_LAYOUT.productionStatus.y,
-            width: 108,
-            height: FARM_LAYOUT.productionStatus.height
-          };
+          return productionLandmarkSystem.getReadyIndicatorBounds(MILL_FLOUR_RECIPE_ID) ??
+            productionLandmarkSystem.getLandmarkBounds(MILL_FLOUR_RECIPE_ID);
         case 'craft-close-menu':
-          return {
-            x: 18,
-            y: FARM_LAYOUT.productionMenu.y + FARM_LAYOUT.productionMenu.height + 8,
-            width: 76,
-            height: 48
-          };
+          return null;
         case 'craft-wait-flour':
           return null;
         default:
@@ -959,7 +971,7 @@ export class FarmScene extends Phaser.Scene {
     };
 
     const shouldUseTutorialArrow = (stepId: TutorialStepId) => {
-      return stepId === 'craft-close-menu';
+      return false;
     };
 
     tutorialPanelSystem.render({

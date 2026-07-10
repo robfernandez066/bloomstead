@@ -3,11 +3,15 @@ import type { TutorialSystem } from '../systems/TutorialSystem';
 import type { TutorialStepId } from '../models/TutorialTypes';
 
 const PANEL_FILL = 0xf7edc7;
-const PANEL_STROKE = 0x6f5734;
+const PANEL_STROKE = 0x496d3e;
+const PANEL_SHADOW = 0x263b2a;
+const PANEL_HEADER_FILL = 0x294f32;
 const PANEL_HIGHLIGHT = 0xffe27a;
-const BUTTON_FILL = 0x6f5734;
+const BUTTON_FILL = 0x496d3e;
 const TEXT_COLOR = '#2f3b26';
 const BUTTON_TEXT_COLOR = '#fff4d0';
+const HEADER_TEXT_COLOR = '#fff4d0';
+const HEADER_HEIGHT = 22;
 
 interface TutorialBounds {
   x: number;
@@ -63,13 +67,30 @@ export class TutorialPanelSystem {
       this.renderTargetGuidance(panelBounds, targetBounds);
     }
 
+    const shadow = this.scene.add
+      .rectangle(panelBounds.x + 3, panelBounds.y + 4, panelBounds.width, panelBounds.height, PANEL_SHADOW, 0.26)
+      .setOrigin(0, 0)
+      .setDepth(120);
     const panel = this.scene.add
       .rectangle(panelBounds.x, panelBounds.y, panelBounds.width, panelBounds.height, PANEL_FILL)
       .setOrigin(0, 0)
       .setStrokeStyle(3, PANEL_STROKE)
-      .setDepth(120);
+      .setDepth(121);
+    const header = this.scene.add
+      .rectangle(panelBounds.x, panelBounds.y, panelBounds.width, HEADER_HEIGHT, PANEL_HEADER_FILL)
+      .setOrigin(0, 0)
+      .setDepth(122);
+    const headerText = this.scene.add
+      .text(panelBounds.x + 10, panelBounds.y + 4, 'FARM GUIDE', {
+        color: HEADER_TEXT_COLOR,
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '12px',
+        fontStyle: 'bold',
+        letterSpacing: 1
+      })
+      .setDepth(123);
 
-    this.objects.push(panel);
+    this.objects.push(shadow, panel, header, headerText);
 
     if (step.id === 'complete') {
       this.scene.tweens.add({
@@ -88,7 +109,7 @@ export class TutorialPanelSystem {
 
     this.objects.push(
       this.scene.add
-        .text(panelBounds.x + 10, panelBounds.y + 9, step.message, {
+          .text(panelBounds.x + 10, panelBounds.y + HEADER_HEIGHT + 6, step.message, {
           color: TEXT_COLOR,
           fontFamily: 'Arial, sans-serif',
           fontSize: '13px',
@@ -96,7 +117,7 @@ export class TutorialPanelSystem {
           lineSpacing: 2,
           wordWrap: { width: textWidth }
         })
-        .setDepth(121)
+        .setDepth(123)
     );
 
     if (step.requiresAcknowledgement) {
@@ -166,14 +187,14 @@ export class TutorialPanelSystem {
     const buttonWidth = label === 'Complete' ? 82 : 66;
     const buttonHeight = 30;
     const buttonX = bounds.x + bounds.width - buttonWidth - 10;
-    const buttonY = bounds.y + (bounds.height - buttonHeight) / 2;
+    const buttonY = bounds.y + HEADER_HEIGHT + (bounds.height - HEADER_HEIGHT - buttonHeight) / 2;
 
     const button = this.scene.add
       .rectangle(buttonX, buttonY, buttonWidth, buttonHeight, BUTTON_FILL)
       .setOrigin(0, 0)
       .setStrokeStyle(2, PANEL_STROKE)
       .setInteractive({ useHandCursor: true })
-      .setDepth(122);
+      .setDepth(124);
 
     button.on('pointerdown', () => {
       this.config?.onAcknowledge();
@@ -189,7 +210,7 @@ export class TutorialPanelSystem {
           fontStyle: 'bold'
         })
         .setOrigin(0.5)
-        .setDepth(123)
+        .setDepth(125)
     );
   }
 

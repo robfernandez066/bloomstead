@@ -24,16 +24,24 @@ export const FARM_LAYOUT = {
     markerAnchorOffsetY: 0,
     debugAnchors: false
   },
-  productionButton: {
-    x: 18,
-    y: 356,
-    width: 58,
-    height: 44
+  productionLandmarks: {
+    mill: {
+      x: 18,
+      y: 170,
+      width: 82,
+      height: 78
+    },
+    bakery: {
+      x: 290,
+      y: 170,
+      width: 82,
+      height: 78
+    }
   },
   productionStatus: {
-    x: 84,
+    x: 18,
     y: 356,
-    width: 288,
+    width: 354,
     height: 44
   },
   productionMenu: {

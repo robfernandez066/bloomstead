@@ -62,6 +62,13 @@ export class ProductionSystem {
     return this.gameState.getState().farmLevel >= PRODUCTION_RECIPES[recipeId].unlockLevel;
   }
 
+  isRecipeAccessible(recipeId: ProductionRecipeId): boolean {
+    return (
+      this.isRecipeUnlocked(recipeId) ||
+      this.getRecipeState(recipeId).status !== 'idle'
+    );
+  }
+
   getActiveRecipes(): ProductionRecipeDefinition[] {
     return this.getAvailableRecipes().filter((recipe) => {
       return this.getRecipeState(recipe.id).status !== 'idle';

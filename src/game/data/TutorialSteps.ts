@@ -43,12 +43,12 @@ export const TUTORIAL_STEPS: TutorialStepDefinition[] = [
   },
   {
     id: 'craft-hint',
-    message: 'You can refine your crops further using the Craft menu.',
+    message: 'The restored Mill can refine your Sunwheat into Flour.',
     requiresAcknowledgement: false
   },
   {
     id: 'craft-open',
-    message: 'You can refine your crops further using the Craft menu.',
+    message: 'Tap the Mill to open its Production window.',
     requiresAcknowledgement: false
   },
   {
@@ -78,7 +78,7 @@ export const TUTORIAL_STEPS: TutorialStepDefinition[] = [
   },
   {
     id: 'craft-close-menu',
-    message: 'Tap here to close production window.',
+    message: 'Tap outside the Production window to close it.',
     requiresAcknowledgement: false
   }
 ];
