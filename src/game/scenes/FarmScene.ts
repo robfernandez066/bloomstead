@@ -568,9 +568,19 @@ export class FarmScene extends Phaser.Scene {
 
         const plantResult = plantingSystem.beginPaint(plot);
 
-        if (plantResult !== null) {
+        if (plantResult?.status === 'planted') {
           dragMode = 'plant';
           handlePlantResult(plantResult);
+          return;
+        }
+
+        if (plantResult?.status === 'insufficient-coins') {
+          dragMode = 'plant';
+          feedbackSystem.showInsufficientCoins(
+            gridSystem.getPlotScreenPosition(plantResult.plot),
+            plantResult.crop.seedCost
+          );
+          audioSystem.playDisabledTap();
           return;
         }
 
@@ -595,8 +605,14 @@ export class FarmScene extends Phaser.Scene {
 
           const plantResult = plantingSystem.paintOver(plot);
 
-          if (plantResult !== null) {
+          if (plantResult?.status === 'planted') {
             handlePlantResult(plantResult);
+          } else if (plantResult?.status === 'insufficient-coins') {
+            feedbackSystem.showInsufficientCoins(
+              gridSystem.getPlotScreenPosition(plantResult.plot),
+              plantResult.crop.seedCost
+            );
+            audioSystem.playDisabledTap();
           }
         }
       }

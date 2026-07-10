@@ -136,6 +136,17 @@ export class FeedbackSystem {
     this.showFloatingText(`-${seedCost}c`, position.x, position.y - 24, 620, 18, '#fff0a8');
   }
 
+  showInsufficientCoins(position: IsometricPoint, seedCost: number): void {
+    this.showFloatingText(
+      `Need ${seedCost} coins`,
+      position.x,
+      position.y - 24,
+      900,
+      20,
+      '#fff0a8'
+    );
+  }
+
   showCropSold(x: number, y: number, cropName: string, coins: number): void {
     this.showFloatingText(`Sold ${cropName} +${coins}c`, x, y, 760, 22, '#fff4a8');
   }

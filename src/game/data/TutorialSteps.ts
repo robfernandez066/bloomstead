@@ -28,7 +28,7 @@ export const TUTORIAL_STEPS: TutorialStepDefinition[] = [
   },
   {
     id: 'upgrade-plots',
-    message: 'You can spend gold to expand your farm. Tap here to upgrade.',
+    message: 'You can spend coins to expand your farm. Tap here to upgrade.',
     requiresAcknowledgement: false
   },
   {

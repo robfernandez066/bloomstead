@@ -136,7 +136,7 @@ export class GameStateSystem {
     const previousLevel = this.state.farmLevel;
 
     this.state.farmXp += amount;
-    this.state.farmLevel = getFarmLevelForXp(this.state.farmXp);
+    this.state.farmLevel = Math.max(previousLevel, getFarmLevelForXp(this.state.farmXp));
 
     return {
       previousLevel,

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { getNextFarmLevelThreshold } from '../data/LevelProgression';
 import type { GameStateSystem } from '../systems/GameStateSystem';
 
 const PANEL_FILL = 0xf4e6b3;
@@ -35,10 +36,15 @@ export class HudSystem {
   refresh(): void {
     const state = this.gameState.getState();
     const selectedSeed = this.gameState.getSelectedSeed();
+    const nextLevelThreshold = getNextFarmLevelThreshold(state.farmLevel);
 
     this.coinsText?.setText(`Coins: ${state.coins}`);
     this.levelText?.setText(`Level: ${state.farmLevel}`);
-    this.xpText?.setText(`XP: ${state.farmXp}`);
+    this.xpText?.setText(
+      nextLevelThreshold === null
+        ? `XP: ${state.farmXp} | Max`
+        : `XP: ${state.farmXp} / ${nextLevelThreshold.requiredXp}`
+    );
     this.selectedSeedText?.setText(`Seed: ${selectedSeed.name}`);
   }
 

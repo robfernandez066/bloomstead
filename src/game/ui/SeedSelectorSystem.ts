@@ -52,7 +52,9 @@ export class SeedSelectorSystem {
       button.setFillStyle(unlocked ? fillColor : LOCKED_FILL);
       button.setAlpha(unlocked ? 1 : 0.72);
       label.setColor(unlocked ? UNLOCKED_TEXT : LOCKED_TEXT);
-      label.setText(unlocked ? crop.name : `${crop.name}\nLevel ${crop.unlockLevel}`);
+      label.setText(
+        unlocked ? `${crop.name}\n${crop.seedCost} coins` : `${crop.name}\nLevel ${crop.unlockLevel}`
+      );
 
       if (unlocked) {
         button.setInteractive({ useHandCursor: true });
@@ -89,7 +91,7 @@ export class SeedSelectorSystem {
       .text(
         x + config.buttonWidth / 2,
         config.y + config.buttonHeight / 2,
-        unlocked ? crop.name : `${crop.name}\nLevel ${crop.unlockLevel}`,
+        unlocked ? `${crop.name}\n${crop.seedCost} coins` : `${crop.name}\nLevel ${crop.unlockLevel}`,
         {
           color: unlocked ? UNLOCKED_TEXT : LOCKED_TEXT,
           fontFamily: 'Arial, sans-serif',
