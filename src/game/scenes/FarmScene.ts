@@ -70,6 +70,8 @@ export class FarmScene extends Phaser.Scene {
     let dragMode: DragMode = 'none';
     let pendingTapHarvest: HarvestResult | null = null;
     let pendingTapHarvestPosition: Phaser.Math.Vector2 | null = null;
+    let lastPaintPointerPosition: Phaser.Math.Vector2 | null = null;
+    let activeGesturePointerId: number | null = null;
     let suppressPlantingUntil = 0;
 
     const saveGame = (): void => {
@@ -553,17 +555,25 @@ export class FarmScene extends Phaser.Scene {
       markerAnchorOffsetY: FARM_LAYOUT.farmGrid.markerAnchorOffsetY,
       debugAnchors: FARM_LAYOUT.farmGrid.debugAnchors
     }, plotStateSystem.getPlots(), {
-      onPlotPressed: (plot) => {
+      onPlotPressed: (plot, pointer) => {
+        if (activeGesturePointerId !== null) {
+          return;
+        }
+
+        activeGesturePointerId = pointer.id;
+        lastPaintPointerPosition = new Phaser.Math.Vector2(pointer.x, pointer.y);
         const harvestResult = harvestingSystem.beginHarvest(plot);
 
         if (harvestResult !== null) {
           dragMode = 'harvest';
+          lastPaintPointerPosition = null;
           handleHarvestResult(harvestResult, 'defer-single');
           return;
         }
 
         if (this.time.now < suppressPlantingUntil) {
           dragMode = 'none';
+          lastPaintPointerPosition = null;
           return;
         }
 
@@ -587,9 +597,10 @@ export class FarmScene extends Phaser.Scene {
 
         audioSystem.playDisabledTap();
         dragMode = 'none';
+        lastPaintPointerPosition = null;
       },
-      onPlotDraggedOver: (plot) => {
-        if (dragMode === 'harvest') {
+      onPlotDraggedOver: (plot, pointer) => {
+        if (dragMode === 'harvest' && activeGesturePointerId === pointer.id) {
           const harvestResult = harvestingSystem.harvestOver(plot);
 
           if (harvestResult !== null) {
@@ -597,24 +608,6 @@ export class FarmScene extends Phaser.Scene {
           }
 
           return;
-        }
-
-        if (dragMode === 'plant') {
-          if (this.time.now < suppressPlantingUntil) {
-            return;
-          }
-
-          const plantResult = plantingSystem.paintOver(plot);
-
-          if (plantResult?.status === 'planted') {
-            handlePlantResult(plantResult);
-          } else if (plantResult?.status === 'insufficient-coins') {
-            feedbackSystem.showInsufficientCoins(
-              gridSystem.getPlotScreenPosition(plantResult.plot),
-              plantResult.crop.seedCost
-            );
-            audioSystem.playDisabledTap();
-          }
         }
       }
     });
@@ -832,12 +825,102 @@ export class FarmScene extends Phaser.Scene {
 
     renderOrderBoard();
 
-    this.input.on('pointerup', () => {
+    const paintStrokeTo = (pointer: Phaser.Input.Pointer): void => {
+      if (
+        dragMode !== 'plant' ||
+        activeGesturePointerId !== pointer.id ||
+        lastPaintPointerPosition === null
+      ) {
+        return;
+      }
+
+      const currentPosition = new Phaser.Math.Vector2(pointer.x, pointer.y);
+
+      for (const plot of gridSystem.getPlotsCrossedByScreenSegment(lastPaintPointerPosition, currentPosition)) {
+        const plantResult = plantingSystem.paintOver(plot);
+
+        if (plantResult?.status === 'planted') {
+          handlePlantResult(plantResult);
+        } else if (plantResult?.status === 'insufficient-coins') {
+          feedbackSystem.showInsufficientCoins(
+            gridSystem.getPlotScreenPosition(plantResult.plot),
+            plantResult.crop.seedCost
+          );
+          audioSystem.playDisabledTap();
+        }
+      }
+
+      lastPaintPointerPosition = currentPosition;
+    };
+    const endGesture = (): void => {
+      activeGesturePointerId = null;
+      lastPaintPointerPosition = null;
       flushPendingTapHarvestText();
       plantingSystem.endPaint();
       harvestingSystem.endHarvest();
       dragMode = 'none';
-    });
+    };
+    const endGestureWithPointer = (pointer: Phaser.Input.Pointer): void => {
+      if (activeGesturePointerId !== pointer.id) {
+        return;
+      }
+
+      if (dragMode === 'plant') {
+        paintStrokeTo(pointer);
+      }
+
+      endGesture();
+    };
+    const handlePaintMove = (pointer: Phaser.Input.Pointer): void => {
+      if (
+        dragMode !== 'plant' ||
+        activeGesturePointerId !== pointer.id ||
+        !pointer.isDown
+      ) {
+        return;
+      }
+
+      paintStrokeTo(pointer);
+    };
+    const handlePointerUp = (pointer: Phaser.Input.Pointer): void => {
+      endGestureWithPointer(pointer);
+    };
+    const handlePointerUpOutside = (pointer: Phaser.Input.Pointer): void => {
+      endGestureWithPointer(pointer);
+    };
+    const handlePointerCancel = (candidate?: unknown): void => {
+      if (candidate instanceof Phaser.Input.Pointer) {
+        endGestureWithPointer(candidate);
+        return;
+      }
+
+      endGesture();
+    };
+    const handleGameOut = (_timeStamp: number, _event: MouseEvent | TouchEvent): void => {
+      endGesture();
+    };
+    const handleInterrupted = (): void => {
+      endGesture();
+    };
+    const cleanupInput = (): void => {
+      endGesture();
+      this.input.off('pointermove', handlePaintMove);
+      this.input.off('pointerup', handlePointerUp);
+      this.input.off('pointerupoutside', handlePointerUpOutside);
+      this.input.off('pointercancel', handlePointerCancel);
+      this.input.off('gameout', handleGameOut);
+      this.game.events.off(Phaser.Core.Events.BLUR, handleInterrupted);
+      this.game.events.off(Phaser.Core.Events.HIDDEN, handleInterrupted);
+    };
+
+    this.input.on('pointermove', handlePaintMove);
+    this.input.on('pointerup', handlePointerUp);
+    this.input.on('pointerupoutside', handlePointerUpOutside);
+    this.input.on('pointercancel', handlePointerCancel);
+    this.input.on('gameout', handleGameOut);
+    this.game.events.on(Phaser.Core.Events.BLUR, handleInterrupted);
+    this.game.events.on(Phaser.Core.Events.HIDDEN, handleInterrupted);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, cleanupInput);
 
     this.time.addEvent({
       delay: 250,

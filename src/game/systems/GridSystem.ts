@@ -30,8 +30,8 @@ const DEBUG_LABEL_COLOR = '#1b2b1b';
 const CROP_VISUAL_LOCAL_Y = 3;
 
 interface GridSystemHandlers {
-  onPlotPressed?: (plot: PlotState) => void;
-  onPlotDraggedOver?: (plot: PlotState) => void;
+  onPlotPressed?: (plot: PlotState, pointer: Phaser.Input.Pointer) => void;
+  onPlotDraggedOver?: (plot: PlotState, pointer: Phaser.Input.Pointer) => void;
 }
 
 interface CropStageVisuals {
@@ -121,6 +121,21 @@ export class GridSystem {
       maxX - minX + padding * 2,
       maxY - minY + padding * 2
     );
+  }
+
+  getPlotsCrossedByScreenSegment(
+    start: Phaser.Math.Vector2,
+    end: Phaser.Math.Vector2
+  ): PlotState[] {
+    return this.plots
+      .filter((plot) => plot.unlocked)
+      .map((plot) => ({
+        plot,
+        entry: this.getScreenSegmentEntry(plot, start, end)
+      }))
+      .filter((candidate): candidate is { plot: PlotState; entry: number } => candidate.entry !== null)
+      .sort((left, right) => left.entry - right.entry)
+      .map((candidate) => candidate.plot);
   }
 
   playPlantEffect(plot: PlotState): void {
@@ -231,14 +246,14 @@ export class GridSystem {
     });
     this.refreshPlotVisual(plot);
 
-    diamond.on('pointerdown', () => {
+    diamond.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       this.logTilePosition(position);
-      this.handlers.onPlotPressed?.(plot);
+      this.handlers.onPlotPressed?.(plot, pointer);
     });
 
     diamond.on('pointerover', (pointer: Phaser.Input.Pointer) => {
       if (pointer.isDown) {
-        this.handlers.onPlotDraggedOver?.(plot);
+        this.handlers.onPlotDraggedOver?.(plot, pointer);
       }
 
       if (plot.unlocked) {
@@ -304,6 +319,56 @@ export class GridSystem {
 
   private getPlotKey(plot: PlotState): string {
     return `${plot.row}:${plot.column}`;
+  }
+
+  private getScreenSegmentEntry(
+    plot: PlotState,
+    start: Phaser.Math.Vector2,
+    end: Phaser.Math.Vector2
+  ): number | null {
+    const center = this.getPlotScreenPosition(plot);
+    const halfWidth = this.config.tileWidth / 2;
+    const halfHeight = this.config.tileHeight / 2;
+    const startX = start.x - center.x;
+    const startY = start.y - center.y;
+    const deltaX = end.x - start.x;
+    const deltaY = end.y - start.y;
+    const constraints = [
+      { x: 1 / halfWidth, y: 1 / halfHeight },
+      { x: 1 / halfWidth, y: -1 / halfHeight },
+      { x: -1 / halfWidth, y: 1 / halfHeight },
+      { x: -1 / halfWidth, y: -1 / halfHeight }
+    ];
+    const epsilon = 0.0001;
+    let entry = 0;
+    let exit = 1;
+
+    for (const constraint of constraints) {
+      const position = constraint.x * startX + constraint.y * startY;
+      const movement = constraint.x * deltaX + constraint.y * deltaY;
+
+      if (Math.abs(movement) < epsilon) {
+        if (position > 1 + epsilon) {
+          return null;
+        }
+
+        continue;
+      }
+
+      const boundary = (1 - position) / movement;
+
+      if (movement > 0) {
+        exit = Math.min(exit, boundary);
+      } else {
+        entry = Math.max(entry, boundary);
+      }
+
+      if (entry > exit) {
+        return null;
+      }
+    }
+
+    return exit - entry > epsilon ? Phaser.Math.Clamp(entry, 0, 1) : null;
   }
 
   private getLocalTileCenter(plot: PlotState): Phaser.Math.Vector2 {
