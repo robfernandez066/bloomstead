@@ -2,6 +2,8 @@
 
 Use this checklist before sharing Bloomstead with a small playtest group. Test on a mobile-sized viewport first, ideally `390x844`, then spot-check `360x740`.
 
+For observed first-session sessions, also use the [MVP Playtest Facilitator Worksheet](MVP_PLAYTEST_FACILITATOR_WORKSHEET.md).
+
 ## Setup
 
 * Start from a fresh save or use Dev Reset.
