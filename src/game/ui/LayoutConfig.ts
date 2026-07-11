@@ -71,11 +71,17 @@ export const FARM_LAYOUT = {
   },
   orderBoard: {
     x: 18,
-    y: 458,
+    y: 176,
     width: 354,
-    orderHeight: 54,
+    orderHeight: 68,
     gap: 6,
-    bottomPadding: 14
+    bottomPadding: 12
+  },
+  communityBoard: {
+    x: 282,
+    y: 458,
+    width: 90,
+    height: 82
   },
   tutorialPanel: {
     x: 18,

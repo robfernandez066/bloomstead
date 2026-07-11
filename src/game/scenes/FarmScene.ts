@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { SaveSystem } from '../save/SaveSystem';
+import { CommunityBoardSystem } from '../ui/CommunityBoardSystem';
 import { CropSellPanelSystem } from '../ui/CropSellPanelSystem';
 import { FeedbackSystem } from '../ui/FeedbackSystem';
 import { HudSystem } from '../ui/HudSystem';
@@ -95,6 +96,7 @@ export class FarmScene extends Phaser.Scene {
     );
     const seedSelectorSystem = new SeedSelectorSystem(this, gameStateSystem);
     const orderBoardSystem = new OrderBoardSystem(this, orderSystem);
+    const communityBoardSystem = new CommunityBoardSystem(this);
     const upgradePanelSystem = new UpgradePanelSystem(this, upgradeSystem);
     const tutorialPanelSystem = new TutorialPanelSystem(this, tutorialSystem);
     const muteToggleSystem = new MuteToggleSystem(this, audioSystem);
@@ -180,6 +182,11 @@ export class FarmScene extends Phaser.Scene {
       productionLandmarkSystem.refresh();
     };
 
+    const refreshOrderUi = (): void => {
+      orderBoardSystem.refresh();
+      communityBoardSystem.refresh();
+    };
+
     const refreshTutorialIfAdvanced = (advanced: boolean): void => {
       if (advanced) {
         tutorialPanelSystem.refresh();
@@ -201,6 +208,9 @@ export class FarmScene extends Phaser.Scene {
         return;
       }
 
+      orderBoardSystem.closeWindow(false);
+      tutorialPanelSystem.refresh();
+      communityBoardSystem.refresh();
       audioSystem.playButtonTap();
       productionMenuSystem.openMenu(recipeId);
 
@@ -366,7 +376,7 @@ export class FarmScene extends Phaser.Scene {
 
     const handleLevelUp = (previousLevel: number, currentLevel: number): void => {
       orderSystem.refreshActiveOrdersForCurrentLevel();
-      orderBoardSystem.refresh();
+      refreshOrderUi();
       seedSelectorSystem.refresh();
       refreshProductionUi();
       refreshPostTutorialGoal();
@@ -394,21 +404,22 @@ export class FarmScene extends Phaser.Scene {
       );
     };
 
-    const getOrderBoardY = (): number => {
-      return upgradeSystem.getNextPlotUpgrade() === null && upgradePanelSystem.isCompletionHidden()
-        ? FARM_LAYOUT.plotUpgradePanel.y
-        : FARM_LAYOUT.orderBoard.y;
-    };
-
     const renderOrderBoard = (): void => {
       orderBoardSystem.render({
         x: FARM_LAYOUT.orderBoard.x,
-        y: getOrderBoardY(),
+        y: FARM_LAYOUT.orderBoard.y,
         width: FARM_LAYOUT.orderBoard.width,
         orderHeight: FARM_LAYOUT.orderBoard.orderHeight,
         gap: FARM_LAYOUT.orderBoard.gap,
         bottomPadding: FARM_LAYOUT.orderBoard.bottomPadding,
+        getOwnedItemCount: (itemId) => gameStateSystem.getItemCount(itemId),
+        onClose: () => {
+          audioSystem.playButtonTap();
+          tutorialPanelSystem.refresh();
+          communityBoardSystem.refresh();
+        },
         onOrderComplete: (order) => {
+          const completedOrderBounds = orderBoardSystem.getOrderBounds(order.id);
           const result = orderSystem.completeOrder(order.id);
 
           if (result === null) {
@@ -419,11 +430,15 @@ export class FarmScene extends Phaser.Scene {
           audioSystem.playButtonTap();
           hudSystem.refresh();
           cropSellPanelSystem.refresh();
-          orderBoardSystem.refresh();
+          refreshOrderUi();
           upgradePanelSystem.refresh();
           refreshProductionUi();
           refreshPostTutorialGoal();
           const tutorialAdvanced = tutorialSystem.recordOrderCompleted();
+          if (tutorialAdvanced) {
+            orderBoardSystem.closeWindow(false);
+            communityBoardSystem.refresh();
+          }
           refreshTutorialIfAdvanced(tutorialAdvanced);
           if (tutorialAdvanced) {
             upgradePanelSystem.refresh();
@@ -434,16 +449,19 @@ export class FarmScene extends Phaser.Scene {
           }
           audioSystem.playCoinGain();
           audioSystem.playXpGain();
-          feedbackSystem.showOrderComplete(width / 2, getOrderBoardY() - 10);
+          const feedbackX = completedOrderBounds?.centerX ?? width / 2;
+          const feedbackY = completedOrderBounds?.centerY ?? FARM_LAYOUT.orderBoard.y + 92;
+
+          feedbackSystem.showOrderComplete(feedbackX, feedbackY - 18);
           feedbackSystem.showOrderRewards(
-            width / 2,
-            getOrderBoardY() + 22,
+            feedbackX,
+            feedbackY + 10,
             result.order.coinReward,
             result.order.xpReward
           );
           feedbackSystem.showOrderRewardFlyEffects(
-            width / 2,
-            getOrderBoardY() + 42,
+            feedbackX,
+            feedbackY + 24,
             FARM_LAYOUT.hud.x + 58,
             FARM_LAYOUT.hud.y + 20,
             FARM_LAYOUT.hud.x + 48,
@@ -506,7 +524,7 @@ export class FarmScene extends Phaser.Scene {
       gridSystem.playHarvestEffect(harvestResult.plot);
       hudSystem.refresh();
       cropSellPanelSystem.refresh();
-      orderBoardSystem.refresh();
+      refreshOrderUi();
       upgradePanelSystem.refresh();
       refreshProductionUi();
       refreshPostTutorialGoal();
@@ -662,7 +680,7 @@ export class FarmScene extends Phaser.Scene {
         audioSystem.playButtonTap();
         hudSystem.refresh();
         cropSellPanelSystem.refresh();
-        orderBoardSystem.refresh();
+        refreshOrderUi();
         upgradePanelSystem.refresh();
         refreshProductionUi();
         refreshPostTutorialGoal();
@@ -697,7 +715,7 @@ export class FarmScene extends Phaser.Scene {
           recipeId === MILL_FLOUR_RECIPE_ID && tutorialSystem.recordMillStarted();
         refreshProductionUi();
         cropSellPanelSystem.refresh();
-        orderBoardSystem.refresh();
+        refreshOrderUi();
         refreshPostTutorialGoal();
         refreshTutorialIfAdvanced(tutorialAdvanced);
         saveGame();
@@ -731,7 +749,7 @@ export class FarmScene extends Phaser.Scene {
           recipeId === MILL_FLOUR_RECIPE_ID && tutorialSystem.recordFlourCollected();
         refreshProductionUi();
         cropSellPanelSystem.refresh();
-        orderBoardSystem.refresh();
+        refreshOrderUi();
         refreshPostTutorialGoal();
         refreshTutorialIfAdvanced(tutorialAdvanced);
         saveGame();
@@ -808,7 +826,6 @@ export class FarmScene extends Phaser.Scene {
       y: FARM_LAYOUT.plotUpgradePanel.y,
       width: FARM_LAYOUT.plotUpgradePanel.width,
       height: FARM_LAYOUT.plotUpgradePanel.height,
-      onCompletionHidden: renderOrderBoard,
       isLocked: () => !tutorialSystem.canPurchasePlotUpgrade(),
       isPurchaseDisabled: () => plotInputLocked || gridSystem.isPlotUpgradeTransitionActive(),
       isHighlighted: () => tutorialSystem.getCurrentStep()?.id === 'upgrade-plots',
@@ -846,6 +863,30 @@ export class FarmScene extends Phaser.Scene {
     });
 
     renderOrderBoard();
+
+    communityBoardSystem.render({
+      x: FARM_LAYOUT.communityBoard.x,
+      y: FARM_LAYOUT.communityBoard.y,
+      width: FARM_LAYOUT.communityBoard.width,
+      height: FARM_LAYOUT.communityBoard.height,
+      isReady: () => orderSystem.getActiveOrders().some((order) => orderSystem.canCompleteOrder(order)),
+      isHighlighted: () =>
+        tutorialSystem.getCurrentStep()?.id === 'complete-order' && !orderBoardSystem.isOpen(),
+      onOpen: () => {
+        if (orderBoardSystem.isOpen()) {
+          return;
+        }
+
+        if (productionMenuSystem.isOpen()) {
+          productionMenuSystem.closeMenu();
+        }
+
+        audioSystem.playButtonTap();
+        orderBoardSystem.openWindow();
+        tutorialPanelSystem.refresh();
+        communityBoardSystem.refresh();
+      }
+    });
 
     const paintStrokeTo = (pointer: Phaser.Input.Pointer): void => {
       if (
@@ -1023,7 +1064,9 @@ export class FarmScene extends Phaser.Scene {
         case 'sell-crop':
           return { ...base, y: 168, height: 62 };
         case 'complete-order':
-          return { ...base, y: 650, height: 66 };
+          return orderBoardSystem.isOpen()
+            ? { ...base, y: 456, height: 66 }
+            : { x: 18, y: 458, width: 250, height: 82 };
         case 'craft-open':
           return { ...base, y: 286, height: 66 };
         case 'craft-start-mill':
@@ -1031,7 +1074,7 @@ export class FarmScene extends Phaser.Scene {
         case 'craft-open-ready':
         case 'craft-collect-flour':
         case 'craft-start-second-mill':
-          return { ...base, y: 492, height: 66 };
+          return { ...base, y: 684, height: 66 };
         case 'craft-close-menu':
           return { ...base, y: 590, height: 58 };
         default:
@@ -1054,12 +1097,9 @@ export class FarmScene extends Phaser.Scene {
         case 'harvest':
           return gridSystem.getVisiblePlotScreenBounds();
         case 'complete-order':
-          return {
-            x: FARM_LAYOUT.orderBoard.x + 10,
-            y: FARM_LAYOUT.orderBoard.y + 30,
-            width: FARM_LAYOUT.orderBoard.width - 20,
-            height: FARM_LAYOUT.orderBoard.orderHeight
-          };
+          return orderBoardSystem.isOpen()
+            ? orderBoardSystem.getOrderBounds('sunwheat-sack')
+            : communityBoardSystem.getHitBounds();
         case 'upgrade-plots':
           return FARM_LAYOUT.plotUpgradePanel;
         case 'sell-crop':
@@ -1102,6 +1142,16 @@ export class FarmScene extends Phaser.Scene {
       height: FARM_LAYOUT.tutorialPanel.height,
       getPanelBounds: getTutorialPanelBounds,
       getTargetBounds: getTutorialTargetBounds,
+      isVisible: (step) => !orderBoardSystem.isOpen() || step.id === 'complete-order',
+      getMessage: (step) => {
+        if (step.id !== 'complete-order') {
+          return step.message;
+        }
+
+        return orderBoardSystem.isOpen()
+          ? 'Complete Sunwheat Sack to earn coins and XP.'
+          : 'Tap the Community Board to view Orders.';
+      },
       shouldUseArrow: shouldUseTutorialArrow,
       onAcknowledge: () => {
         if (tutorialSystem.getCurrentStep()?.id === 'complete') {

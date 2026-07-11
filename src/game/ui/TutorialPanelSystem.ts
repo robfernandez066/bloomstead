@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { TutorialSystem } from '../systems/TutorialSystem';
-import type { TutorialStepId } from '../models/TutorialTypes';
+import type { TutorialStepDefinition, TutorialStepId } from '../models/TutorialTypes';
 
 const PANEL_FILL = 0xf7edc7;
 const PANEL_STROKE = 0x496d3e;
@@ -28,6 +28,8 @@ interface TutorialPanelConfig {
   onAcknowledge: () => void;
   getPanelBounds?: (stepId: TutorialStepId) => TutorialBounds;
   getTargetBounds?: (stepId: TutorialStepId) => TutorialBounds | null;
+  getMessage?: (step: TutorialStepDefinition) => string;
+  isVisible?: (step: TutorialStepDefinition) => boolean;
   shouldUseArrow?: (stepId: TutorialStepId) => boolean;
 }
 
@@ -56,12 +58,13 @@ export class TutorialPanelSystem {
 
     const step = this.tutorialSystem.getCurrentStep();
 
-    if (step === null) {
+    if (step === null || this.config.isVisible?.(step) === false) {
       return;
     }
 
     const panelBounds = this.config.getPanelBounds?.(step.id) ?? this.config;
     const targetBounds = this.config.getTargetBounds?.(step.id) ?? null;
+    const message = this.config.getMessage?.(step) ?? step.message;
 
     if (targetBounds !== null) {
       this.renderTargetGuidance(panelBounds, targetBounds);
@@ -109,7 +112,7 @@ export class TutorialPanelSystem {
 
     this.objects.push(
       this.scene.add
-          .text(panelBounds.x + 10, panelBounds.y + HEADER_HEIGHT + 6, step.message, {
+          .text(panelBounds.x + 10, panelBounds.y + HEADER_HEIGHT + 6, message, {
           color: TEXT_COLOR,
           fontFamily: 'Arial, sans-serif',
           fontSize: '13px',
