@@ -50,12 +50,20 @@ export const FARM_LAYOUT = {
     width: 354,
     height: 280
   },
-  cropSellPanel: {
+  bag: {
     x: 18,
-    y: 126,
-    buttonWidth: 84,
-    buttonHeight: 36,
-    gap: 6
+    y: 458,
+    width: 90,
+    height: 82
+  },
+  bagWindow: {
+    x: 18,
+    y: 176,
+    width: 354,
+    cropRowHeight: 44,
+    goodRowHeight: 42,
+    gap: 4,
+    bottomPadding: 12
   },
   muteToggle: {
     x: 292,
