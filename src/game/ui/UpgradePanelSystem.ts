@@ -17,6 +17,7 @@ interface UpgradePanelConfig {
   onPurchase: () => void;
   onCompletionHidden?: () => void;
   isLocked?: () => boolean;
+  isPurchaseDisabled?: () => boolean;
   isHighlighted?: () => boolean;
 }
 
@@ -53,6 +54,7 @@ export class UpgradePanelSystem {
     const upgrade = this.upgradeSystem.getNextPlotUpgrade();
     const canAfford = this.upgradeSystem.canAffordNextPlotUpgrade();
     const locked = this.config.isLocked?.() === true;
+    const purchaseDisabled = this.config.isPurchaseDisabled?.() === true;
     const highlighted = this.config.isHighlighted?.() === true;
 
     if (upgrade !== null) {
@@ -61,7 +63,7 @@ export class UpgradePanelSystem {
       this.completionHideEvent = undefined;
     }
 
-    if (upgrade === null || locked || !canAfford) {
+    if (upgrade === null || locked || purchaseDisabled || !canAfford) {
       this.confirmingPurchase = false;
     }
 
@@ -75,18 +77,19 @@ export class UpgradePanelSystem {
       return;
     }
 
+    const canPurchase = !locked && !purchaseDisabled && canAfford;
     const fillColor = locked
       ? LOCKED_FILL
-      : canAfford
+      : canPurchase
         ? READY_FILL
         : DISABLED_FILL;
-    const textColor = !locked && canAfford ? TEXT_COLOR : DISABLED_TEXT;
+    const textColor = canPurchase ? TEXT_COLOR : DISABLED_TEXT;
 
     const panel = this.scene.add
       .rectangle(this.config.x, this.config.y, this.config.width, this.config.height, fillColor)
       .setOrigin(0, 0)
       .setStrokeStyle(highlighted ? 3 : 2, highlighted ? 0xffe27a : PANEL_STROKE)
-      .setAlpha(!locked && canAfford ? 1 : 0.78);
+      .setAlpha(canPurchase ? 1 : 0.78);
 
     this.objects.push(panel);
 
@@ -101,7 +104,7 @@ export class UpgradePanelSystem {
       });
     }
 
-    if (!locked && canAfford) {
+    if (canPurchase) {
       panel.setInteractive({ useHandCursor: true });
       panel.on('pointerdown', () => {
         this.confirmingPurchase = true;

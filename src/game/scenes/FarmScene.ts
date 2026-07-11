@@ -73,6 +73,7 @@ export class FarmScene extends Phaser.Scene {
     let lastPaintPointerPosition: Phaser.Math.Vector2 | null = null;
     let activeGesturePointerId: number | null = null;
     let suppressPlantingUntil = 0;
+    let plotInputLocked = false;
 
     const saveGame = (): void => {
       saveSystem.save(
@@ -479,6 +480,15 @@ export class FarmScene extends Phaser.Scene {
       pendingTapHarvestPosition = null;
     };
 
+    const cancelActivePlotGesture = (): void => {
+      activeGesturePointerId = null;
+      lastPaintPointerPosition = null;
+      flushPendingTapHarvestText();
+      plantingSystem.endPaint();
+      harvestingSystem.endHarvest();
+      dragMode = 'none';
+    };
+
     const handleHarvestResult = (
       harvestResult: HarvestResult,
       textMode: 'defer-single' | 'aggregate'
@@ -556,7 +566,7 @@ export class FarmScene extends Phaser.Scene {
       debugAnchors: FARM_LAYOUT.farmGrid.debugAnchors
     }, plotStateSystem.getPlots(), {
       onPlotPressed: (plot, pointer) => {
-        if (activeGesturePointerId !== null) {
+        if (plotInputLocked || activeGesturePointerId !== null) {
           return;
         }
 
@@ -600,6 +610,10 @@ export class FarmScene extends Phaser.Scene {
         lastPaintPointerPosition = null;
       },
       onPlotDraggedOver: (plot, pointer) => {
+        if (plotInputLocked) {
+          return;
+        }
+
         if (dragMode === 'harvest' && activeGesturePointerId === pointer.id) {
           const harvestResult = harvestingSystem.harvestOver(plot);
 
@@ -796,20 +810,24 @@ export class FarmScene extends Phaser.Scene {
       height: FARM_LAYOUT.plotUpgradePanel.height,
       onCompletionHidden: renderOrderBoard,
       isLocked: () => !tutorialSystem.canPurchasePlotUpgrade(),
+      isPurchaseDisabled: () => plotInputLocked || gridSystem.isPlotUpgradeTransitionActive(),
       isHighlighted: () => tutorialSystem.getCurrentStep()?.id === 'upgrade-plots',
       onPurchase: () => {
+        if (plotInputLocked || gridSystem.isPlotUpgradeTransitionActive()) {
+          return;
+        }
+
+        cancelActivePlotGesture();
+        plotInputLocked = true;
         const result = upgradeSystem.purchaseNextPlotUpgrade();
 
         if (result === null) {
+          plotInputLocked = false;
           audioSystem.playDisabledTap();
           return;
         }
 
         audioSystem.playButtonTap();
-        gridSystem.refreshPlotVisuals();
-        for (const plot of result.plots) {
-          gridSystem.playPlotUnlockEffect(plot);
-        }
         hudSystem.refresh();
         upgradePanelSystem.refresh();
         refreshTutorialIfAdvanced(
@@ -820,6 +838,10 @@ export class FarmScene extends Phaser.Scene {
         saveGame();
         audioSystem.playPlotUnlock();
         feedbackSystem.showPlotsUnlocked(width / 2, FARM_LAYOUT.plotUpgradePanel.y - 8);
+        gridSystem.playPlotUpgradeTransition(result.plots, () => {
+          plotInputLocked = false;
+          upgradePanelSystem.refresh();
+        });
       }
     });
 
@@ -827,6 +849,7 @@ export class FarmScene extends Phaser.Scene {
 
     const paintStrokeTo = (pointer: Phaser.Input.Pointer): void => {
       if (
+        plotInputLocked ||
         dragMode !== 'plant' ||
         activeGesturePointerId !== pointer.id ||
         lastPaintPointerPosition === null
@@ -853,12 +876,7 @@ export class FarmScene extends Phaser.Scene {
       lastPaintPointerPosition = currentPosition;
     };
     const endGesture = (): void => {
-      activeGesturePointerId = null;
-      lastPaintPointerPosition = null;
-      flushPendingTapHarvestText();
-      plantingSystem.endPaint();
-      harvestingSystem.endHarvest();
-      dragMode = 'none';
+      cancelActivePlotGesture();
     };
     const endGestureWithPointer = (pointer: Phaser.Input.Pointer): void => {
       if (activeGesturePointerId !== pointer.id) {
@@ -873,6 +891,7 @@ export class FarmScene extends Phaser.Scene {
     };
     const handlePaintMove = (pointer: Phaser.Input.Pointer): void => {
       if (
+        plotInputLocked ||
         dragMode !== 'plant' ||
         activeGesturePointerId !== pointer.id ||
         !pointer.isDown
@@ -903,7 +922,9 @@ export class FarmScene extends Phaser.Scene {
       endGesture();
     };
     const cleanupInput = (): void => {
-      endGesture();
+      plotInputLocked = true;
+      gridSystem.cancelPlotUpgradeTransition();
+      cancelActivePlotGesture();
       this.input.off('pointermove', handlePaintMove);
       this.input.off('pointerup', handlePointerUp);
       this.input.off('pointerupoutside', handlePointerUpOutside);

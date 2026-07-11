@@ -54,6 +54,9 @@ export class GridSystem {
   private readonly gridContainer: Phaser.GameObjects.Container;
   private readonly tileLayer: Phaser.GameObjects.Container;
   private readonly markerLayer: Phaser.GameObjects.Container;
+  private plotUpgradeTransitionActive = false;
+  private plotUpgradeMoveTween?: Phaser.Tweens.Tween;
+  private readonly plotUpgradeRevealTweens: Phaser.Tweens.Tween[] = [];
 
   constructor(
     scene: Phaser.Scene,
@@ -83,6 +86,58 @@ export class GridSystem {
     for (const plot of this.plots) {
       this.refreshPlotVisual(plot);
     }
+  }
+
+  isPlotUpgradeTransitionActive(): boolean {
+    return this.plotUpgradeTransitionActive;
+  }
+
+  playPlotUpgradeTransition(newlyUnlockedPlots: PlotState[], onComplete: () => void): boolean {
+    if (this.plotUpgradeTransitionActive) {
+      return false;
+    }
+
+    this.plotUpgradeTransitionActive = true;
+    this.refreshPlotVisuals();
+
+    for (const plot of newlyUnlockedPlots) {
+      const objects = this.renderObjects.get(this.getPlotKey(plot));
+
+      if (objects === undefined) {
+        continue;
+      }
+
+      objects.tile.setAlpha(0).setScale(0.9);
+      objects.cropVisual.setAlpha(0).setScale(0.9);
+    }
+
+    const targetPosition = this.getCenteredFarmBedPosition();
+
+    this.plotUpgradeMoveTween = this.scene.tweens.add({
+      targets: this.gridContainer,
+      x: targetPosition.x,
+      y: targetPosition.y,
+      duration: 300,
+      ease: 'Quad.easeOut',
+      onComplete: () => {
+        this.plotUpgradeMoveTween = undefined;
+        this.revealUnlockedPlots(newlyUnlockedPlots, onComplete);
+      }
+    });
+
+    return true;
+  }
+
+  cancelPlotUpgradeTransition(): void {
+    this.plotUpgradeMoveTween?.stop();
+    this.plotUpgradeMoveTween = undefined;
+
+    for (const tween of this.plotUpgradeRevealTweens) {
+      tween.stop();
+    }
+
+    this.plotUpgradeRevealTweens.length = 0;
+    this.plotUpgradeTransitionActive = false;
   }
 
   getPlotScreenPosition(plot: PlotState): Phaser.Math.Vector2 {
@@ -410,6 +465,16 @@ export class GridSystem {
   }
 
   private recenterVisibleFarmBed(): void {
+    if (this.plotUpgradeTransitionActive) {
+      return;
+    }
+
+    const position = this.getCenteredFarmBedPosition();
+
+    this.gridContainer.setPosition(position.x, position.y);
+  }
+
+  private getCenteredFarmBedPosition(): Phaser.Math.Vector2 {
     const position = getCenteredIsometricPlotContainerPosition(
       this.getVisiblePlotPositions(),
       this.config.tileWidth,
@@ -417,7 +482,45 @@ export class GridSystem {
       this.config.area
     );
 
-    this.gridContainer.setPosition(position.x, position.y);
+    return new Phaser.Math.Vector2(position.x, position.y);
+  }
+
+  private revealUnlockedPlots(newlyUnlockedPlots: PlotState[], onComplete: () => void): void {
+    const revealTargets: Phaser.GameObjects.GameObject[] = [];
+
+    for (const plot of newlyUnlockedPlots) {
+      const objects = this.renderObjects.get(this.getPlotKey(plot));
+
+      if (objects !== undefined) {
+        revealTargets.push(objects.tile, objects.cropVisual);
+      }
+    }
+
+    if (revealTargets.length === 0) {
+      this.completePlotUpgradeTransition(onComplete);
+      return;
+    }
+
+    const revealTween = this.scene.tweens.add({
+      targets: revealTargets,
+      alpha: 1,
+      scale: 1,
+      duration: 180,
+      ease: 'Sine.easeOut',
+      onComplete: () => {
+        this.plotUpgradeRevealTweens.length = 0;
+        this.completePlotUpgradeTransition(onComplete);
+      }
+    });
+
+    this.plotUpgradeRevealTweens.push(revealTween);
+  }
+
+  private completePlotUpgradeTransition(onComplete: () => void): void {
+    this.plotUpgradeTransitionActive = false;
+    this.recenterVisibleFarmBed();
+    this.refreshPlotVisuals();
+    onComplete();
   }
 
   private getVisiblePlotPositions(): GridPosition[] {
