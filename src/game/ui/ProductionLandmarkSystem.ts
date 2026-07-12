@@ -10,8 +10,11 @@ import { createItemIcon } from './ItemIcon';
 
 const LANDMARK_DEPTH = 18;
 const HIT_DEPTH = LANDMARK_DEPTH + 3;
-const READY_DEPTH = LANDMARK_DEPTH + 4;
+const PROGRESS_DEPTH = LANDMARK_DEPTH + 4;
 const HIGHLIGHT_FILL = 0xffe27a;
+const PROGRESS_TRACK = 0x8f9b82;
+const PROGRESS_FILL = 0x5f9f52;
+const PROGRESS_BACK = 0xfff8dd;
 const SIGN_FILL = 0xf7edc7;
 const SIGN_STROKE = 0x6f5734;
 const SIGN_TEXT = '#2f3b26';
@@ -41,6 +44,7 @@ export class ProductionLandmarkSystem {
   private renderSignature = '';
   private readonly objects: Phaser.GameObjects.GameObject[] = [];
   private readonly animatedTargets: Phaser.GameObjects.GameObject[] = [];
+  private readonly progressGraphics = new Map<ProductionRecipeId, Phaser.GameObjects.Graphics>();
 
   constructor(scene: Phaser.Scene, productionSystem: ProductionSystem) {
     this.scene = scene;
@@ -60,6 +64,7 @@ export class ProductionLandmarkSystem {
     const signature = this.getRenderSignature();
 
     if (!force && signature === this.renderSignature) {
+      this.updateProgressIndicators();
       return;
     }
 
@@ -69,6 +74,8 @@ export class ProductionLandmarkSystem {
     for (const recipe of Object.values(PRODUCTION_RECIPES)) {
       this.renderLandmark(recipe, this.config.landmarks[recipe.buildingId]);
     }
+
+    this.updateProgressIndicators();
   }
 
   getLandmarkBounds(recipeId: ProductionRecipeId): Phaser.Geom.Rectangle {
@@ -87,7 +94,12 @@ export class ProductionLandmarkSystem {
       return null;
     }
 
-    return this.getReadyBounds(PRODUCTION_RECIPES[recipeId]);
+    return this.getProgressBounds(PRODUCTION_RECIPES[recipeId]);
+  }
+
+  getProgressIndicatorPosition(recipeId: ProductionRecipeId): Phaser.Math.Vector2 {
+    const bounds = this.getProgressBounds(PRODUCTION_RECIPES[recipeId]);
+    return new Phaser.Math.Vector2(bounds.centerX, bounds.centerY);
   }
 
   private renderLandmark(
@@ -144,8 +156,8 @@ export class ProductionLandmarkSystem {
     });
     this.objects.push(hitArea);
 
-    if (claimableQuantity > 0) {
-      this.renderReadyIndicator(recipe, claimableQuantity);
+    if (state.status !== 'idle') {
+      this.renderProgressIndicator(recipe, claimableQuantity);
     }
   }
 
@@ -379,58 +391,74 @@ export class ProductionLandmarkSystem {
     return container.add([panel, text]);
   }
 
-  private renderReadyIndicator(
+  private renderProgressIndicator(
     recipe: ProductionRecipeDefinition,
     claimableQuantity: number
   ): void {
-    const bounds = this.getReadyBounds(recipe);
+    const bounds = this.getProgressBounds(recipe);
     const centerX = bounds.centerX;
     const centerY = bounds.centerY;
     const highlighted = this.config?.shouldHighlightReady?.(recipe.id) === true;
-    const bubble = this.scene.add.circle(centerX, centerY, 14, 0xfff8dd)
-      .setStrokeStyle(highlighted ? 4 : 3, highlighted ? HIGHLIGHT_FILL : 0x6f5734)
-      .setDepth(READY_DEPTH);
+    const background = this.scene.add.circle(centerX, centerY, 18, PROGRESS_BACK)
+      .setStrokeStyle(3, highlighted ? HIGHLIGHT_FILL : 0x6f5734)
+      .setDepth(PROGRESS_DEPTH);
+    const track = this.scene.add.graphics().setDepth(PROGRESS_DEPTH + 1);
+    const progress = this.scene.add.graphics().setDepth(PROGRESS_DEPTH + 2);
+
+    track.lineStyle(4, PROGRESS_TRACK, 1);
+    track.strokeCircle(centerX, centerY, 14);
+    this.progressGraphics.set(recipe.id, progress);
+
     const icon = createItemIcon(
       this.scene,
       recipe.outputItemId,
       centerX,
       centerY,
-      16,
-      { depth: READY_DEPTH + 1 }
+      15,
+      { depth: PROGRESS_DEPTH + 3 }
     );
-    const quantity = this.scene.add
-      .text(centerX + 10, centerY + 7, `${claimableQuantity}`, {
-        color: '#fff4d0',
-        backgroundColor: '#496d3e',
-        fontFamily: 'Arial, sans-serif',
-        fontSize: '9px',
-        fontStyle: 'bold',
-        padding: { x: 3, y: 1 }
-      })
-      .setOrigin(0.5)
-      .setDepth(READY_DEPTH + 2)
-      .setResolution(2);
     const hitArea = this.scene.add
       .rectangle(bounds.x, bounds.y, bounds.width, bounds.height, 0xffffff, 0.001)
       .setOrigin(0, 0)
       .setInteractive({ useHandCursor: true })
-      .setDepth(READY_DEPTH + 3);
+      .setDepth(PROGRESS_DEPTH + 6);
 
     hitArea.on('pointerdown', () => this.config?.onOpen(recipe.id));
-    this.scene.tweens.add({
-      targets: [bubble, icon],
-      scale: highlighted ? 1.18 : 1.1,
-      duration: highlighted ? 420 : 640,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
-    });
 
-    this.objects.push(bubble, icon, quantity, hitArea);
-    this.animatedTargets.push(bubble, icon);
+    this.objects.push(background, track, progress, icon, hitArea);
+
+    if (highlighted) {
+      this.scene.tweens.add({
+        targets: [background, icon],
+        scale: 1.12,
+        duration: 420,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut'
+      });
+      this.animatedTargets.push(background, icon);
+    }
+
+    if (claimableQuantity > 0) {
+      const badge = this.scene.add.circle(centerX + 14, centerY + 14, 9, 0x496d3e)
+        .setStrokeStyle(2, 0xfff4d0)
+        .setDepth(PROGRESS_DEPTH + 4);
+      const quantity = this.scene.add
+        .text(centerX + 14, centerY + 14, `${claimableQuantity}`, {
+          color: '#fff4d0',
+          fontFamily: 'Arial, sans-serif',
+          fontSize: '9px',
+          fontStyle: 'bold'
+        })
+        .setOrigin(0.5)
+        .setDepth(PROGRESS_DEPTH + 5)
+        .setResolution(2);
+
+      this.objects.push(badge, quantity);
+    }
   }
 
-  private getReadyBounds(recipe: ProductionRecipeDefinition): Phaser.Geom.Rectangle {
+  private getProgressBounds(recipe: ProductionRecipeDefinition): Phaser.Geom.Rectangle {
     const landmark = this.config?.landmarks[recipe.buildingId];
 
     if (landmark === undefined) {
@@ -438,10 +466,57 @@ export class ProductionLandmarkSystem {
     }
 
     const x = recipe.buildingId === 'mill'
-      ? landmark.x + landmark.width - 27
-      : landmark.x - 2;
+      ? landmark.x + landmark.width - 34
+      : landmark.x - 10;
 
-    return new Phaser.Geom.Rectangle(x, landmark.y - 4, 30, 30);
+    return new Phaser.Geom.Rectangle(x, landmark.y - 10, 44, 44);
+  }
+
+  private updateProgressIndicators(): void {
+    for (const recipe of Object.values(PRODUCTION_RECIPES)) {
+      const graphics = this.progressGraphics.get(recipe.id);
+
+      if (graphics === undefined) {
+        continue;
+      }
+
+      const bounds = this.getProgressBounds(recipe);
+      const progress = this.getCurrentUnitProgress(recipe);
+
+      graphics.clear();
+      graphics.lineStyle(4, PROGRESS_FILL, 1);
+      graphics.beginPath();
+      graphics.arc(
+        bounds.centerX,
+        bounds.centerY,
+        14,
+        -Math.PI / 2,
+        -Math.PI / 2 + Math.PI * 2 * progress,
+        false
+      );
+      graphics.strokePath();
+    }
+  }
+
+  private getCurrentUnitProgress(recipe: ProductionRecipeDefinition): number {
+    const state = this.productionSystem.getRecipeState(recipe.id);
+
+    if (state.status === 'ready') {
+      return 1;
+    }
+
+    if (state.status !== 'producing' || state.startedAt === null) {
+      return 0;
+    }
+
+    const elapsedMs = Math.max(0, Date.now() - state.startedAt);
+    const totalDurationMs = recipe.durationMs * state.quantity;
+
+    if (elapsedMs >= totalDurationMs) {
+      return 1;
+    }
+
+    return Phaser.Math.Clamp((elapsedMs % recipe.durationMs) / recipe.durationMs, 0, 1);
   }
 
   private getRenderSignature(): string {
@@ -452,6 +527,8 @@ export class ProductionLandmarkSystem {
         recipe.id,
         this.productionSystem.isRecipeUnlocked(recipe.id),
         state.status,
+        state.quantity,
+        state.collectedQuantity,
         this.productionSystem.getClaimableQuantity(recipe.id),
         this.config?.shouldHighlightLandmark?.(recipe.id) === true,
         this.config?.shouldHighlightReady?.(recipe.id) === true
@@ -471,5 +548,6 @@ export class ProductionLandmarkSystem {
 
     this.animatedTargets.length = 0;
     this.objects.length = 0;
+    this.progressGraphics.clear();
   }
 }

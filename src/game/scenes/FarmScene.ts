@@ -9,7 +9,6 @@ import { MuteToggleSystem } from '../ui/MuteToggleSystem';
 import { OrderBoardSystem } from '../ui/OrderBoardSystem';
 import { ProductionLandmarkSystem } from '../ui/ProductionLandmarkSystem';
 import { ProductionMenuSystem } from '../ui/ProductionMenuSystem';
-import { ProductionStatusSystem } from '../ui/ProductionStatusSystem';
 import { SeedSelectorSystem } from '../ui/SeedSelectorSystem';
 import { TutorialPanelSystem } from '../ui/TutorialPanelSystem';
 import { UpgradePanelSystem } from '../ui/UpgradePanelSystem';
@@ -96,7 +95,6 @@ export class FarmScene extends Phaser.Scene {
     const tutorialPanelSystem = new TutorialPanelSystem(this, tutorialSystem);
     const muteToggleSystem = new MuteToggleSystem(this, audioSystem);
     const productionMenuSystem = new ProductionMenuSystem(this, productionSystem);
-    const productionStatusSystem = new ProductionStatusSystem(this, productionSystem);
     const productionLandmarkSystem = new ProductionLandmarkSystem(this, productionSystem);
     const postTutorialGoalObjects: Phaser.GameObjects.GameObject[] = [];
     let gridSystem: GridSystem;
@@ -170,7 +168,6 @@ export class FarmScene extends Phaser.Scene {
     };
 
     const refreshProductionUi = (): void => {
-      productionStatusSystem.refresh();
       productionMenuSystem.refresh();
       productionLandmarkSystem.refresh();
       bagSystem.refresh();
@@ -190,7 +187,6 @@ export class FarmScene extends Phaser.Scene {
 
     const refreshOnboardingUi = (): void => {
       tutorialPanelSystem.refresh();
-      productionStatusSystem.refresh();
       productionLandmarkSystem.refresh();
       bagSystem.refresh();
       refreshPostTutorialGoal();
@@ -684,10 +680,7 @@ export class FarmScene extends Phaser.Scene {
 
         feedbackSystem.showProductionStarted(
           { x: FARM_LAYOUT.productionMenu.x + 68, y: recipeRowY },
-          {
-            x: FARM_LAYOUT.productionStatus.x + 56,
-            y: FARM_LAYOUT.productionStatus.y + FARM_LAYOUT.productionStatus.height / 2
-          },
+          productionLandmarkSystem.getProgressIndicatorPosition(recipeId),
           result.recipe.buildingName,
           inputItemId
         );
@@ -712,14 +705,9 @@ export class FarmScene extends Phaser.Scene {
         refreshPostTutorialGoal();
         refreshTutorialIfAdvanced(tutorialAdvanced);
         saveGame();
-        const recipeRowY = FARM_LAYOUT.productionMenu.y + 88;
-
         feedbackSystem.showProductionCollected(
-          { x: FARM_LAYOUT.productionMenu.x + FARM_LAYOUT.productionMenu.width - 62, y: recipeRowY },
-          {
-            x: FARM_LAYOUT.productionStatus.x + FARM_LAYOUT.productionStatus.width - 90,
-            y: FARM_LAYOUT.productionStatus.y + FARM_LAYOUT.productionStatus.height / 2
-          },
+          productionLandmarkSystem.getProgressIndicatorPosition(recipeId),
+          bagSystem.getInventoryTargetPosition(),
           result.recipe.outputItemId,
           result.outputName,
           result.outputAmount
@@ -750,16 +738,6 @@ export class FarmScene extends Phaser.Scene {
 
         return 1;
       }
-    });
-
-    productionStatusSystem.render({
-      statusX: FARM_LAYOUT.productionStatus.x,
-      statusY: FARM_LAYOUT.productionStatus.y,
-      statusWidth: FARM_LAYOUT.productionStatus.width,
-      statusHeight: FARM_LAYOUT.productionStatus.height,
-      highlightRecipeChip: (recipeId) =>
-        recipeId === MILL_FLOUR_RECIPE_ID && tutorialSystem.shouldHighlightMillReady(),
-      onOpen: openProductionForRecipe
     });
 
     upgradePanelSystem.render({
@@ -1073,7 +1051,7 @@ export class FarmScene extends Phaser.Scene {
         case 'craft-start-second-mill':
           return { ...base, y: 684, height: 66 };
         case 'craft-close-menu':
-          return { ...base, y: 590, height: 58 };
+          return { ...base, y: 684, height: 58 };
         default:
           return base;
       }

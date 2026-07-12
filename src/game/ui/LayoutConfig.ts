@@ -38,12 +38,6 @@ export const FARM_LAYOUT = {
       height: 78
     }
   },
-  productionStatus: {
-    x: 18,
-    y: 356,
-    width: 354,
-    height: 44
-  },
   productionMenu: {
     x: 18,
     y: 204,
@@ -73,7 +67,7 @@ export const FARM_LAYOUT = {
   },
   plotUpgradePanel: {
     x: 18,
-    y: 406,
+    y: 632,
     width: 354,
     height: 44
   },
