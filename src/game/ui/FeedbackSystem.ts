@@ -11,6 +11,7 @@ const POP_FILL = 0xffe27a;
 const HARVEST_FLY_WINDOW_MS = 320;
 const MAX_HARVEST_FLY_EFFECTS_PER_WINDOW = 4;
 const HARVEST_AGGREGATE_FADE_DELAY_MS = 620;
+const ITEM_TRAVEL_DEPTH = 142;
 const LEVEL_UP_OVERLAY_DEPTH = 200;
 const LEVEL_UP_PANEL_DEPTH = LEVEL_UP_OVERLAY_DEPTH + 1;
 const LEVEL_UP_PANEL_FILL = 0xf7edc7;
@@ -128,7 +129,10 @@ export class FeedbackSystem {
       duration: 590,
       delay,
       ease: 'Sine.easeInOut',
-      onComplete: () => cropDot.destroy()
+      onComplete: () => {
+        cropDot.destroy();
+        this.showArrivalPulse(target.x, target.y, CROP_FEEDBACK_FILL[cropId]);
+      }
     });
   }
 
@@ -155,11 +159,31 @@ export class FeedbackSystem {
     source: IsometricPoint,
     target: IsometricPoint,
     buildingName: string,
-    inputItemId: ItemId
+    inputs: Array<{ itemId: ItemId; amount: number }>
   ): void {
-    this.showFloatingText(`${buildingName} Started`, target.x, target.y - 12, 720, 20, '#fff4a8', 142);
-    this.showItemFlyEffect(inputItemId, source, target, 16, 520, 142);
-    this.showPop(source.x, source.y, 0xfff0a8, 141);
+    this.showFloatingText(
+      `${buildingName} Started`,
+      target.x,
+      target.y - 12,
+      720,
+      20,
+      '#fff4a8',
+      ITEM_TRAVEL_DEPTH
+    );
+
+    inputs.forEach((input, index) => {
+      this.showQuantityItemFlyEffect(
+        input.itemId,
+        input.amount,
+        { x: source.x + index * 9, y: source.y - index * 5 },
+        target,
+        18,
+        560,
+        ITEM_TRAVEL_DEPTH,
+        index * 70,
+        0xfff0a8
+      );
+    });
   }
 
   showProductionReady(x: number, y: number, itemId: ItemId): void {
@@ -174,9 +198,50 @@ export class FeedbackSystem {
     itemName: string,
     amount: number
   ): void {
-    this.showFloatingText(`+${amount} ${itemName}`, target.x, target.y - 12, 900, 24, '#fff4a8', 142);
-    this.showItemFlyEffect(itemId, source, target, 18, 600, 142);
-    this.showPop(source.x, source.y, POP_FILL, 141);
+    this.showFloatingText(
+      `+${amount} ${itemName}`,
+      target.x,
+      target.y - 12,
+      900,
+      24,
+      '#fff4a8',
+      ITEM_TRAVEL_DEPTH
+    );
+    this.showQuantityItemFlyEffect(
+      itemId,
+      amount,
+      source,
+      target,
+      19,
+      600,
+      ITEM_TRAVEL_DEPTH,
+      0,
+      POP_FILL
+    );
+  }
+
+  showOrderRequirementsSpent(
+    source: IsometricPoint,
+    target: IsometricPoint,
+    requirements: Partial<Record<ItemId, number>>
+  ): void {
+    Object.entries(requirements).forEach(([itemId, amount], index) => {
+      if (amount === undefined || amount <= 0) {
+        return;
+      }
+
+      this.showQuantityItemFlyEffect(
+        itemId as ItemId,
+        amount,
+        { x: source.x + index * 8, y: source.y - index * 4 },
+        target,
+        18,
+        540,
+        ITEM_TRAVEL_DEPTH,
+        index * 90,
+        0xfff0a8
+      );
+    });
   }
 
   showOrderRewards(x: number, y: number, coins: number, xp: number): void {
@@ -531,6 +596,22 @@ export class FeedbackSystem {
     });
   }
 
+  private showArrivalPulse(x: number, y: number, fill: number): void {
+    const pulse = this.scene.add
+      .circle(x, y, 9, fill, 0.08)
+      .setStrokeStyle(2, fill, 0.9)
+      .setDepth(ITEM_TRAVEL_DEPTH - 1);
+
+    this.scene.tweens.add({
+      targets: pulse,
+      scale: 2.2,
+      alpha: 0,
+      duration: 300,
+      ease: 'Sine.easeOut',
+      onComplete: () => pulse.destroy()
+    });
+  }
+
   private showRewardBurst(x: number, y: number): void {
     for (let index = 0; index < 8; index += 1) {
       const angle = Phaser.Math.DegToRad(index * 45);
@@ -606,15 +687,34 @@ export class FeedbackSystem {
     });
   }
 
-  private showItemFlyEffect(
+  private showQuantityItemFlyEffect(
     itemId: ItemId,
+    amount: number,
     source: IsometricPoint,
     target: IsometricPoint,
     size: number,
     duration: number,
-    depth: number
+    depth: number,
+    delay: number,
+    arrivalFill: number
   ): void {
     const icon = createItemIcon(this.scene, itemId, source.x, source.y, size, { depth });
+    const badgeX = size * 0.45;
+    const badgeY = size * 0.42;
+    const badge = this.scene.add
+      .circle(badgeX, badgeY, 8, 0x496d3e)
+      .setStrokeStyle(1.5, 0xfff4d0);
+    const quantity = this.scene.add
+      .text(badgeX, badgeY, `x${amount}`, {
+        color: '#fff4d0',
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '9px',
+        fontStyle: 'bold'
+      })
+      .setOrigin(0.5)
+      .setResolution(2);
+
+    icon.add([badge, quantity]);
 
     this.scene.tweens.add({
       targets: icon,
@@ -623,8 +723,12 @@ export class FeedbackSystem {
       scale: 0.82,
       alpha: 0,
       duration,
+      delay,
       ease: 'Sine.easeInOut',
-      onComplete: () => icon.destroy()
+      onComplete: () => {
+        icon.destroy();
+        this.showArrivalPulse(target.x, target.y, arrivalFill);
+      }
     });
   }
 }

@@ -440,8 +440,20 @@ export class FarmScene extends Phaser.Scene {
           }
           audioSystem.playCoinGain();
           audioSystem.playXpGain();
-          const feedbackX = completedOrderBounds?.centerX ?? width / 2;
-          const feedbackY = completedOrderBounds?.centerY ?? FARM_LAYOUT.orderBoard.y + 92;
+          const communityBoardBounds = communityBoardSystem.getHitBounds();
+          const useCommunityBoardFeedback = tutorialAdvanced || completedOrderBounds === null;
+          const feedbackX = useCommunityBoardFeedback
+            ? communityBoardBounds.centerX
+            : completedOrderBounds.centerX;
+          const feedbackY = useCommunityBoardFeedback
+            ? communityBoardBounds.centerY
+            : completedOrderBounds.centerY;
+
+          feedbackSystem.showOrderRequirementsSpent(
+            bagSystem.getInventoryTargetPosition(),
+            { x: feedbackX, y: feedbackY },
+            result.order.requirements
+          );
 
           feedbackSystem.showOrderComplete(feedbackX, feedbackY - 18);
           feedbackSystem.showOrderRewards(
@@ -675,14 +687,19 @@ export class FarmScene extends Phaser.Scene {
         refreshPostTutorialGoal();
         refreshTutorialIfAdvanced(tutorialAdvanced);
         saveGame();
-        const inputItemId = Object.keys(result.recipe.input)[0] as ItemId;
-        const recipeRowY = FARM_LAYOUT.productionMenu.y + 88;
+        const consumedInputs = Object.entries(result.recipe.input).flatMap(([itemId, amount]) => {
+          if (amount === undefined || amount <= 0) {
+            return [];
+          }
+
+          return [{ itemId: itemId as ItemId, amount: amount * result.quantity }];
+        });
 
         feedbackSystem.showProductionStarted(
-          { x: FARM_LAYOUT.productionMenu.x + 68, y: recipeRowY },
+          bagSystem.getInventoryTargetPosition(),
           productionLandmarkSystem.getProgressIndicatorPosition(recipeId),
           result.recipe.buildingName,
-          inputItemId
+          consumedInputs
         );
 
         if (tutorialAdvanced && tutorialSystem.getCurrentStep()?.id === 'craft-wait-flour') {
